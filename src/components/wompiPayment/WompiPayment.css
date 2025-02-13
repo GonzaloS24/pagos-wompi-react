@@ -2,31 +2,79 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
+  width: 100%;
   height: 100vh;
-  background-color: #f4f4f4;
+}
+
+.logo {
+  width: 300px;
+}
+
+@media screen and (max-width: 400px) {
+  .logo {
+    width: 90%;
+  }
 }
 
 .card {
   background: white;
   padding: 20px;
-  border-radius: 8px;
+  margin: 20px;
+  border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
-  width: 300px;
+  width: 500px;
+  border: 2px solid #009ee3;
+}
+
+@media screen and (max-width: 600px) {
+  .card {
+    width: 90%;
+  }
+}
+
+.price-info {
+  display: flex;
+  justify-content: space-around;
+  flex-direction: column;
+  margin: 20px 0;
 }
 
 h2 {
   margin-bottom: 16px;
   font-size: 20px;
+  color: #212529ab;
 }
 
 select {
   width: 100%;
-  padding: 8px;
-  margin-bottom: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
   font-size: 16px;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23009ee3'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 30px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #009ee3;
+}
+
+@media (max-width: 480px) {
+  select {
+    font-size: 14px;
+    padding: 8px;
+  }
 }
 
 button {
