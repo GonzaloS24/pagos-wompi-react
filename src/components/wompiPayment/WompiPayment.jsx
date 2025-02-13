@@ -28,54 +28,6 @@ const WompiPayment = () => {
     return Math.round(usdAmount * usdToCopRate * 100);
   };
 
-  // Función para manejar el evento de transacción
-  const handleTransactionResponse = (data) => {
-    try {
-      console.log("Datos completos del evento:", data);
-
-      if (!data || !data.transaction) {
-        console.warn("No se recibieron datos de transacción válidos");
-        return;
-      }
-
-      const transaction = data.transaction;
-
-      const payload = {
-        transactionId: transaction.id,
-        status: transaction.status,
-        amountInCents: transaction.amount_in_cents,
-        currency: transaction.currency,
-        reference: transaction.reference,
-        customerEmail: transaction.customer_email,
-        customerData: transaction.customer_data,
-        paymentMethod: transaction.payment_method_type,
-        amountUSD: selectedPlan?.priceUSD,
-        exchangeRate: usdToCopRate,
-        createdAt: new Date().toISOString(),
-      };
-
-      console.log("Datos que se enviarán al webhook:", payload);
-
-      // Enviar datos al webhook
-      fetch("https://webhook-test.com/a3af9ab23fe8512e4d15629cc5a5ea28", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Respuesta del webhook:", data);
-        })
-        .catch((error) => {
-          console.error("Error al enviar al webhook:", error);
-        });
-    } catch (error) {
-      console.error("Error al procesar la transacción:", error);
-    }
-  };
-
   useEffect(() => {
     fetch("https://api.exchangerate-api.com/v4/latest/USD")
       .then((res) => res.json())
@@ -85,33 +37,13 @@ const WompiPayment = () => {
       );
 
     const Plans = [
-      { id: 1, name: "Chatea Pro Start", priceUSD: 49 },
-      { id: 2, name: "Chatea Pro Advanced", priceUSD: 109 },
-      { id: 3, name: "Chatea Pro Plus", priceUSD: 189 },
-      { id: 4, name: "Chatea Pro Master", priceUSD: 389 },
+      { id: "business", name: "Chatea Pro Start", priceUSD: 49 },
+      { id: "business_lite", name: "Chatea Pro Advanced", priceUSD: 109 },
+      { id: "custom_plan3", name: "Chatea Pro Plus", priceUSD: 189 },
+      { id: "business_large", name: "Chatea Pro Master", priceUSD: 389 },
     ];
     setPlans(Plans);
-
-    const handleWompiEvent = (event) => {
-      console.log("Evento Wompi detectado:", event.detail);
-      if (event.detail && event.detail.transaction) {
-        handleTransactionResponse(event.detail);
-      }
-    };
-
-    document.addEventListener("transaction.status.updated", handleWompiEvent);
-    document.addEventListener("transaction.succeeded", handleWompiEvent);
-    document.addEventListener("transaction.failed", handleWompiEvent);
-
-    return () => {
-      document.removeEventListener(
-        "transaction.status.updated",
-        handleWompiEvent
-      );
-      document.removeEventListener("transaction.succeeded", handleWompiEvent);
-      document.removeEventListener("transaction.failed", handleWompiEvent);
-    };
-  }, [selectedPlan, usdToCopRate]);
+  }, []);
 
   useEffect(() => {
     const updateWompiButton = async () => {
@@ -122,7 +54,10 @@ const WompiPayment = () => {
 
       if (selectedPlan && usdToCopRate) {
         const priceCOPCents = convertUSDtoCOPCents(selectedPlan.priceUSD);
-        const reference = `PLAN-${selectedPlan.id}-${Date.now()}`;
+        const workspaceId = "107593";
+        const reference = `plan_id=${
+          selectedPlan.id
+        }-workspace_id=${workspaceId}-reference${Date.now()}`;
 
         const signature = await generateIntegritySignature(
           reference,
@@ -130,9 +65,9 @@ const WompiPayment = () => {
           "COP"
         );
 
-        console.log(`Precio en USD: $${selectedPlan.priceUSD}`);
-        console.log(`Precio en COP centavos: ${priceCOPCents}`);
-        console.log(`Firma generada: ${signature}`);
+        // console.log(`Precio en USD: $${selectedPlan.priceUSD}`);
+        // console.log(`Precio en COP centavos: ${priceCOPCents}`);
+        // console.log(`Firma generada: ${signature}`);
 
         const script = document.createElement("script");
         script.src = "https://checkout.wompi.co/widget.js";
@@ -145,14 +80,6 @@ const WompiPayment = () => {
         script.setAttribute("data-amount-in-cents", priceCOPCents.toString());
         script.setAttribute("data-reference", reference);
         script.setAttribute("data-signature:integrity", signature);
-        script.setAttribute(
-          "data-customer-data:price_usd",
-          selectedPlan.priceUSD.toString()
-        );
-        script.setAttribute(
-          "data-customer-data:exchange_rate",
-          usdToCopRate.toString()
-        );
         script.setAttribute("data-finish-text", "Pago completado");
         script.setAttribute("data-complete", "true");
 
@@ -172,7 +99,7 @@ const WompiPayment = () => {
         <h2>Selecciona un Plan</h2>
         <select
           onChange={(e) =>
-            setSelectedPlan(plans.find((p) => p.id === Number(e.target.value)))
+            setSelectedPlan(plans.find((p) => p.id === e.target.value))
           }
         >
           <option value="">Seleccionar plan</option>
