@@ -54,7 +54,12 @@ const WompiPayment = () => {
   // Función para extraer y validar parámetros de la URL
   const extractUrlParams = () => {
     try {
-      const params = new URLSearchParams(window.location.search);
+      // Decodificar la URL completa primero
+      const decodedUrl = decodeURIComponent(
+        window.location.search.replace(/&amp;/g, "&")
+      );
+      const params = new URLSearchParams(decodedUrl);
+
       const urlData = {
         workspace_id: sanitizeString(params.get("workspace_id")),
         workspace_name: sanitizeString(params.get("workspace_name")),
@@ -192,8 +197,10 @@ const WompiPayment = () => {
         script.setAttribute("data-signature:integrity", signature);
         script.setAttribute("data-finish-text", "Pago completado");
         script.setAttribute("data-complete", "true");
-        script.setAttribute("data-redirect-url", "https://transaction-redirect.wompi.co/check");
-
+        script.setAttribute(
+          "data-redirect-url",
+          "https://transaction-redirect.wompi.co/check"
+        );
 
         // Callbacks de Wompi
         window.handleWompiResponse = (response) => {
