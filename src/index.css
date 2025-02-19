@@ -58,3 +58,49 @@ h5,
 h6 {
   overflow-wrap: break-word;
 }
+
+/* Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #009ee3 #fff;
+}
+
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #fff;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #009ee3;
+  border-radius: 14px;
+  border: 3px solid #fff;
+}
+
+*::selection {
+  background-color: #009ee3;
+  color: #fff;
+}
+
+.ReactModal__Overlay--after-open {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* loader position */
+.loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  height: 100vh !important;
+}
+
+.user-icon {
+  color: #000000;
+  margin-right: 3px;
+}

@@ -10,10 +10,17 @@
   background-color: #009ee3;
 }
 
+.form-select {
+  cursor: pointer;
+  color: #676464;
+  background-color: #edf4ff;
+  border: none;
+}
+
 .form-select:disabled {
   cursor: not-allowed !important;
   color: #676464c9;
-  background-color: #f8f9fa !important;
+  background-color: #edf4ff !important;
 }
 
 @media (max-width: 576px) {
