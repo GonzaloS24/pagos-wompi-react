@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 import Swal from "sweetalert2";
@@ -11,11 +11,14 @@ import {
 import { WOMPI_CONFIG } from "../../api/wompiConfig";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import PaymentSummary from "../../components/PaymentSummary";
+import AIAssistants from "../../components/AIAssistants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./WompiPayment.css";
 import ConfirmedInfo from "../../components/ConfirmedInfo";
+import Complements from "../../components/Complements";
 
 const WompiPayment = () => {
+  const [selectedAssistants, setSelectedAssistants] = useState([]);
   const {
     plans,
     selectedPlan,
@@ -54,6 +57,14 @@ const WompiPayment = () => {
     setFormErrors({ ...formErrors, [field]: null });
   };
 
+  const handleAssistantChange = useCallback((assistantId) => {
+    setSelectedAssistants((prev) =>
+      prev.includes(assistantId)
+        ? prev.filter((id) => id !== assistantId)
+        : [...prev, assistantId]
+    );
+  }, []);
+
   useEffect(() => {
     const updateWompiButton = async () => {
       const container = document.getElementById("wompi-button-container");
@@ -63,12 +74,21 @@ const WompiPayment = () => {
       container.innerHTML = "";
 
       try {
-        const priceCOPCents = convertUSDtoCOPCents(
-          selectedPlan.priceUSD,
-          usdToCopRate
-        );
+        // Calcular el precio total incluyendo asistentes
+        const assistantPrice = 20;
+        const totalAssistantsPrice = selectedAssistants.length * assistantPrice;
+        const totalUSD = selectedPlan.priceUSD + totalAssistantsPrice;
+
+        const priceCOPCents = convertUSDtoCOPCents(totalUSD, usdToCopRate);
+
         const workspaceId =
           urlParams?.workspace_id || WOMPI_CONFIG.DEFAULT_WORKSPACE_ID;
+
+        // Crear string de asistentes seleccionados
+        const assistantsString =
+          selectedAssistants.length > 0
+            ? `-assistants_ids=${selectedAssistants.join("+")}`
+            : "";
 
         const reference = `plan_id=${
           selectedPlan.id
@@ -76,7 +96,9 @@ const WompiPayment = () => {
           urlParams?.workspace_name
         }-owner_name=${urlParams?.owner_name}-owner_email=${
           urlParams?.owner_email
-        }-phone_number=${urlParams?.phone_number}-reference${Date.now()}`;
+        }-phone_number=${
+          urlParams?.phone_number
+        }${assistantsString}-reference${Date.now()}`;
 
         const signature = await generateIntegritySignature(
           reference,
@@ -84,10 +106,10 @@ const WompiPayment = () => {
           "COP"
         );
 
-        // console.log(`Precio en USD: $${selectedPlan.priceUSD}`);
-        // console.log(`Precio en COP centavos: ${priceCOPCents}`);
-        // console.log(`Firma generada: ${signature}`);
-        // console.log(">>>>>>>>> ", reference);
+        console.log(`Precio en USD: $${selectedPlan.priceUSD}`);
+        console.log(`Precio en COP centavos: ${priceCOPCents}`);
+        console.log(`Firma generada: ${signature}`);
+        console.log(">>>>>>>>> ", reference);
 
         if (!signature) return;
 
@@ -118,7 +140,13 @@ const WompiPayment = () => {
     };
 
     updateWompiButton();
-  }, [selectedPlan, usdToCopRate, urlParams, isDataConfirmed]);
+  }, [
+    selectedPlan,
+    usdToCopRate,
+    urlParams,
+    isDataConfirmed,
+    selectedAssistants,
+  ]);
 
   if (loading) {
     return (
@@ -135,56 +163,63 @@ const WompiPayment = () => {
   }
 
   return (
-    <div className="container min-vh-100 d-flex flex-column justify-content-center align-items-center py-4">
-      <figure className="text-center mb-4">
-        <img
-          src={chatea}
-          alt="Chatea Logo"
-          className="img-fluid"
-          style={{ maxWidth: "250px" }}
-        />
-      </figure>
+    <div className="container py-4">
+      {isDataConfirmed ? (
+        <div className="main-container" key="main-content">
+          <div className="plan-section">
+            <figure className=" mb-4">
+              <img
+                src={chatea}
+                alt="Chatea Logo"
+                className="img-fluid chatea-logo"
+              />
+            </figure>
+            <select
+              className="form-select form-select-lg mb-3 p-2"
+              onChange={(e) => {
+                const plan = plans.find((p) => p.id === e.target.value);
+                setSelectedPlan(plan);
+              }}
+              value={selectedPlan?.id || ""}
+              disabled={Boolean(urlParams?.plan_id)}
+            >
+              <option value="">Seleccionar plan</option>
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} - {plan.bot_users} usuarios
+                </option>
+              ))}
+            </select>
 
-      <div
-        className="card shadow-sm p-2"
-        style={{
-          maxWidth: "500px",
-          width: "100%",
-          borderRadius: "10px",
-          borderColor: "#009ee3",
-        }}
-      >
-        <div className="card-body">
-          {isDataConfirmed && <ConfirmedInfo formData={formData} />}
+            {selectedPlan && (
+              <div className="selected-plan-content">
+                <AIAssistants
+                  selectedAssistants={selectedAssistants}
+                  onAssistantChange={handleAssistantChange}
+                />
 
-          <select
-            className="form-select form-select-lg mb-4"
-            onChange={(e) => {
-              const plan = plans.find((p) => p.id === e.target.value);
-              setSelectedPlan(plan);
-            }}
-            value={selectedPlan?.id || ""}
-            disabled={Boolean(urlParams?.plan_id)}
-          >
-            <option value="">Seleccionar plan</option>
-            {plans.map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.name} - {plan.bot_users}
-              </option>
-            ))}
-          </select>
+                <Complements />
+              </div>
+            )}
+          </div>
 
-          {selectedPlan && isDataConfirmed && (
-            <div className="mt-4">
+          <div className="info-section">
+            <ConfirmedInfo formData={formData} />
+            {selectedPlan && (
               <PaymentSummary
                 selectedPlan={selectedPlan}
                 usdToCopRate={usdToCopRate}
+                selectedAssistants={selectedAssistants}
               />
+            )}
+            <div className="mt-4">
               <div id="wompi-button-container"></div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="text-center text-muted" key="waiting-message"></div>
+      )}
 
       <ConfirmationModal
         show={showModal}

@@ -2,6 +2,9 @@
 const ConfirmedInfo = ({ formData }) => {
   return (
     <div style={{ background: "#edf4ff" }} className="p-3 rounded mb-4">
+      <h5 style={{ color: "#009ee3" }} className="card-title mb-3">
+        Información Confirmada
+      </h5>
       <div className="row g-2">
         <div className="col-sm-6">
           <div className="text-start">
