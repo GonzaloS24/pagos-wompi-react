@@ -1,11 +1,23 @@
 /* WompiPayment.css */
 .main-container {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 20px;
-  max-width: 1200px;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 25px;
+  /* max-width: 1200px; */
   margin: 0 auto;
-  padding: 20px;
+  /* background-color: #009ee3; */
+}
+
+@media (max-width: 1200px) {
+  .main-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .main-container {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chatea-logo {
@@ -37,12 +49,6 @@
   border-radius: 8px;
   width: 100%;
   margin-top: 10px;
-}
-
-@media (max-width: 768px) {
-  .main-container {
-    grid-template-columns: 1fr;
-  }
 }
 
 .main-container {
@@ -85,7 +91,7 @@
   border: none;
   transition: all 0.3s ease;
   padding: 0.75rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .form-select:disabled {
@@ -108,7 +114,7 @@
   border: none;
   transition: all 0.3s ease;
   padding: 0.75rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .complement-select:hover {
@@ -194,4 +200,28 @@
 .badge {
   background-color: #009ee3 !important;
   padding: 0.5em 0.8em;
+}
+
+.purchase-option {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+  background-color: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 10px !important;
+}
+
+.purchase-option:hover {
+  border-color: #009ee3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 158, 227, 0.1);
+}
+
+.purchase-option div {
+  font-size: 2.2rem;
+}
+
+.selected-option {
+  background-color: #edf4ff;
+  color: #009ee3;
 }

@@ -1,7 +1,8 @@
-// Complements.jsx
-import { useState } from "react";
+/* eslint-disable react/display-name */
 
-const Complements = () => {
+import { useState, forwardRef, useImperativeHandle } from "react";
+
+const Complements = forwardRef((props, ref) => {
   const [selectedComplement, setSelectedComplement] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedComplements, setSelectedComplements] = useState([]);
@@ -23,6 +24,15 @@ const Complements = () => {
       description: "",
     },
   ];
+
+  // Exponer método de reset para el componente padre
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      setSelectedComplement("");
+      setQuantity(1);
+      setSelectedComplements([]);
+    },
+  }));
 
   const handleIncrement = () => {
     setQuantity((prev) => prev + 1);
@@ -60,7 +70,7 @@ const Complements = () => {
   return (
     <div className="complements-section p-2 bg-white rounded mb-4">
       <h5 style={{ color: "#009ee3" }} className="mb-3">
-        Complementos Disponibles
+        Agregar complementos
       </h5>
 
       <div className="mb-3">
@@ -137,6 +147,6 @@ const Complements = () => {
       )}
     </div>
   );
-};
+});
 
 export default Complements;

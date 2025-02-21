@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 import Swal from "sweetalert2";
@@ -12,13 +12,16 @@ import { WOMPI_CONFIG } from "../../api/wompiConfig";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import PaymentSummary from "../../components/PaymentSummary";
 import AIAssistants from "../../components/AIAssistants";
+import PurchaseTypeSelector from "../../components/PurchaseTypeSelector";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./WompiPayment.css";
 import ConfirmedInfo from "../../components/ConfirmedInfo";
 import Complements from "../../components/Complements";
-
 const WompiPayment = () => {
   const [selectedAssistants, setSelectedAssistants] = useState([]);
+  const [purchaseType, setPurchaseType] = useState(null);
+  const complementsRef = useRef(null);
+
   const {
     plans,
     selectedPlan,
@@ -65,40 +68,80 @@ const WompiPayment = () => {
     );
   }, []);
 
+  const handlePurchaseTypeChange = (type) => {
+    setPurchaseType(type);
+    setSelectedAssistants([]);
+
+    // Reiniciar complementos
+    if (complementsRef.current) {
+      complementsRef.current.reset();
+    }
+
+    if (type === "plan" && urlParams?.plan_id) {
+      const plan = plans.find((p) => p.id === urlParams.plan_id);
+      setSelectedPlan(plan);
+    } else {
+      setSelectedPlan(null);
+    }
+  };
+
+  // Determinar si mostrar los asistentes y complementos
+  const shouldShowAssistants = () => {
+    if (purchaseType === "assistants") return true;
+    if (purchaseType === "plan") return selectedPlan !== null;
+    return false;
+  };
+
+  // Determinar si mostrar el botón de Wompi
+  const shouldShowWompiButton = () => {
+    if (!purchaseType) return false;
+    if (purchaseType === "assistants") return selectedAssistants.length > 0;
+    if (purchaseType === "plan") return selectedPlan !== null;
+    return false;
+  };
+
   useEffect(() => {
     const updateWompiButton = async () => {
       const container = document.getElementById("wompi-button-container");
-      if (!container || !selectedPlan || !usdToCopRate || !isDataConfirmed)
-        return;
+      if (!container || !isDataConfirmed) return;
 
       container.innerHTML = "";
 
+      if (!shouldShowWompiButton()) return;
+
       try {
-        // Calcular el precio total incluyendo asistentes
         const assistantPrice = 20;
         const totalAssistantsPrice = selectedAssistants.length * assistantPrice;
-        const totalUSD = selectedPlan.priceUSD + totalAssistantsPrice;
+        const planPrice = purchaseType === "plan" ? selectedPlan.priceUSD : 0;
+        const totalUSD = planPrice + totalAssistantsPrice;
 
         const priceCOPCents = convertUSDtoCOPCents(totalUSD, usdToCopRate);
-
         const workspaceId =
           urlParams?.workspace_id || WOMPI_CONFIG.DEFAULT_WORKSPACE_ID;
 
-        // Crear string de asistentes seleccionados
         const assistantsString =
           selectedAssistants.length > 0
             ? `-assistants_ids=${selectedAssistants.join("+")}`
             : "";
 
-        const reference = `plan_id=${
-          selectedPlan.id
-        }-workspace_id=${workspaceId}-workspace_name=${
-          urlParams?.workspace_name
-        }-owner_name=${urlParams?.owner_name}-owner_email=${
-          urlParams?.owner_email
-        }-phone_number=${
-          urlParams?.phone_number
-        }${assistantsString}-reference${Date.now()}`;
+        const reference =
+          purchaseType === "plan"
+            ? `plan_id=${
+                selectedPlan.id
+              }-workspace_id=${workspaceId}-workspace_name=${
+                urlParams?.workspace_name
+              }-owner_name=${urlParams?.owner_name}-owner_email=${
+                urlParams?.owner_email
+              }-phone_number=${
+                urlParams?.phone_number
+              }${assistantsString}-reference${Date.now()}`
+            : `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
+                urlParams?.workspace_name
+              }-owner_name=${urlParams?.owner_name}-owner_email=${
+                urlParams?.owner_email
+              }-phone_number=${
+                urlParams?.phone_number
+              }${assistantsString}-reference${Date.now()}`;
 
         const signature = await generateIntegritySignature(
           reference,
@@ -106,10 +149,7 @@ const WompiPayment = () => {
           "COP"
         );
 
-        console.log(`Precio en USD: $${selectedPlan.priceUSD}`);
-        console.log(`Precio en COP centavos: ${priceCOPCents}`);
-        console.log(`Firma generada: ${signature}`);
-        console.log(">>>>>>>>> ", reference);
+        console.log('152  >>>>>>>>> ', reference);
 
         if (!signature) return;
 
@@ -146,6 +186,7 @@ const WompiPayment = () => {
     urlParams,
     isDataConfirmed,
     selectedAssistants,
+    purchaseType,
   ]);
 
   if (loading) {
@@ -165,57 +206,69 @@ const WompiPayment = () => {
   return (
     <div className="container py-4">
       {isDataConfirmed ? (
-        <div className="main-container" key="main-content">
-          <div className="plan-section">
-            <figure className=" mb-4">
-              <img
-                src={chatea}
-                alt="Chatea Logo"
-                className="img-fluid chatea-logo"
-              />
-            </figure>
-            <select
-              className="form-select form-select-lg mb-3 p-2"
-              onChange={(e) => {
-                const plan = plans.find((p) => p.id === e.target.value);
-                setSelectedPlan(plan);
-              }}
-              value={selectedPlan?.id || ""}
-              disabled={Boolean(urlParams?.plan_id)}
-            >
-              <option value="">Seleccionar plan</option>
-              {plans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name} - {plan.bot_users} usuarios
-                </option>
-              ))}
-            </select>
+        <div>
+          <figure className="mb-4 text-center">
+            <img
+              src={chatea}
+              alt="Chatea Logo"
+              className="img-fluid chatea-logo"
+              style={{ maxWidth: "250px" }}
+            />
+          </figure>
 
-            {selectedPlan && (
-              <div className="selected-plan-content">
-                <AIAssistants
-                  selectedAssistants={selectedAssistants}
-                  onAssistantChange={handleAssistantChange}
-                />
+          <PurchaseTypeSelector onSelect={handlePurchaseTypeChange} />
 
-                <Complements />
+          {purchaseType && (
+            <div className="main-container" key="main-content">
+              <div className="plan-section">
+                {purchaseType === "plan" && (
+                  <select
+                    className="form-select form-select-lg mb-3 p-2"
+                    onChange={(e) => {
+                      const plan = plans.find((p) => p.id === e.target.value);
+                      setSelectedPlan(plan);
+                    }}
+                    value={selectedPlan?.id || ""}
+                    disabled={Boolean(urlParams?.plan_id)}
+                  >
+                    <option value="">Seleccionar plan</option>
+                    {plans.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.name} - {plan.bot_users} usuarios
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {shouldShowAssistants() && (
+                  <div className="selected-plan-content">
+                    <AIAssistants
+                      selectedAssistants={selectedAssistants}
+                      onAssistantChange={handleAssistantChange}
+                      isStandalone={purchaseType === "assistants"}
+                    />
+
+                    <Complements ref={complementsRef} />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="info-section">
-            <ConfirmedInfo formData={formData} />
-            {selectedPlan && (
-              <PaymentSummary
-                selectedPlan={selectedPlan}
-                usdToCopRate={usdToCopRate}
-                selectedAssistants={selectedAssistants}
-              />
-            )}
-            <div className="mt-4">
-              <div id="wompi-button-container"></div>
+              <div className="info-section">
+                <ConfirmedInfo formData={formData} />
+                {shouldShowAssistants() && (
+                  <PaymentSummary
+                    selectedPlan={purchaseType === "plan" ? selectedPlan : null}
+                    usdToCopRate={usdToCopRate}
+                    selectedAssistants={selectedAssistants}
+                    isAssistantsOnly={purchaseType === "assistants"}
+                  />
+                )}
+                <div className="mt-4">
+                  <div id="wompi-button-container"></div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
         <div className="text-center text-muted" key="waiting-message"></div>
