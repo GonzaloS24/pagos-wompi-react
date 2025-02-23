@@ -2,18 +2,30 @@
 
 import { convertUSDtoCOPCents } from "../utils/wompiHelpers";
 
-const PaymentSummary = ({ selectedPlan, usdToCopRate, selectedAssistants, isAssistantsOnly }) => {
+const PaymentSummary = ({
+  selectedPlan,
+  usdToCopRate,
+  selectedAssistants,
+  isAssistantsOnly,
+  selectedComplements = [], // Nuevo prop para los complementos
+}) => {
   const assistantPrice = 20;
   const totalAssistantsPrice = selectedAssistants.length * assistantPrice;
-  // Si es solo asistentes, el precio del plan es 0
   const planPrice = selectedPlan ? selectedPlan.priceUSD : 0;
-  const totalUSD = planPrice + totalAssistantsPrice;
+
+  // Calcular el total de complementos
+  const totalComplementsPrice = selectedComplements.reduce(
+    (total, complement) => total + complement.totalPrice,
+    0
+  );
+
+  const totalUSD = planPrice + totalAssistantsPrice + totalComplementsPrice;
 
   return (
     <div style={{ background: "#edf4ff" }} className="rounded mb-4 p-3">
       <div className="card-body">
         <h5 style={{ color: "#009ee3" }} className="card-title mb-3">
-          {isAssistantsOnly ? 'Resumen de Asistentes' : 'Resumen del Plan'}
+          {isAssistantsOnly ? "Resumen de Asistentes" : "Resumen del Plan"}
         </h5>
 
         {!isAssistantsOnly && selectedPlan && (
@@ -42,6 +54,13 @@ const PaymentSummary = ({ selectedPlan, usdToCopRate, selectedAssistants, isAssi
               Asistentes ({selectedAssistants.length} x ${assistantPrice}):
             </span>
             <span className="fw-medium">${totalAssistantsPrice}</span>
+          </div>
+        )}
+
+        {selectedComplements.length > 0 && (
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <span className="text-muted">Complementos:</span>
+            <span className="fw-medium">${totalComplementsPrice}</span>
           </div>
         )}
 

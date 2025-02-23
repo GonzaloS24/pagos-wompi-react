@@ -7,19 +7,19 @@ const AIAssistants = ({ selectedAssistants, onAssistantChange }) => {
       label: "Asistente de ventas por WhatsApp",
     },
     {
-      id: "confirmaciones",
-      type: "asistente de confirmaciones de pedidos",
-      label: "Asistente de confirmaciones de pedidos",
-    },
-    {
       id: "comentarios",
-      type: "asistente que contesta comentarios",
-      label: "Asistente que contesta comentarios",
+      type: "asistente de comentarios",
+      label: "Asistente de comentarios",
     },
     {
       id: "carritos",
-      type: "asistente que recupera carritos abandonados",
-      label: "Asistente que recupera carritos abandonados",
+      type: "asistente de carritos abandonados",
+      label: "Asistente de carritos abandonados",
+    },
+    {
+      id: "carritos",
+      type: "asistente de Marketing",
+      label: "Asistente de Marketing",
     },
   ];
 

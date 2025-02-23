@@ -32,7 +32,7 @@ const ConfirmedInfo = ({ formData }) => {
         </div>
         <div className="col-12">
           <div className="text-start">
-            <small className="text-muted d-block">Teléfono</small>
+            <small className="text-muted d-block">WhatsApp Personal</small>
             <span className="fw-medium">{formData.phone_number}</span>
           </div>
         </div>

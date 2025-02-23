@@ -20,7 +20,7 @@ const ConfirmationModal = ({
       <Modal.Body>
         <Form onSubmit={onSubmit}>
           <Form.Group className="mb-3">
-            <Form.Label>ID del Espacio *</Form.Label>
+            <Form.Label>ID del Espacio de trabajo *</Form.Label>
             <Form.Control
               type="text"
               value={formData.workspace_id}
@@ -35,7 +35,7 @@ const ConfirmationModal = ({
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label>Nombre del Espacio *</Form.Label>
+            <Form.Label>Nombre del Espacio de trabajo *</Form.Label>
             <Form.Control
               type="text"
               value={formData.workspace_name}
@@ -76,7 +76,7 @@ const ConfirmationModal = ({
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label>Número de Teléfono *</Form.Label>
+            <Form.Label>WhatsApp Personal *</Form.Label>
             <Form.Control
               type="tel"
               value={formData.phone_number}

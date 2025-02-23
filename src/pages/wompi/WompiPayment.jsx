@@ -21,6 +21,8 @@ const WompiPayment = () => {
   const [selectedAssistants, setSelectedAssistants] = useState([]);
   const [purchaseType, setPurchaseType] = useState(null);
   const complementsRef = useRef(null);
+  const [selectedComplements, setSelectedComplements] = useState([]);
+  const isUpdatingButton = useRef(false);
 
   const {
     plans,
@@ -53,6 +55,10 @@ const WompiPayment = () => {
     } else {
       setFormErrors(errors);
     }
+  };
+
+  const handleComplementsChange = (complements) => {
+    setSelectedComplements(complements);
   };
 
   const handleFormChange = (field, value) => {
@@ -95,8 +101,11 @@ const WompiPayment = () => {
   // Determinar si mostrar el botón de Wompi
   const shouldShowWompiButton = () => {
     if (!purchaseType) return false;
-    if (purchaseType === "assistants") return selectedAssistants.length > 0;
     if (purchaseType === "plan") return selectedPlan !== null;
+    if (purchaseType === "assistants") {
+      // Se muestra si hay asistentes O complementos seleccionados
+      return selectedAssistants.length > 0 || selectedComplements.length > 0;
+    }
     return false;
   };
 
@@ -105,15 +114,38 @@ const WompiPayment = () => {
       const container = document.getElementById("wompi-button-container");
       if (!container || !isDataConfirmed) return;
 
-      container.innerHTML = "";
-
-      if (!shouldShowWompiButton()) return;
+      // Verificar si ya se está actualizando el botón
+      if (isUpdatingButton.current) return;
+      isUpdatingButton.current = true;
 
       try {
+        // Limpiar el contenedor
+        container.innerHTML = "";
+
+        // Remover scripts previos
+        const existingScripts = document.querySelectorAll(
+          'script[src="https://checkout.wompi.co/widget.js"]'
+        );
+        existingScripts.forEach((script) => script.remove());
+
+        if (!shouldShowWompiButton()) {
+          isUpdatingButton.current = false;
+          return;
+        }
+
         const assistantPrice = 20;
         const totalAssistantsPrice = selectedAssistants.length * assistantPrice;
         const planPrice = purchaseType === "plan" ? selectedPlan.priceUSD : 0;
-        const totalUSD = planPrice + totalAssistantsPrice;
+
+        // Cálculo del precio total de los complementos
+        const totalComplementsPrice = selectedComplements.reduce(
+          (total, complement) => total + complement.totalPrice,
+          0
+        );
+
+        // Suma total en USD
+        const totalUSD =
+          planPrice + totalAssistantsPrice + totalComplementsPrice;
 
         const priceCOPCents = convertUSDtoCOPCents(totalUSD, usdToCopRate);
         const workspaceId =
@@ -122,6 +154,13 @@ const WompiPayment = () => {
         const assistantsString =
           selectedAssistants.length > 0
             ? `-assistants_ids=${selectedAssistants.join("+")}`
+            : "";
+
+        const complementsString =
+          selectedComplements.length > 0
+            ? `-complements=${selectedComplements
+                .map((c) => `${c.id}_${c.quantity}`)
+                .join("+")}`
             : "";
 
         const reference =
@@ -134,14 +173,14 @@ const WompiPayment = () => {
                 urlParams?.owner_email
               }-phone_number=${
                 urlParams?.phone_number
-              }${assistantsString}-reference${Date.now()}`
+              }${assistantsString}${complementsString}-reference${Date.now()}`
             : `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
                 urlParams?.workspace_name
               }-owner_name=${urlParams?.owner_name}-owner_email=${
                 urlParams?.owner_email
               }-phone_number=${
                 urlParams?.phone_number
-              }${assistantsString}-reference${Date.now()}`;
+              }${assistantsString}${complementsString}-reference${Date.now()}`;
 
         const signature = await generateIntegritySignature(
           reference,
@@ -149,7 +188,7 @@ const WompiPayment = () => {
           "COP"
         );
 
-        console.log('152  >>>>>>>>> ', reference);
+        console.log('191  >>>>>>>>> ', reference);
 
         if (!signature) return;
 
@@ -176,6 +215,9 @@ const WompiPayment = () => {
           title: "Error",
           text: "Error al preparar el botón de pago",
         });
+      } finally {
+        // Importante: resetear el flag al finalizar
+        isUpdatingButton.current = false;
       }
     };
 
@@ -186,6 +228,7 @@ const WompiPayment = () => {
     urlParams,
     isDataConfirmed,
     selectedAssistants,
+    selectedComplements,
     purchaseType,
   ]);
 
@@ -223,7 +266,7 @@ const WompiPayment = () => {
               <div className="plan-section">
                 {purchaseType === "plan" && (
                   <select
-                    className="form-select form-select-lg mb-3 p-2"
+                    className="form-select form-select-lg mb-3 "
                     onChange={(e) => {
                       const plan = plans.find((p) => p.id === e.target.value);
                       setSelectedPlan(plan);
@@ -248,7 +291,10 @@ const WompiPayment = () => {
                       isStandalone={purchaseType === "assistants"}
                     />
 
-                    <Complements ref={complementsRef} />
+                    <Complements
+                      ref={complementsRef}
+                      onComplementsChange={handleComplementsChange}
+                    />
                   </div>
                 )}
               </div>
@@ -261,6 +307,7 @@ const WompiPayment = () => {
                     usdToCopRate={usdToCopRate}
                     selectedAssistants={selectedAssistants}
                     isAssistantsOnly={purchaseType === "assistants"}
+                    selectedComplements={selectedComplements}
                   />
                 )}
                 <div className="mt-4">
