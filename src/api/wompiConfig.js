@@ -6,13 +6,13 @@ export const WOMPI_CONFIG = {
   EXCHANGE_RATE_API: "https://api.exchangerate-api.com/v4/latest/USD",
   DEFAULT_WORKSPACE_ID: null,
 };
-
 import axios from "axios";
 
+// Variable para almacenar los planes
 let plansData = [];
 
-// obtener lista de planes
-const fetchPlans = async () => {
+// Obtener lista de planes
+export const fetchPlans = async () => {
   try {
     const response = await axios.get(
       "https://apimetricasplanes-service-26551171030.us-east1.run.app/api/metrics/workspaces/plans"
@@ -26,16 +26,17 @@ const fetchPlans = async () => {
         priceUSD: parseFloat(plan.display_price) || 0,
         bot_users: plan.bot_users,
       }));
+    return plansData; // Aseguramos que devuelva los datos
   } catch (error) {
     console.error("Error fetching plans:", error);
+    return []; // Devolvemos un array vacío en caso de error
   }
 };
 
-await fetchPlans();
-
+// Exportamos los planes como referencia (opcional, si aún lo necesitas en otro lugar)
 export const PLANS = plansData;
 
-// obtener bots de un workspace
+// Obtener bots de un workspace
 export const fetchWorkspaceBots = async (workspaceId) => {
   try {
     const response = await axios.get(
@@ -47,5 +48,3 @@ export const fetchWorkspaceBots = async (workspaceId) => {
     return [];
   }
 };
-
-await fetchPlans();

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { WOMPI_CONFIG, PLANS } from "../api/wompiConfig";
+import { WOMPI_CONFIG,  fetchPlans } from "../api/wompiConfig";
 import { sanitizeString } from "../utils/wompiHelpers";
 import Swal from "sweetalert2";
 
@@ -72,17 +72,21 @@ export const useWompiPayment = () => {
     const initializeData = async () => {
       setLoading(true);
       try {
+        // Obtener tasa de cambio
         const response = await fetch(WOMPI_CONFIG.EXCHANGE_RATE_API);
         if (!response.ok) throw new Error("Error al obtener tasa de cambio");
         const data = await response.json();
         setUsdToCopRate(data.rates.COP);
 
-        setPlans(PLANS);
+        // Obtener los planes desde fetchPlans
+        const fetchedPlans = await fetchPlans();
+        setPlans(fetchedPlans);
 
+        // Buscar plan seleccionado desde los parámetros de la URL
         const params = new URLSearchParams(window.location.search);
         const planId = sanitizeString(params.get("plan_id"));
         if (planId) {
-          const plan = PLANS.find((p) => p.id === planId);
+          const plan = fetchedPlans.find((p) => p.id === planId); // Usamos los planes recién obtenidos
           if (plan) {
             setSelectedPlan(plan);
           }
