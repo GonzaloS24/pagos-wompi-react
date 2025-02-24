@@ -7,29 +7,45 @@ export const WOMPI_CONFIG = {
   DEFAULT_WORKSPACE_ID: null,
 };
 
-export const PLANS = [
-  {
-    id: "business",
-    name: "Chatea Pro Start",
-    priceUSD: 49,
-    bot_users: 1000,
-  },
-  {
-    id: "business_lite",
-    name: "Chatea Pro Advanced",
-    priceUSD: 109,
-    bot_users: 10000,
-  },
-  {
-    id: "custom_plan3",
-    name: "Chatea Pro Plus",
-    priceUSD: 189,
-    bot_users: 20000,
-  },
-  {
-    id: "business_large",
-    name: "Chatea Pro Master",
-    priceUSD: 389,
-    bot_users: 50000,
-  },
-];
+import axios from "axios";
+
+let plansData = [];
+
+// obtener lista de planes
+const fetchPlans = async () => {
+  try {
+    const response = await axios.get(
+      "https://apimetricasplanes-service-26551171030.us-east1.run.app/api/metrics/workspaces/plans"
+    );
+
+    plansData = response.data
+      .filter((plan) => plan.status === "active" && plan.id !== "free")
+      .map((plan) => ({
+        id: plan.id,
+        name: plan.name,
+        priceUSD: parseFloat(plan.display_price) || 0,
+        bot_users: plan.bot_users,
+      }));
+  } catch (error) {
+    console.error("Error fetching plans:", error);
+  }
+};
+
+await fetchPlans();
+
+export const PLANS = plansData;
+
+// obtener bots de un workspace
+export const fetchWorkspaceBots = async (workspaceId) => {
+  try {
+    const response = await axios.get(
+      `https://apimetricasplanes-service-26551171030.us-east1.run.app/api/metrics/workspaces/${workspaceId}/bots`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching bots:", error);
+    return [];
+  }
+};
+
+await fetchPlans();

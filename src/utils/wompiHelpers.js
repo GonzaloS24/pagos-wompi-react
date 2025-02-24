@@ -35,18 +35,41 @@ export const generateIntegritySignature = async (
   currency
 ) => {
   try {
+    // Validar que los parámetros no sean undefined o null
+    if (!reference || !amountInCents || !currency) {
+      console.error("Parámetros inválidos:", {
+        reference,
+        amountInCents,
+        currency,
+      });
+      throw new Error("Parámetros incompletos para generar la firma");
+    }
+
+    // Asegurar que el mensaje esté correctamente formateado
     const message = `${reference}${amountInCents}${currency}${WOMPI_CONFIG.INTEGRITY_SECRET}`;
+
     const msgBuffer = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const signature = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    if (!signature) {
+      throw new Error("No se pudo generar la firma");
+    }
+
+    return signature;
   } catch (error) {
-    console.error("Error generando firma:", error);
+    console.error("Error detallado al generar firma:", error);
+
     Swal.fire({
       icon: "error",
-      title: "Error",
-      text: "Error al generar la firma de seguridad",
+      title: "Error de Procesamiento",
+      text: "Hubo un problema al procesar tu solicitud. Por favor, intenta nuevamente o contacta soporte.",
+      confirmButtonColor: "#009ee3",
     });
+
     return null;
   }
 };

@@ -78,7 +78,6 @@ const WompiPayment = () => {
     setPurchaseType(type);
     setSelectedAssistants([]);
 
-    // Reiniciar complementos
     if (complementsRef.current) {
       complementsRef.current.reset();
     }
@@ -119,10 +118,8 @@ const WompiPayment = () => {
       isUpdatingButton.current = true;
 
       try {
-        // Limpiar el contenedor
         container.innerHTML = "";
 
-        // Remover scripts previos
         const existingScripts = document.querySelectorAll(
           'script[src="https://checkout.wompi.co/widget.js"]'
         );
@@ -153,13 +150,18 @@ const WompiPayment = () => {
 
         const assistantsString =
           selectedAssistants.length > 0
-            ? `-assistants_ids=${selectedAssistants.join("+")}`
+            ? `-assistants=${selectedAssistants.join("+")}`
             : "";
 
         const complementsString =
           selectedComplements.length > 0
             ? `-complements=${selectedComplements
-                .map((c) => `${c.id}_${c.quantity}`)
+                .map((c) => {
+                  if (c.id === "webhooks") {
+                    return `${c.id}_${c.quantity}_${c.selectedBot.flow_ns}`;
+                  }
+                  return `${c.id}_${c.quantity}`;
+                })
                 .join("+")}`
             : "";
 
@@ -188,7 +190,7 @@ const WompiPayment = () => {
           "COP"
         );
 
-        console.log('191  >>>>>>>>> ', reference);
+        // console.log("191  >>>>>>>>> ", reference);
 
         if (!signature) return;
 
@@ -216,7 +218,6 @@ const WompiPayment = () => {
           text: "Error al preparar el botón de pago",
         });
       } finally {
-        // Importante: resetear el flag al finalizar
         isUpdatingButton.current = false;
       }
     };
@@ -255,7 +256,7 @@ const WompiPayment = () => {
               src={chatea}
               alt="Chatea Logo"
               className="img-fluid chatea-logo"
-              style={{ maxWidth: "250px" }}
+              style={{ maxWidth: "220px" }}
             />
           </figure>
 
@@ -265,22 +266,28 @@ const WompiPayment = () => {
             <div className="main-container" key="main-content">
               <div className="plan-section">
                 {purchaseType === "plan" && (
-                  <select
-                    className="form-select form-select-lg mb-3 "
-                    onChange={(e) => {
-                      const plan = plans.find((p) => p.id === e.target.value);
-                      setSelectedPlan(plan);
-                    }}
-                    value={selectedPlan?.id || ""}
-                    disabled={Boolean(urlParams?.plan_id)}
-                  >
-                    <option value="">Seleccionar plan</option>
-                    {plans.map((plan) => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.name} - {plan.bot_users} usuarios
-                      </option>
-                    ))}
-                  </select>
+                  <div>
+                    <p style={{ color: "#009ee3" }} className=" mb-3">
+                      Todos los planes incluyen por defecto el Asistente
+                      Logístico (confirmación, seguimiento y novedad)
+                    </p>
+                    <select
+                      className="form-select form-select-lg mb-3 "
+                      onChange={(e) => {
+                        const plan = plans.find((p) => p.id === e.target.value);
+                        setSelectedPlan(plan);
+                      }}
+                      value={selectedPlan?.id || ""}
+                      disabled={Boolean(urlParams?.plan_id)}
+                    >
+                      <option value="">Seleccionar plan</option>
+                      {plans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.name} - {plan.bot_users} usuarios
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
 
                 {shouldShowAssistants() && (
@@ -294,6 +301,7 @@ const WompiPayment = () => {
                     <Complements
                       ref={complementsRef}
                       onComplementsChange={handleComplementsChange}
+                      workspaceId={formData.workspace_id}
                     />
                   </div>
                 )}

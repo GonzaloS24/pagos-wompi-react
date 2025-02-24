@@ -1,5 +1,4 @@
 /* eslint-disable react/prop-types */
-
 import { convertUSDtoCOPCents } from "../utils/wompiHelpers";
 
 const PaymentSummary = ({
@@ -7,7 +6,7 @@ const PaymentSummary = ({
   usdToCopRate,
   selectedAssistants,
   isAssistantsOnly,
-  selectedComplements = [], // Nuevo prop para los complementos
+  selectedComplements = [],
 }) => {
   const assistantPrice = 20;
   const totalAssistantsPrice = selectedAssistants.length * assistantPrice;
@@ -22,7 +21,13 @@ const PaymentSummary = ({
   const totalUSD = planPrice + totalAssistantsPrice + totalComplementsPrice;
 
   return (
-    <div style={{ background: "#edf4ff" }} className="rounded mb-4 p-3">
+    <div
+      style={{
+        background: "#edf4ff",
+        border: "1px solid rgba(0, 158, 227, 0.2)",
+      }}
+      className="rounded mb-4 p-3"
+    >
       <div className="card-body">
         <h5 style={{ color: "#009ee3" }} className="card-title mb-3">
           {isAssistantsOnly ? "Resumen de Asistentes" : "Resumen del Plan"}
@@ -42,7 +47,7 @@ const PaymentSummary = ({
               </span>
             </div>
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-muted">Precio Base USD:</span>
+              <span className="text-muted">Precio plan:</span>
               <span className="fw-medium">${selectedPlan.priceUSD}</span>
             </div>
           </>

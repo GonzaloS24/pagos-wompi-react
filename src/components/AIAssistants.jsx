@@ -17,7 +17,7 @@ const AIAssistants = ({ selectedAssistants, onAssistantChange }) => {
       label: "Asistente de carritos abandonados",
     },
     {
-      id: "carritos",
+      id: "marketing",
       type: "asistente de Marketing",
       label: "Asistente de Marketing",
     },
