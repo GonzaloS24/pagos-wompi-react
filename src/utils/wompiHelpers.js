@@ -8,24 +8,34 @@ export const sanitizeString = (str) => {
 
 export const validateForm = (formData) => {
   const errors = {};
-  if (!formData.workspace_id.trim())
+
+  if (!formData.workspace_id.trim()) {
     errors.workspace_id = "El ID del espacio es requerido";
+  } else if (!/^\d+$/.test(formData.workspace_id)) {
+    errors.workspace_id = "El ID del espacio solo debe contener números";
+  }
+
   if (!formData.workspace_name.trim())
     errors.workspace_name = "El nombre del espacio es requerido";
+
   if (!formData.owner_name.trim())
     errors.owner_name = "El nombre del dueño es requerido";
+
   if (
     !formData.owner_email.trim() ||
     !/\S+@\S+\.\S+/.test(formData.owner_email)
   ) {
     errors.owner_email = "Email inválido";
   }
+
   if (
     !formData.phone_number.trim() ||
-    !/^\d{10}$/.test(formData.phone_number)
+    !/^\+?\d{5,15}$/.test(formData.phone_number)
   ) {
-    errors.phone_number = "Número de teléfono inválido (10 dígitos)";
+    errors.phone_number =
+      "Número de teléfono inválido";
   }
+
   return errors;
 };
 

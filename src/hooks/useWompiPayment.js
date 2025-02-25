@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { WOMPI_CONFIG,  fetchPlans } from "../api/wompiConfig";
+import { WOMPI_CONFIG, fetchPlans } from "../api/wompiConfig";
 import { sanitizeString } from "../utils/wompiHelpers";
 import Swal from "sweetalert2";
 

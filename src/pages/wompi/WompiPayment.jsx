@@ -67,11 +67,21 @@ const WompiPayment = () => {
   };
 
   const handleAssistantChange = useCallback((assistantId) => {
-    setSelectedAssistants((prev) =>
-      prev.includes(assistantId)
-        ? prev.filter((id) => id !== assistantId)
-        : [...prev, assistantId]
-    );
+    setSelectedAssistants((prev) => {
+      if (prev.includes(assistantId)) {
+        // Si estamos desmarcando el asistente gratuito (el primero de la lista)
+        if (assistantId === prev[0] && prev.length > 1) {
+          // Promover el segundo asistente a ser el gratuito
+          const newSelection = [...prev];
+          newSelection.splice(prev.indexOf(assistantId), 1);
+          return newSelection;
+        } else {
+          return prev.filter((id) => id !== assistantId);
+        }
+      } else {
+        return [...prev, assistantId];
+      }
+    });
   }, []);
 
   const handlePurchaseTypeChange = (type) => {
@@ -131,7 +141,20 @@ const WompiPayment = () => {
         }
 
         const assistantPrice = 20;
-        const totalAssistantsPrice = selectedAssistants.length * assistantPrice;
+        // Aplicar lógica de asistente gratis SOLO para la compra de plan
+        let totalAssistantsPrice;
+        if (purchaseType === "plan") {
+          const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
+          const paidAssistants = Math.max(
+            0,
+            selectedAssistants.length - freeAssistants
+          );
+          totalAssistantsPrice = paidAssistants * assistantPrice;
+        } else {
+          // Para la sección de "Solo Asistentes", mantener el cálculo original
+          totalAssistantsPrice = selectedAssistants.length * assistantPrice;
+        }
+
         const planPrice = purchaseType === "plan" ? selectedPlan.priceUSD : 0;
 
         // Cálculo del precio total de los complementos
@@ -190,7 +213,7 @@ const WompiPayment = () => {
           "COP"
         );
 
-        // console.log("191  >>>>>>>>> ", reference);
+        console.log("191  >>>>>>>>> ", reference);
 
         if (!signature) return;
 

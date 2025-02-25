@@ -22,7 +22,7 @@ const ConfirmationModal = ({
           <Form.Group className="mb-3">
             <Form.Label>ID del Espacio de trabajo *</Form.Label>
             <Form.Control
-              type="text"
+              type="number"
               value={formData.workspace_id}
               onChange={(e) =>
                 handleInputChange("workspace_id", e.target.value)

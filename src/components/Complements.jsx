@@ -30,7 +30,7 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
       id: "webhooks",
       name: "1.000 Webhooks Diarios 🔗",
       description: "",
-      priceUSD: 10,
+      priceUSD: 20,
     },
   ];
 

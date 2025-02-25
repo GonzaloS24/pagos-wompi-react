@@ -9,7 +9,34 @@ const PaymentSummary = ({
   selectedComplements = [],
 }) => {
   const assistantPrice = 20;
-  const totalAssistantsPrice = selectedAssistants.length * assistantPrice;
+
+  let totalAssistantsPrice;
+  let assistantsLabel;
+
+  if (isAssistantsOnly) {
+    // Para la sección "Solo Asistentes", todos tienen costo
+    totalAssistantsPrice = selectedAssistants.length * assistantPrice;
+    assistantsLabel = `${selectedAssistants.length} x $${assistantPrice}`;
+  } else {
+    // Para la sección de Plan, el primero es gratis
+    const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
+    const paidAssistants = Math.max(
+      0,
+      selectedAssistants.length - freeAssistants
+    );
+    totalAssistantsPrice = paidAssistants * assistantPrice;
+
+    if (selectedAssistants.length === 0) {
+      assistantsLabel = "0 asistentes";
+    } else if (selectedAssistants.length === 1) {
+      assistantsLabel = "1 asistente (gratis)";
+    } else {
+      assistantsLabel = `1 gratis + ${paidAssistants} adicional${
+        paidAssistants !== 1 ? "es" : ""
+      } ($${totalAssistantsPrice})`;
+    }
+  }
+
   const planPrice = selectedPlan ? selectedPlan.priceUSD : 0;
 
   // Calcular el total de complementos
@@ -55,10 +82,8 @@ const PaymentSummary = ({
 
         {selectedAssistants.length > 0 && (
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <span className="text-muted">
-              Asistentes ({selectedAssistants.length} x ${assistantPrice}):
-            </span>
-            <span className="fw-medium">${totalAssistantsPrice}</span>
+            <span className="text-muted">Asistentes:</span>
+            <span className="fw-medium">{assistantsLabel}</span>
           </div>
         )}
 

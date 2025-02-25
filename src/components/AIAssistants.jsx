@@ -1,5 +1,9 @@
 /* eslint-disable react/prop-types */
-const AIAssistants = ({ selectedAssistants, onAssistantChange }) => {
+const AIAssistants = ({
+  selectedAssistants,
+  onAssistantChange,
+  isStandalone,
+}) => {
   const assistantsData = [
     {
       id: "ventas",
@@ -23,13 +27,21 @@ const AIAssistants = ({ selectedAssistants, onAssistantChange }) => {
     },
   ];
 
+  // Determinamos cuál es el primer asistente seleccionado (gratis)
+  const freeAssistant =
+    !isStandalone && selectedAssistants.length > 0
+      ? selectedAssistants[0]
+      : null;
+
   return (
     <div className="assistants-section p-2 bg-white rounded">
       <h5 style={{ color: "#009ee3" }} className="mb-3">
         Asistentes de IA Disponibles
       </h5>
       <p className="text-muted mb-3">
-        Cada asistente tiene un costo adicional de $20 USD
+        {!isStandalone
+          ? "Tu plan incluye un asistente gratuito. Asistentes adicionales tienen un costo de $20 USD cada uno."
+          : "Cada asistente tiene un costo adicional de $20 USD"}
       </p>
       <div className="assistants-grid">
         {assistantsData.map((assistant) => (
@@ -43,6 +55,9 @@ const AIAssistants = ({ selectedAssistants, onAssistantChange }) => {
             />
             <label className="form-check-label" htmlFor={assistant.id}>
               {assistant.label}
+              {assistant.id === freeAssistant && (
+                <span className="ms-2 badge bg-success">Gratis</span>
+              )}
             </label>
           </div>
         ))}
