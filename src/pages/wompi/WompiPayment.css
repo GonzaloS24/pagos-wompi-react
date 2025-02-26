@@ -281,9 +281,21 @@ input[type="checkbox"]:checked {
   font-weight: 500;
   padding: 0.25em 0.6em;
   border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .form-check-label {
   display: flex;
   align-items: center;
+  justify-content: inherit;
+}
+
+.free-assistant-alert {
+  padding: 0.75rem;
+  margin: 0px;
+  background-color: #fff4ccb1;
+  transition: all 0.3s ease;
+  border-radius: 10px;
 }

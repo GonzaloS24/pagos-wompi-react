@@ -38,11 +38,20 @@ const AIAssistants = ({
       <h5 style={{ color: "#009ee3" }} className="mb-3">
         Asistentes de IA Disponibles
       </h5>
+
       <p className="text-muted mb-3">
         {!isStandalone
           ? "Tu plan incluye un asistente gratuito. Asistentes adicionales tienen un costo de $20 USD cada uno."
           : "Cada asistente tiene un costo adicional de $20 USD"}
       </p>
+      {!isStandalone && selectedAssistants.length === 0 && (
+        <div
+          className="alert alert-warning mb-3 free-assistant-alert"
+          role="alert"
+        >
+          Selecciona al menos un asistente para continuar.
+        </div>
+      )}
       <div className="assistants-grid">
         {assistantsData.map((assistant) => (
           <div key={assistant.id} className="form-check mb-2">

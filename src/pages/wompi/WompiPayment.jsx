@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
-import Swal from "sweetalert2";
 import { useWompiPayment } from "../../hooks/useWompiPayment";
 import {
   validateForm,
@@ -69,9 +68,7 @@ const WompiPayment = () => {
   const handleAssistantChange = useCallback((assistantId) => {
     setSelectedAssistants((prev) => {
       if (prev.includes(assistantId)) {
-        // Si estamos desmarcando el asistente gratuito (el primero de la lista)
         if (assistantId === prev[0] && prev.length > 1) {
-          // Promover el segundo asistente a ser el gratuito
           const newSelection = [...prev];
           newSelection.splice(prev.indexOf(assistantId), 1);
           return newSelection;
@@ -110,11 +107,17 @@ const WompiPayment = () => {
   // Determinar si mostrar el botón de Wompi
   const shouldShowWompiButton = () => {
     if (!purchaseType) return false;
-    if (purchaseType === "plan") return selectedPlan !== null;
+
+    if (purchaseType === "plan") {
+      // Solo mostrar el botón si hay un plan seleccionado Y al menos un asistente
+      return selectedPlan !== null && selectedAssistants.length > 0;
+    }
+
     if (purchaseType === "assistants") {
       // Se muestra si hay asistentes O complementos seleccionados
       return selectedAssistants.length > 0 || selectedComplements.length > 0;
     }
+
     return false;
   };
 
@@ -151,7 +154,6 @@ const WompiPayment = () => {
           );
           totalAssistantsPrice = paidAssistants * assistantPrice;
         } else {
-          // Para la sección de "Solo Asistentes", mantener el cálculo original
           totalAssistantsPrice = selectedAssistants.length * assistantPrice;
         }
 
@@ -235,11 +237,11 @@ const WompiPayment = () => {
         container.appendChild(script);
       } catch (error) {
         console.error("Error al actualizar botón de Wompi:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Error al preparar el botón de pago",
-        });
+        // Swal.fire({
+        //   icon: "error",
+        //   title: "Error",
+        //   text: "Error al preparar el botón de pago",
+        // });
       } finally {
         isUpdatingButton.current = false;
       }
@@ -289,7 +291,7 @@ const WompiPayment = () => {
             <div className="main-container" key="main-content">
               <div className="plan-section">
                 {purchaseType === "plan" && (
-                  <div>
+                  <div className="m-2">
                     <p style={{ color: "#009ee3" }} className=" mb-3">
                       Todos los planes incluyen por defecto el Asistente
                       Logístico (confirmación, seguimiento y novedad)

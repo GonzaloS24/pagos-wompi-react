@@ -248,10 +248,6 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
         Agregar complementos
       </h5>
 
-      <p className="text-muted mb-3">
-        Cada complemento tiene un costo adicional de $10 USD
-      </p>
-
       <div className="mb-3">
         <label className="form-label text-muted mb-2">
           Selecciona un complemento

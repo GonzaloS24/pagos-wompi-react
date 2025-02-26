@@ -1,14 +1,13 @@
 export const WOMPI_CONFIG = {
-  // PUBLIC_KEY: "pub_test_oRPBRklN6tpD4bJoRrkkd3X5l7kwzpF3",
-  // INTEGRITY_SECRET: "test_integrity_RMUwn1SSLmR31OFgXOdgJcV2VkcaaDVL",
-  PUBLIC_KEY: "pub_prod_mUzoGd0TQzkIWZwMamDL3ADjEYCO93N7",
-  INTEGRITY_SECRET: "prod_integrity_KZkk9BdR7yGH9jDspvfhWud8IdUBnMQw",
+  PUBLIC_KEY: "pub_test_oRPBRklN6tpD4bJoRrkkd3X5l7kwzpF3",
+  INTEGRITY_SECRET: "test_integrity_RMUwn1SSLmR31OFgXOdgJcV2VkcaaDVL",
+  // PUBLIC_KEY: "pub_prod_mUzoGd0TQzkIWZwMamDL3ADjEYCO93N7",
+  // INTEGRITY_SECRET: "prod_integrity_KZkk9BdR7yGH9jDspvfhWud8IdUBnMQw",
   EXCHANGE_RATE_API: "https://api.exchangerate-api.com/v4/latest/USD",
   DEFAULT_WORKSPACE_ID: null,
 };
 import axios from "axios";
 
-// Variable para almacenar los planes
 let plansData = [];
 
 // Obtener lista de planes
@@ -26,14 +25,13 @@ export const fetchPlans = async () => {
         priceUSD: parseFloat(plan.display_price) || 0,
         bot_users: plan.bot_users,
       }));
-    return plansData; // Aseguramos que devuelva los datos
+    return plansData;
   } catch (error) {
     console.error("Error fetching plans:", error);
-    return []; // Devolvemos un array vacío en caso de error
+    return [];
   }
 };
 
-// Exportamos los planes como referencia (opcional, si aún lo necesitas en otro lugar)
 export const PLANS = plansData;
 
 // Obtener bots de un workspace
