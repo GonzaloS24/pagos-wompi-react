@@ -215,7 +215,7 @@ const WompiPayment = () => {
           "COP"
         );
 
-        console.log("191  >>>>>>>>> ", reference);
+        // console.log("191  >>>>>>>>> ", reference);
 
         if (!signature) return;
 
