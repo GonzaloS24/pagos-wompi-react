@@ -237,11 +237,6 @@ const WompiPayment = () => {
         container.appendChild(script);
       } catch (error) {
         console.error("Error al actualizar botón de Wompi:", error);
-        // Swal.fire({
-        //   icon: "error",
-        //   title: "Error",
-        //   text: "Error al preparar el botón de pago",
-        // });
       } finally {
         isUpdatingButton.current = false;
       }
@@ -321,6 +316,7 @@ const WompiPayment = () => {
                       selectedAssistants={selectedAssistants}
                       onAssistantChange={handleAssistantChange}
                       isStandalone={purchaseType === "assistants"}
+                      workspaceId={formData.workspace_id}
                     />
 
                     <Complements

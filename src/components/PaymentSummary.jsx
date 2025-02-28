@@ -14,9 +14,8 @@ const PaymentSummary = ({
   let assistantsLabel;
 
   if (isAssistantsOnly) {
-    // Para la sección "Solo Asistentes", todos tienen costo
     totalAssistantsPrice = selectedAssistants.length * assistantPrice;
-    assistantsLabel = `${selectedAssistants.length} x $${assistantPrice}`;
+    assistantsLabel = `${selectedAssistants.length} adicional ($${totalAssistantsPrice})`;
   } else {
     // Para la sección de Plan, el primero es gratis
     const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;

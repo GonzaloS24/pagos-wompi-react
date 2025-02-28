@@ -100,6 +100,15 @@ h6 {
   height: 100vh !important;
 }
 
+.assistant-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  margin: 80px;
+}
+
 .user-icon {
   color: #000000;
   margin-right: 3px;

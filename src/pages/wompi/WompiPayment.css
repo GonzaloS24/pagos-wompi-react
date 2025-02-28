@@ -279,8 +279,8 @@ input[type="checkbox"]:checked {
   background-color: #28a745 !important;
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.25em 0.6em;
-  border-radius: 10px;
+  padding: 0.40em 0.6em;
+  border-radius: 4px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -298,4 +298,31 @@ input[type="checkbox"]:checked {
   background-color: #fff4ccb1;
   transition: all 0.3s ease;
   border-radius: 10px;
+}
+
+.form-check-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
+  font-size: 0.75rem;
+}
+
+.form-check-label.text-muted {
+  opacity: 0.7;
+}
+
+.buy-assistant-alert {
+  padding: 0.75rem;
+  margin: 0px;
+  background-color: #d6e8ff;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+} 
+
+.acquired-assistant {
+  font-weight: 500 !important;
 }

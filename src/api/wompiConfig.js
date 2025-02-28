@@ -10,6 +10,19 @@ import axios from "axios";
 
 let plansData = [];
 
+// obtener asistentes de un espacio de trabajo
+export const fetchWorkspaceAssistants = async (workspaceId) => {
+  try {
+    const response = await axios.get(
+      `https://apimetricasplanes-service-26551171030.us-east1.run.app/api/metrics/templates/usage/${workspaceId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching workspace assistants:", error);
+    return null;
+  }
+};
+
 // Obtener lista de planes
 export const fetchPlans = async () => {
   try {
