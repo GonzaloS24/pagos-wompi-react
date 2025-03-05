@@ -196,15 +196,11 @@ const WompiPayment = () => {
                 selectedPlan.id
               }-workspace_id=${workspaceId}-workspace_name=${
                 urlParams?.workspace_name
-              }-owner_name=${urlParams?.owner_name}-owner_email=${
-                urlParams?.owner_email
               }-phone_number=${
                 urlParams?.phone_number
               }${assistantsString}${complementsString}-reference${Date.now()}`
             : `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
                 urlParams?.workspace_name
-              }-owner_name=${urlParams?.owner_name}-owner_email=${
-                urlParams?.owner_email
               }-phone_number=${
                 urlParams?.phone_number
               }${assistantsString}${complementsString}-reference${Date.now()}`;
@@ -215,7 +211,7 @@ const WompiPayment = () => {
           "COP"
         );
 
-        // console.log("191  >>>>>>>>> ", reference);
+        console.log("191  >>>>>>>>> ", reference);
 
         if (!signature) return;
 

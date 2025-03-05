@@ -37,11 +37,11 @@ const AIAssistants = ({
       type: "asistente de carritos abandonados",
       label: "Asistente de carritos abandonados",
     },
-    {
-      id: "marketing",
-      type: "asistente de Marketing",
-      label: "Asistente de Marketing",
-    },
+    // {
+    //   id: "marketing",
+    //   type: "asistente de Marketing",
+    //   label: "Asistente de Marketing",
+    // },
   ];
 
   // Determinar cuál es el primer asistente seleccionado (gratis)
