@@ -22,6 +22,7 @@ const WompiPayment = () => {
   const complementsRef = useRef(null);
   const [selectedComplements, setSelectedComplements] = useState([]);
   const isUpdatingButton = useRef(false);
+  const [enableRecurringPayment, setEnableRecurringPayment] = useState(false);
 
   const {
     plans,
@@ -109,12 +110,10 @@ const WompiPayment = () => {
     if (!purchaseType) return false;
 
     if (purchaseType === "plan") {
-      // Solo mostrar el botón si hay un plan seleccionado Y al menos un asistente
       return selectedPlan !== null && selectedAssistants.length > 0;
     }
 
     if (purchaseType === "assistants") {
-      // Se muestra si hay asistentes O complementos seleccionados
       return selectedAssistants.length > 0 || selectedComplements.length > 0;
     }
 
@@ -126,7 +125,6 @@ const WompiPayment = () => {
       const container = document.getElementById("wompi-button-container");
       if (!container || !isDataConfirmed) return;
 
-      // Verificar si ya se está actualizando el botón
       if (isUpdatingButton.current) return;
       isUpdatingButton.current = true;
 
@@ -144,7 +142,6 @@ const WompiPayment = () => {
         }
 
         const assistantPrice = 20;
-        // Aplicar lógica de asistente gratis SOLO para la compra de plan
         let totalAssistantsPrice;
         if (purchaseType === "plan") {
           const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
@@ -190,6 +187,8 @@ const WompiPayment = () => {
                 .join("+")}`
             : "";
 
+        const recurringString = enableRecurringPayment ? "-recurring=true" : "";
+
         const reference =
           purchaseType === "plan"
             ? `plan_id=${
@@ -198,12 +197,12 @@ const WompiPayment = () => {
                 urlParams?.workspace_name
               }-phone_number=${
                 urlParams?.phone_number
-              }${assistantsString}${complementsString}-reference${Date.now()}`
+              }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`
             : `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
                 urlParams?.workspace_name
               }-phone_number=${
                 urlParams?.phone_number
-              }${assistantsString}${complementsString}-reference${Date.now()}`;
+              }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`;
 
         const signature = await generateIntegritySignature(
           reference,
@@ -211,7 +210,7 @@ const WompiPayment = () => {
           "COP"
         );
 
-        console.log("191  >>>>>>>>> ", reference);
+        // console.log("191  >>>>>>>>> ", reference);
 
         if (!signature) return;
 
@@ -247,6 +246,7 @@ const WompiPayment = () => {
     selectedAssistants,
     selectedComplements,
     purchaseType,
+    enableRecurringPayment,
   ]);
 
   if (loading) {
@@ -336,6 +336,49 @@ const WompiPayment = () => {
                   />
                 )}
                 <div className="mt-4">
+                  {shouldShowWompiButton() && (
+                    <div
+                      style={{
+                        background: "#edf4ff",
+                        border: "1px solid rgba(0, 158, 227, 0.2)",
+                      }}
+                      className="recurring-payment-option mb-3 p-3"
+                    >
+                      <div className="tooltip-container d-flex align-items-center">
+                        <input
+                          type="checkbox"
+                          className="form-check-input me-2 recurring-payment-checkbox"
+                          id="recurringPaymentCheck"
+                          checked={enableRecurringPayment}
+                          onChange={(e) =>
+                            setEnableRecurringPayment(e.target.checked)
+                          }
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor="recurringPaymentCheck"
+                        >
+                          Habilitar pago automático mensual
+                          <i className="bx bx-info-circle ms-2 text-primary"></i>
+                        </label>
+
+                        <div className="tooltip">
+                          <strong>Información sobre Pagos Automáticos</strong>
+                          <p>
+                            Los pagos automáticos solo están disponibles con
+                            tarjetas de crédito o débito. Si elige otro método,
+                            esta opción será ignorada.
+                          </p>
+                          <p>
+                            Es importante habilitar esta opción para que los
+                            cobros se realicen de forma automática, autorizando
+                            cargos mensuales a su tarjeta para renovar su
+                            compra.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div id="wompi-button-container"></div>
                 </div>
               </div>

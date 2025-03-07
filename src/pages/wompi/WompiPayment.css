@@ -279,7 +279,7 @@ input[type="checkbox"]:checked {
   background-color: #28a745 !important;
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.40em 0.6em;
+  padding: 0.4em 0.6em;
   border-radius: 4px;
   display: flex;
   justify-content: center;
@@ -321,8 +321,123 @@ input[type="checkbox"]:checked {
   transition: all 0.3s ease;
   border-radius: 6px;
   border: 1px solid rgba(0, 158, 227, 0.2);
-} 
+}
 
 .acquired-assistant {
   font-weight: 500 !important;
+}
+
+/* Agregar en tu archivo WompiPayment.css */
+
+.tooltip-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.tooltip-container:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 15px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px;
+  background: white;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.tooltip strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #009ee3;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tooltip p {
+  margin: 8px 0;
+  color: #4a5568;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.tooltip small {
+  display: block;
+  color: #718096;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.tooltip::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: white transparent transparent transparent;
+}
+
+.recurring-payment-option {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+  transition: all 0.3s ease;
+}
+
+.recurring-payment-option:hover {
+  background-color: #305ba0;
+}
+
+.bx-info-circle {
+  font-size: 1.1rem;
+  vertical-align: middle;
+  color: #009ee3 !important;
+}
+
+.recurring-payment-checkbox[type="checkbox"] {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+}
+
+#wompi-button-container {
+  min-height: 50px;
+  transition: opacity 0.2s ease;
+  will-change: contents;
+  position: relative;
+}
+
+#wompi-button-container:empty::before {
+  content: "";
+  display: block;
+  height: 50px;
+}
+
+.recurring-payment-option {
+  transition: background-color 0.3s ease;
+  will-change: background-color;
+}
+
+.recurring-payment-checkbox {
+  transition: background-color 0.2s ease;
+  will-change: background-color;
+}
+
+.plan-section, .info-section {
+  contain: content;
 }
