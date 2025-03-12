@@ -195,12 +195,12 @@ const WompiPayment = () => {
                 selectedPlan.id
               }-workspace_id=${workspaceId}-workspace_name=${
                 urlParams?.workspace_name
-              }-phone_number=${
+              }-owner_email=${urlParams?.owner_email}-phone_number=${
                 urlParams?.phone_number
               }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`
             : `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
                 urlParams?.workspace_name
-              }-phone_number=${
+              }-owner_email=${urlParams?.owner_email}-phone_number=${
                 urlParams?.phone_number
               }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`;
 
@@ -214,6 +214,9 @@ const WompiPayment = () => {
 
         if (!signature) return;
 
+        const baseUrl = window.location.origin;
+        const redirectUrl = `${baseUrl}/transaction-summary`;
+
         const script = document.createElement("script");
         script.src = "https://checkout.wompi.co/widget.js";
         script.setAttribute("data-render", "button");
@@ -224,10 +227,7 @@ const WompiPayment = () => {
         script.setAttribute("data-signature:integrity", signature);
         script.setAttribute("data-finish-text", "Pago completado");
         script.setAttribute("data-complete", "true");
-        script.setAttribute(
-          "data-redirect-url",
-          "https://transaction-redirect.wompi.co/check"
-        );
+        script.setAttribute("data-redirect-url", redirectUrl);
 
         container.appendChild(script);
       } catch (error) {
