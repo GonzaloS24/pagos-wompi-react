@@ -95,6 +95,7 @@ h6 {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
   background-color: transparent !important;
   box-shadow: none !important;
   height: 100vh !important;

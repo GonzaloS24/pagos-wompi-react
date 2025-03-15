@@ -1,3 +1,7 @@
+import {
+  isSimulatedTest,
+  getSimulatedTransactionData,
+} from "../../utils/TransactionTester";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { PuffLoader } from "react-spinners";
@@ -8,12 +12,113 @@ import { WOMPI_CONFIG } from "../../api/wompiConfig";
 const TransactionConfirmation = () => {
   const [transactionData, setTransactionData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pollingCount, setPollingCount] = useState(0);
+  const [pollingTimer, setPollingTimer] = useState(null);
   const location = useLocation();
 
+  // Función para obtener detalles de la transacción
+  const fetchTransactionDetails = async (transactionId, env) => {
+    try {
+      // Verificar si estamos en modo de prueba simulada
+      if (isSimulatedTest(location.search)) {
+        return getSimulatedTransactionData(transactionId, processAssistants);
+      }
+
+      if (!transactionId) {
+        setLoading(false);
+        return null;
+      }
+
+      const apiUrl =
+        env === "test"
+          ? `https://sandbox.wompi.co/v1/transactions/${transactionId}`
+          : `https://production.wompi.co/v1/transactions/${transactionId}`;
+
+      const response = await fetch(apiUrl);
+      const responseData = await response.json();
+
+      if (responseData.data) {
+        const transaction = responseData.data;
+        const referenceData = parseReferenceString(transaction.reference);
+
+        let cardType = null;
+        if (
+          transaction.payment_method_type === "CARD" &&
+          transaction.payment_method?.extra?.card_type
+        ) {
+          cardType = transaction.payment_method.extra.card_type;
+        }
+
+        let amountUSD, amountCOP;
+
+        if (transaction.currency === "COP") {
+          amountCOP = transaction.amount_in_cents / 100;
+
+          try {
+            const exchangeResponse = await fetch(
+              WOMPI_CONFIG.EXCHANGE_RATE_API
+            );
+            if (exchangeResponse.ok) {
+              const exchangeData = await exchangeResponse.json();
+              const copRate = exchangeData.rates.COP;
+              amountUSD = amountCOP / copRate;
+            } else {
+              amountUSD = referenceData.totalUSD
+                ? parseFloat(referenceData.totalUSD)
+                : amountCOP / 4000;
+            }
+          } catch (error) {
+            console.error("Error obteniendo tasa de cambio:", error);
+            amountUSD = referenceData.totalUSD
+              ? parseFloat(referenceData.totalUSD)
+              : amountCOP / 4000;
+          }
+        } else {
+          amountUSD = transaction.amount_in_cents / 100;
+          amountCOP = amountUSD * 4000;
+        }
+
+        const assistantsProcessed = processAssistants(
+          referenceData.assistants || []
+        );
+        const complementsProcessed = processComplements(
+          referenceData.complements || []
+        );
+
+        return {
+          id: transaction.id,
+          status: transaction.status,
+          statusMessage: getStatusMessage(transaction.status),
+          reference: transaction.reference,
+          amountUSD: amountUSD,
+          amountCOP: amountCOP,
+          currency: transaction.currency,
+          createdAt: new Date(transaction.created_at).toLocaleString(),
+          paymentMethod: transaction.payment_method_type,
+          paymentMethodName: getPaymentMethodName(
+            transaction.payment_method_type
+          ),
+          cardType,
+          cardBrand: transaction.payment_method?.extra?.brand || null,
+          cardLastFour: transaction.payment_method?.extra?.last_four || null,
+          assistants: assistantsProcessed,
+          complements: complementsProcessed,
+          plan_id: referenceData.plan_id,
+          workspace_id: referenceData.workspace_id,
+          recurring: referenceData.recurring,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching transaction details:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    const fetchTransactionDetails = async () => {
+    const startPolling = async () => {
       try {
-        // Obtener ID de transacción de la URL
+        // Obtener ID de transacción en la URL
         const params = new URLSearchParams(location.search);
         const transactionId = params.get("id");
         const env = params.get("env");
@@ -23,97 +128,85 @@ const TransactionConfirmation = () => {
           return;
         }
 
-        const apiUrl =
-          env === "test"
-            ? `https://sandbox.wompi.co/v1/transactions/${transactionId}`
-            : `https://production.wompi.co/v1/transactions/${transactionId}`;
+        const transactionResult = await fetchTransactionDetails(
+          transactionId,
+          env
+        );
 
-        const response = await fetch(apiUrl);
-        const responseData = await response.json();
+        if (transactionResult) {
+          setTransactionData(transactionResult);
 
-        if (responseData.data) {
-          const transaction = responseData.data;
-
-          const referenceData = parseReferenceString(transaction.reference);
-
-          let cardType = null;
-          if (
-            transaction.payment_method_type === "CARD" &&
-            transaction.payment_method?.extra?.card_type
-          ) {
-            cardType = transaction.payment_method.extra.card_type;
-          }
-
-          let amountUSD, amountCOP;
-
-          if (transaction.currency === "COP") {
-            amountCOP = transaction.amount_in_cents / 100;
-
-            try {
-              const exchangeResponse = await fetch(
-                WOMPI_CONFIG.EXCHANGE_RATE_API
-              );
-              if (exchangeResponse.ok) {
-                const exchangeData = await exchangeResponse.json();
-                const copRate = exchangeData.rates.COP;
-                amountUSD = amountCOP / copRate;
-              } else {
-                amountUSD = referenceData.totalUSD
-                  ? parseFloat(referenceData.totalUSD)
-                  : amountCOP / 4000;
-              }
-            } catch (error) {
-              console.error("Error obteniendo tasa de cambio:", error);
-              amountUSD = referenceData.totalUSD
-                ? parseFloat(referenceData.totalUSD)
-                : amountCOP / 4000;
-            }
+          // Si la transacción está pendiente, configurar polling
+          if (transactionResult.status === "PENDING") {
+            const timer = setTimeout(() => {
+              setPollingCount((prev) => prev + 1);
+            }, 3000);
+            setPollingTimer(timer);
           } else {
-            amountUSD = transaction.amount_in_cents / 100;
-            amountCOP = amountUSD * 4000;
+            setLoading(false);
           }
-
-          const assistantsProcessed = processAssistants(
-            referenceData.assistants || []
-          );
-          const complementsProcessed = processComplements(
-            referenceData.complements || []
-          );
-
-          setTransactionData({
-            id: transaction.id,
-            status: transaction.status,
-            statusMessage: getStatusMessage(transaction.status),
-            reference: transaction.reference,
-            amountUSD: amountUSD,
-            amountCOP: amountCOP,
-            currency: transaction.currency,
-            createdAt: new Date(transaction.created_at).toLocaleString(),
-            paymentMethod: transaction.payment_method_type,
-            paymentMethodName: getPaymentMethodName(
-              transaction.payment_method_type
-            ),
-            cardType,
-            cardBrand: transaction.payment_method?.extra?.brand || null,
-            cardLastFour: transaction.payment_method?.extra?.last_four || null,
-            assistants: assistantsProcessed,
-            complements: complementsProcessed,
-            plan_id: referenceData.plan_id,
-            workspace_id: referenceData.workspace_id,
-            recurring: referenceData.recurring,
-          });
+        } else {
+          setLoading(false);
         }
       } catch (error) {
-        console.error("Error fetching transaction details:", error);
-      } finally {
+        console.error("Error in polling:", error);
         setLoading(false);
       }
     };
 
-    fetchTransactionDetails();
+    startPolling();
+
+    return () => {
+      if (pollingTimer) {
+        clearTimeout(pollingTimer);
+      }
+    };
   }, [location]);
 
-  // Función para parsear la referencia
+  // Efecto para manejar el polling
+  useEffect(() => {
+    const handlePolling = async () => {
+      if (pollingCount > 0 && pollingCount <= 20) {
+        try {
+          const params = new URLSearchParams(location.search);
+          const transactionId = params.get("id");
+          const env = params.get("env");
+
+          const updatedTransaction = await fetchTransactionDetails(
+            transactionId,
+            env
+          );
+
+          if (updatedTransaction) {
+            setTransactionData(updatedTransaction);
+
+            // Si la transacción ya no está pendiente o alcanzamos el límite, detenerla
+            if (updatedTransaction.status !== "PENDING" || pollingCount >= 20) {
+              setLoading(false);
+            } else {
+              const timer = setTimeout(() => {
+                setPollingCount((prev) => prev + 1);
+              }, 3000);
+              setPollingTimer(timer);
+            }
+          } else {
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error("Error in polling:", error);
+          setLoading(false);
+        }
+      } else if (pollingCount > 20) {
+        setLoading(false);
+      }
+    };
+
+    if (pollingCount > 0) {
+      handlePolling();
+    }
+  }, [pollingCount, location]);
+
+  // parsear la referencia
   const parseReferenceString = (reference) => {
     try {
       const result = {
@@ -241,6 +334,8 @@ const TransactionConfirmation = () => {
         return "Transacción Anulada";
       case "ERROR":
         return "Error en la Transacción";
+      case "PENDING":
+        return "Transacción en Proceso";
       default:
         return "Estado Desconocido";
     }
@@ -298,11 +393,18 @@ const TransactionConfirmation = () => {
           margin={2}
           speedMultiplier={4}
         />
+        {pollingCount > 0 && (
+          <p className="polling-message">
+            Verificando el estado de tu pago...
+            {pollingCount > 5 && " Esto puede tomar unos momentos."}
+          </p>
+        )}
       </div>
     );
   }
 
   const isSuccessful = transactionData?.status === "APPROVED";
+  const isPending = transactionData?.status === "PENDING";
 
   const getCurrentDateFormatted = () => {
     const now = new Date();
@@ -353,6 +455,22 @@ const TransactionConfirmation = () => {
                   Tu pago ha sido procesado correctamente
                 </p>
               </>
+            ) : isPending ? (
+              <>
+                <div className="pending-icon-container">
+                  <i className="bx bx-time pending-icon"></i>
+                </div>
+                <h2 className="confirmation-title pending-title">
+                  {transactionData.statusMessage}
+                </h2>
+                <p className="text-muted">
+                  Tu pago está siendo procesado. Esto puede tomar unos minutos.
+                </p>
+                <p className="refresh-hint">
+                  <i className="bx bx-refresh"></i> Puedes actualizar esta
+                  página en unos momentos para ver el estado actualizado.
+                </p>
+              </>
             ) : (
               <>
                 <div className="error-icon-container">
@@ -397,7 +515,7 @@ const TransactionConfirmation = () => {
                 <div className="info-value">
                   <span
                     className={`status-badge ${
-                      isSuccessful ? "success" : "error"
+                      isSuccessful ? "success" : isPending ? "pending" : "error"
                     }`}
                   >
                     {transactionData.status}
@@ -566,6 +684,16 @@ const TransactionConfirmation = () => {
                 <button className="btn-outline" onClick={handlePrint}>
                   <i className="bx bx-printer me-2"></i>
                   Imprimir recibo
+                </button>
+              )}
+
+              {isPending && (
+                <button
+                  className="btn-outline"
+                  onClick={() => window.location.reload()}
+                >
+                  <i className="bx bx-refresh me-2"></i>
+                  Actualizar estado
                 </button>
               )}
             </div>

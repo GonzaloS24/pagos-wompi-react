@@ -537,3 +537,64 @@
   background-color: rgba(108, 117, 125, 0.1);
   color: #6c757d;
 }
+
+.pending-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.pending-icon {
+  font-size: 4rem;
+  padding: 1rem;
+  border-radius: 50%;
+  display: inline-block;
+  color: #f0ad4e;
+  background-color: rgba(240, 173, 78, 0.1);
+}
+
+.pending-title {
+  color: #f0ad4e;
+}
+
+.status-badge.pending {
+  background-color: rgba(240, 173, 78, 0.1);
+  color: #f0ad4e;
+}
+
+.refresh-hint {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-hint i {
+  margin-right: 0.3rem;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.polling-message {
+  margin-top: 1rem;
+  color: #6c757d;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+@media print {
+  .pending-icon {
+    font-size: 2.5rem;
+    padding: 0.5rem;
+  }
+}

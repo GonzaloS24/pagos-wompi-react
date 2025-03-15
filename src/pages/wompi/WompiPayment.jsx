@@ -16,6 +16,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./WompiPayment.css";
 import ConfirmedInfo from "../../components/ConfirmedInfo";
 import Complements from "../../components/Complements";
+// import TestTransactionPanel from "../confirmation/TestTransactionPanel";
 const WompiPayment = () => {
   const [selectedAssistants, setSelectedAssistants] = useState([]);
   const [purchaseType, setPurchaseType] = useState(null);
@@ -381,6 +382,7 @@ const WompiPayment = () => {
                   )}
                   <div id="wompi-button-container"></div>
                 </div>
+                {/* <TestTransactionPanel /> */}
               </div>
             </div>
           )}
