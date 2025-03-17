@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
+import wompi from "../../assets/wompi.png";
 import { useWompiPayment } from "../../hooks/useWompiPayment";
 import {
   validateForm,
@@ -126,12 +127,27 @@ const WompiPayment = () => {
     return false;
   };
 
+  // Manejo del clic botón wompi
   const handlePayButtonClick = () => {
-    // Primero mostramos el diálogo de confirmación de pago recurrente
+    if (enableRecurringPayment) {
+      setShowWompiWidget(true);
+      setTimeout(() => {
+        const wompiButton = document.querySelector(
+          "#wompi-button-container button"
+        );
+        if (wompiButton) {
+          wompiButtonRef.current = wompiButton;
+          wompiButton.click();
+        }
+      }, 500);
+      return;
+    }
+
+    // alerta de confirmacion si no se activa el checkbox
     Swal.fire({
       title: "¿Deseas activar el pago automático mensual?",
       html: `
-        <div style="text-align: left; margin-bottom: 1rem;">
+        <div style="text-align: center; margin-bottom: 1rem; margin-top: 1rem;">
           <p>Los pagos automáticos solo están disponibles con tarjetas de crédito o débito. Si eliges otro método, esta opción será ignorada.</p>
           <p>Activar esta opción permitirá que los cobros se realicen de forma automática, autorizando cargos mensuales a tu tarjeta para renovar tu compra.</p>
         </div>
@@ -146,7 +162,6 @@ const WompiPayment = () => {
       allowEscapeKey: false,
       allowEnterKey: false,
     }).then((result) => {
-      // Actualizar el estado según la selección del usuario
       setEnableRecurringPayment(result.isConfirmed);
 
       // Mostrar el widget de Wompi después de la selección
@@ -253,6 +268,8 @@ const WompiPayment = () => {
           priceCOPCents,
           "COP"
         );
+
+        // console.log("274  >>>>>>>>> ", reference);
 
         if (!signature) return;
 
@@ -382,17 +399,55 @@ const WompiPayment = () => {
                 <div className="mt-4">
                   {shouldShowPayButton() && (
                     <>
+                      {/* Checkbox para habilitar pago recurrente */}
+                      <div className="alert alert-info mb-3 p-3">
+                        <div className="tooltip-container d-flex align-items-center">
+                          <input
+                            type="checkbox"
+                            className="form-check-input me-2 recurring-payment-checkbox"
+                            id="recurringPaymentCheck"
+                            checked={enableRecurringPayment}
+                            onChange={(e) =>
+                              setEnableRecurringPayment(e.target.checked)
+                            }
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="recurringPaymentCheck"
+                          >
+                            Habilitar pago automático mensual
+                            <i
+                              style={{ fontSize: "24px" }}
+                              className="bx bx-info-circle ms-2 text-primary"
+                            ></i>
+                          </label>
+
+                          <div className="tooltip">
+                            <strong>Información sobre Pagos Automáticos</strong>
+                            <p>
+                              Los pagos automáticos solo están disponibles con
+                              tarjetas de crédito o débito. Si eliges otro
+                              método, esta opción será ignorada.
+                            </p>
+                            <p>
+                              Activar esta opción permitirá que los cobros se
+                              realicen de forma automática, autorizando cargos
+                              mensuales a tu tarjeta para renovar tu compra.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Botón personalizado visible cuando no se muestra el widget */}
                       {!showWompiWidget && (
                         <button
                           className="wompi-button-custom"
                           onClick={handlePayButtonClick}
                         >
-                          Pagar con Wompi
+                          <img width={22} src={wompi} alt="" /> Paga con Wompi
                         </button>
                       )}
 
-                      {/* Widget de Wompi (oculto visualmente pero presente en el DOM) */}
                       <div
                         id="wompi-button-container"
                         style={{
