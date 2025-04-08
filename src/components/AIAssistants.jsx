@@ -26,22 +26,34 @@ const AIAssistants = ({
       id: "ventas",
       type: "Asistente de ventas por WhatsApp",
       label: "Asistente de ventas por WhatsApp",
+      description: "Logra CPAs hasta de 5.000",
     },
     {
       id: "comentarios",
       type: "asistente de comentarios",
       label: "Asistente de comentarios",
+      description: "Convierte en ventas los comentarios de Facebook.",
     },
     {
       id: "carritos",
       type: "asistente de carritos abandonados",
       label: "Asistente de carritos abandonados",
+      description: "Recupera hasta el 50% de los carritos abandonados.",
     },
-    // {
-    //   id: "marketing",
-    //   type: "asistente de Marketing",
-    //   label: "Asistente de Marketing",
-    // },
+    {
+      id: "remarketing",
+      type: "asistente de Remarketing",
+      label: "Asistente de Remarketing",
+      description: "Aumenta tus ventas usando tu base de datos.",
+      comingSoon: true,
+    },
+    {
+      id: "voz",
+      type: "asistente de Voz con IA",
+      label: "Asistente de Voz con IA",
+      description: "Contacta al cliente con un agente de voz IA",
+      comingSoon: true,
+    },
   ];
 
   // Determinar cuál es el primer asistente seleccionado (gratis)
@@ -140,6 +152,7 @@ const AIAssistants = ({
             {assistantsData.map((assistant) => {
               const isExisting =
                 isStandalone && isAssistantExisting(assistant.id);
+              const isComingSoon = assistant.comingSoon === true;
 
               return (
                 <div key={assistant.id} className="form-check mb-2">
@@ -149,15 +162,18 @@ const AIAssistants = ({
                     id={assistant.id}
                     checked={selectedAssistants.includes(assistant.id)}
                     onChange={() => handleAssistantChange(assistant.id)}
-                    disabled={isExisting}
+                    disabled={isExisting || isComingSoon}
                   />
                   <label
                     className={`form-check-label ${
-                      isExisting ? "text-muted" : ""
+                      isExisting || isComingSoon ? "text-muted" : ""
                     }`}
                     htmlFor={assistant.id}
                   >
-                    {assistant.label}
+                    {assistant.label}&nbsp;
+                    <span className="assistant-description">
+                      {assistant.description}
+                    </span>
                     {assistant.id === freeAssistant && !isStandalone && (
                       <span className="ms-2 badge bg-success">Gratis</span>
                     )}
@@ -165,6 +181,9 @@ const AIAssistants = ({
                       <span className="ms-2 badge acquired-assistant">
                         Ya adquirido
                       </span>
+                    )}
+                    {isComingSoon && (
+                      <span className="ms-2 badge">Próximamente</span>
                     )}
                   </label>
                 </div>

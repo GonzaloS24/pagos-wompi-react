@@ -323,6 +323,52 @@ input[type="checkbox"]:checked {
   border: 1px solid rgba(0, 158, 227, 0.2);
 }
 
+.assistant-description {
+  font-size: 0.9rem;
+  color: #4a5568;
+  font-style: italic;
+  line-height: 1.5;
+  background-color: #edf4ff;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+  padding: 0 5px;
+  border-radius: 5px;
+  margin-left: 5px;
+  display: inline-block;
+  word-break: break-word;
+}
+
+@media (max-width: 1200px) {
+  .form-check {
+    padding-right: 10px;
+  }
+  
+  .form-check-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  
+  .assistant-description {
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+  
+  .badge {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .assistants-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-check {
+    margin-bottom: 15px !important;
+  }
+}
+
 .acquired-assistant {
   font-weight: 500 !important;
 }
