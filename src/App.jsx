@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import WompiPayment from "./pages/wompi/WompiPayment";
-import Confirmation from "./pages/confirmation/Confirmation";
+import StripePayment from "./pages/wompi/StripePayment";
+import StripeConfirmation from "./pages/confirmation/Confirmation";
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<WompiPayment />} />
-        <Route path="/transaction-summary" element={<Confirmation />} />
+        <Route path="/" element={<StripePayment />} />
+        <Route path="/transaction-summary" element={<StripeConfirmation />} />
       </Routes>
     </Router>
   );

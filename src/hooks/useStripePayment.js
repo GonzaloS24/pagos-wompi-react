@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { WOMPI_CONFIG, fetchPlans } from "../api/wompiConfig";
-import { sanitizeString } from "../utils/wompiHelpers";
+import { STRIPE_CONFIG, fetchPlans } from "../api/stripeConfig";
+import { sanitizeString } from "../utils/stripeHelpers";
 import Swal from "sweetalert2";
 
-export const useWompiPayment = () => {
+export const useStripePayment = () => {
   const [plans, setPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [usdToCopRate, setUsdToCopRate] = useState();
@@ -73,7 +73,7 @@ export const useWompiPayment = () => {
       setLoading(true);
       try {
         // Obtener tasa de cambio
-        const response = await fetch(WOMPI_CONFIG.EXCHANGE_RATE_API);
+        const response = await fetch(STRIPE_CONFIG.EXCHANGE_RATE_API);
         if (!response.ok) throw new Error("Error al obtener tasa de cambio");
         const data = await response.json();
         setUsdToCopRate(data.rates.COP);

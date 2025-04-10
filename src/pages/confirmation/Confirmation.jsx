@@ -1,114 +1,96 @@
-import {
-  isSimulatedTest,
-  getSimulatedTransactionData,
-} from "../../utils/TransactionTester";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 import "./Confirmation.css";
-import { WOMPI_CONFIG } from "../../api/wompiConfig";
 
-const TransactionConfirmation = () => {
+const StripeConfirmation = () => {
   const [transactionData, setTransactionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pollingCount, setPollingCount] = useState(0);
   const [pollingTimer, setPollingTimer] = useState(null);
   const location = useLocation();
 
-  // Función para obtener detalles de la transacción
-  const fetchTransactionDetails = async (transactionId, env) => {
+  // Función para obtener detalles de la transacción desde Stripe
+  const fetchTransactionDetails = async (sessionId) => {
     try {
-      // Verificar si estamos en modo de prueba simulada
-      if (isSimulatedTest(location.search)) {
-        return getSimulatedTransactionData(transactionId, processAssistants);
-      }
-
-      if (!transactionId) {
+      if (!sessionId) {
         setLoading(false);
         return null;
       }
 
-      const apiUrl =
-        env === "test"
-          ? `https://sandbox.wompi.co/v1/transactions/${transactionId}`
-          : `https://production.wompi.co/v1/transactions/${transactionId}`;
+      const response = await fetch(
+        `http://localhost:4000/checkout-session/${sessionId}`
+      );
+      const session = await response.json();
 
-      const response = await fetch(apiUrl);
-      const responseData = await response.json();
-
-      if (responseData.data) {
-        const transaction = responseData.data;
-        const referenceData = parseReferenceString(transaction.reference);
-
-        let cardType = null;
-        if (
-          transaction.payment_method_type === "CARD" &&
-          transaction.payment_method?.extra?.card_type
-        ) {
-          cardType = transaction.payment_method.extra.card_type;
-        }
-
-        let amountUSD, amountCOP;
-
-        if (transaction.currency === "COP") {
-          amountCOP = transaction.amount_in_cents / 100;
-
-          try {
-            const exchangeResponse = await fetch(
-              WOMPI_CONFIG.EXCHANGE_RATE_API
-            );
-            if (exchangeResponse.ok) {
-              const exchangeData = await exchangeResponse.json();
-              const copRate = exchangeData.rates.COP;
-              amountUSD = amountCOP / copRate;
-            } else {
-              amountUSD = referenceData.totalUSD
-                ? parseFloat(referenceData.totalUSD)
-                : amountCOP / 4000;
-            }
-          } catch (error) {
-            console.error("Error obteniendo tasa de cambio:", error);
-            amountUSD = referenceData.totalUSD
-              ? parseFloat(referenceData.totalUSD)
-              : amountCOP / 4000;
-          }
-        } else {
-          amountUSD = transaction.amount_in_cents / 100;
-          amountCOP = amountUSD * 4000;
-        }
-
-        const assistantsProcessed = processAssistants(
-          referenceData.assistants || []
-        );
-        const complementsProcessed = processComplements(
-          referenceData.complements || []
-        );
-
-        return {
-          id: transaction.id,
-          status: transaction.status,
-          statusMessage: getStatusMessage(transaction.status),
-          reference: transaction.reference,
-          amountUSD: amountUSD,
-          amountCOP: amountCOP,
-          currency: transaction.currency,
-          createdAt: new Date(transaction.created_at).toLocaleString(),
-          paymentMethod: transaction.payment_method_type,
-          paymentMethodName: getPaymentMethodName(
-            transaction.payment_method_type
-          ),
-          cardType,
-          cardBrand: transaction.payment_method?.extra?.brand || null,
-          cardLastFour: transaction.payment_method?.extra?.last_four || null,
-          assistants: assistantsProcessed,
-          complements: complementsProcessed,
-          plan_id: referenceData.plan_id,
-          workspace_id: referenceData.workspace_id,
-          recurring: referenceData.recurring,
-        };
+      if (!session) {
+        return null;
       }
-      return null;
+
+      // Parsear la referencia desde los metadatos
+      const reference = session.metadata?.reference || "";
+      const referenceData = parseReferenceString(reference);
+
+      // Calcular el total en COP y USD
+      let amountCOP = session.amount_total / 100;
+      let amountUSD = amountCOP / 4000;
+
+      // Si tenemos el total en USD en la referencia, usarlo
+      if (referenceData.totalUSD) {
+        amountUSD = parseFloat(referenceData.totalUSD);
+      }
+
+      // Procesar status
+      const status = getSessionStatus(session);
+
+      // Procesar asistentes y complementos de la referencia
+      const assistantsProcessed = processAssistants(
+        referenceData.assistants || []
+      );
+      const complementsProcessed = processComplements(
+        referenceData.complements || []
+      );
+
+      // Determinar método de pago
+      const paymentMethod =
+        session.payment_method_types && session.payment_method_types[0]
+          ? session.payment_method_types[0].toUpperCase()
+          : "CARD";
+
+      // Información de tarjeta si está disponible
+      let cardDetails = null;
+      if (session.payment_intent && session.payment_intent.payment_method) {
+        const paymentMethodDetails = session.payment_intent.payment_method.card;
+        if (paymentMethodDetails) {
+          cardDetails = {
+            brand: paymentMethodDetails.brand,
+            last4: paymentMethodDetails.last4,
+            funding: paymentMethodDetails.funding,
+          };
+        }
+      }
+
+      return {
+        id: session.id,
+        status: status.code,
+        statusMessage: status.message,
+        reference: reference,
+        amountUSD: amountUSD,
+        amountCOP: amountCOP,
+        currency: session.currency?.toUpperCase() || "COP",
+        createdAt: new Date(session.created * 1000).toLocaleString(),
+        paymentMethod: paymentMethod,
+        paymentMethodName: getPaymentMethodName(paymentMethod),
+        cardType: cardDetails?.funding === "credit" ? "CREDIT" : "DEBIT",
+        cardBrand: cardDetails?.brand ? cardDetails.brand.toUpperCase() : null,
+        cardLastFour: cardDetails?.last4 || null,
+        assistants: assistantsProcessed,
+        complements: complementsProcessed,
+        plan_id: referenceData.plan_id,
+        workspace_id: referenceData.workspace_id,
+        recurring: referenceData.recurring,
+      };
     } catch (error) {
       console.error("Error fetching transaction details:", error);
       return null;
@@ -118,20 +100,18 @@ const TransactionConfirmation = () => {
   useEffect(() => {
     const startPolling = async () => {
       try {
-        // Obtener ID de transacción en la URL
+        // Obtener ID de sesión en la URL
         const params = new URLSearchParams(location.search);
-        const transactionId = params.get("id");
-        const env = params.get("env");
+        const sessionId = params.get("id");
+        const status = params.get("status");
+        console.log("104  >>>>>>>>> ", status, sessionId);
 
-        if (!transactionId) {
+        if (!sessionId) {
           setLoading(false);
           return;
         }
 
-        const transactionResult = await fetchTransactionDetails(
-          transactionId,
-          env
-        );
+        const transactionResult = await fetchTransactionDetails(sessionId);
 
         if (transactionResult) {
           setTransactionData(transactionResult);
@@ -169,13 +149,9 @@ const TransactionConfirmation = () => {
       if (pollingCount > 0 && pollingCount <= 20) {
         try {
           const params = new URLSearchParams(location.search);
-          const transactionId = params.get("id");
-          const env = params.get("env");
+          const sessionId = params.get("id");
 
-          const updatedTransaction = await fetchTransactionDetails(
-            transactionId,
-            env
-          );
+          const updatedTransaction = await fetchTransactionDetails(sessionId);
 
           if (updatedTransaction) {
             setTransactionData(updatedTransaction);
@@ -205,6 +181,25 @@ const TransactionConfirmation = () => {
       handlePolling();
     }
   }, [pollingCount, location]);
+
+  // Función para determinar el estado de la sesión de Stripe
+  const getSessionStatus = (session) => {
+    // Determinar el estado basado en session.status y payment_status
+    if (session.status === "complete" && session.payment_status === "paid") {
+      return { code: "APPROVED", message: "¡Transacción Exitosa!" };
+    } else if (
+      session.status === "complete" &&
+      session.payment_status === "unpaid"
+    ) {
+      return { code: "DECLINED", message: "Transacción Rechazada" };
+    } else if (session.status === "expired") {
+      return { code: "VOIDED", message: "Transacción Expirada" };
+    } else if (session.status === "open") {
+      return { code: "PENDING", message: "Transacción en Proceso" };
+    } else {
+      return { code: "ERROR", message: "Error en la Transacción" };
+    }
+  };
 
   // parsear la referencia
   const parseReferenceString = (reference) => {
@@ -322,23 +317,6 @@ const TransactionConfirmation = () => {
         description: comp,
       };
     });
-  };
-
-  const getStatusMessage = (status) => {
-    switch (status) {
-      case "APPROVED":
-        return "¡Transacción Exitosa!";
-      case "DECLINED":
-        return "Transacción Rechazada";
-      case "VOIDED":
-        return "Transacción Anulada";
-      case "ERROR":
-        return "Error en la Transacción";
-      case "PENDING":
-        return "Transacción en Proceso";
-      default:
-        return "Estado Desconocido";
-    }
   };
 
   const getPaymentMethodName = (methodType) => {
@@ -704,4 +682,4 @@ const TransactionConfirmation = () => {
   );
 };
 
-export default TransactionConfirmation;
+export default StripeConfirmation;

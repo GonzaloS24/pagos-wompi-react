@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from "react";
-import { fetchWorkspaceAssistants } from "../api/wompiConfig";
+import { fetchWorkspaceAssistants } from "../api/stripeConfig";
 import Swal from "sweetalert2";
 import { PuffLoader } from "react-spinners";
 

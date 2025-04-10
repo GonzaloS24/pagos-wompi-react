@@ -2,7 +2,7 @@
 /* eslint-disable react/display-name */
 import { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import Swal from "sweetalert2";
-import { fetchWorkspaceBots } from "../api/wompiConfig";
+import { fetchWorkspaceBots } from "../api/stripeConfig";
 
 const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
   const [selectedComplement, setSelectedComplement] = useState("");

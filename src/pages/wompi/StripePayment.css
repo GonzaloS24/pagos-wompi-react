@@ -73,17 +73,30 @@
   max-width: 500px;
 }
 
-#wompi-button-container button {
+.stripe-button-custom {
   width: 100%;
   border-radius: 8px;
   font-weight: 500;
   letter-spacing: 0.5px;
-  background-color: #009ee3;
+  background-color: #635bff;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#wompi-button-container button:hover {
-  background-color: #007ab3;
+.stripe-button-custom:hover {
+  background-color: #4b45c6;
+}
+
+.stripe-button-custom:disabled {
+  background-color: #a8a6cc;
+  cursor: not-allowed;
 }
 
 .form-select {
@@ -452,19 +465,6 @@ input[type="checkbox"]:checked {
   border: 1px solid #009ee3;
 }
 
-#wompi-button-container {
-  min-height: 50px;
-  transition: opacity 0.2s ease;
-  will-change: contents;
-  position: relative;
-}
-
-#wompi-button-container:empty::before {
-  content: "";
-  display: block;
-  height: 50px;
-}
-
 .recurring-payment-option {
   transition: background-color 0.3s ease;
   will-change: background-color;
@@ -480,20 +480,4 @@ input[type="checkbox"]:checked {
 .plan-section,
 .info-section {
   contain: content;
-}
-
-.wompi-button-custom {
-  width: 100%;
-  border-radius: 8px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  background-color: #009ee3;
-  transition: all 0.3s ease;
-  height: 40px;
-  font-size: 14px;
-  padding: 0px 16px;
-  border: 0px;
-  color: white;
-  line-height: 40px;
-  display: inline-block;
 }
