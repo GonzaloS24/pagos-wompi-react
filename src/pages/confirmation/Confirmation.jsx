@@ -4,12 +4,32 @@ import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 import "./Confirmation.css";
 
+const EXCHANGE_RATE_API = "https://api.exchangerate-api.com/v4/latest/USD";
+
 const StripeConfirmation = () => {
   const [transactionData, setTransactionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pollingCount, setPollingCount] = useState(0);
   const [pollingTimer, setPollingTimer] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [exchangeRate, setExchangeRate] = useState(4200);
   const location = useLocation();
+
+  // Función para obtener la tasa de cambio actualizada
+  const fetchExchangeRate = async () => {
+    try {
+      const response = await fetch(EXCHANGE_RATE_API);
+      const data = await response.json();
+      if (data.rates && data.rates.COP) {
+        setExchangeRate(data.rates.COP);
+        return data.rates.COP;
+      }
+      return 4200;
+    } catch (error) {
+      console.error("Error fetching exchange rate:", error);
+      return 4200;
+    }
+  };
 
   // Función para obtener detalles de la transacción desde Stripe
   const fetchTransactionDetails = async (sessionId) => {
@@ -18,6 +38,9 @@ const StripeConfirmation = () => {
         setLoading(false);
         return null;
       }
+
+      // Obtener tasa de cambio actual
+      const currentRate = await fetchExchangeRate();
 
       const response = await fetch(
         `http://localhost:4000/checkout-session/${sessionId}`
@@ -28,23 +51,18 @@ const StripeConfirmation = () => {
         return null;
       }
 
-      // Parsear la referencia desde los metadatos
       const reference = session.metadata?.reference || "";
       const referenceData = parseReferenceString(reference);
 
-      // Calcular el total en COP y USD
       let amountCOP = session.amount_total / 100;
-      let amountUSD = amountCOP / 4000;
+      let amountUSD = amountCOP / currentRate;
 
-      // Si tenemos el total en USD en la referencia, usarlo
       if (referenceData.totalUSD) {
         amountUSD = parseFloat(referenceData.totalUSD);
       }
 
-      // Procesar status
       const status = getSessionStatus(session);
 
-      // Procesar asistentes y complementos de la referencia
       const assistantsProcessed = processAssistants(
         referenceData.assistants || []
       );
@@ -225,6 +243,8 @@ const StripeConfirmation = () => {
             }
           } else if (key === "recurring" && value === "true") {
             result.recurring = true;
+          } else if (key === "totalUSD") {
+            result.totalUSD = value;
           } else if (key && value) {
             result[key] = value;
           }
