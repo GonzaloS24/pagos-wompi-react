@@ -19,7 +19,7 @@ export const startTransactionTest = (mode = TEST_MODES.PENDING_TO_APPROVED) => {
   localStorage.setItem("testStartTime", Date.now().toString());
 
   // Redireccionar a la página de resumen con parámetros de prueba
-  window.location.href = `/transaction-summary?id=${testTransactionId}&env=test&simulatedTest=true`;
+  window.location.href = `/transaction-summary-wompi?id=${testTransactionId}&env=test&simulatedTest=true`;
 };
 
 /**

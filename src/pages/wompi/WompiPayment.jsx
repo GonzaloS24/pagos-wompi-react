@@ -1,22 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 import wompi from "../../assets/wompi.png";
 import { useWompiPayment } from "../../hooks/useWompiPayment";
 import {
   validateForm,
-  generateIntegritySignature,
   convertUSDtoCOPCents,
+  generateIntegritySignature,
 } from "../../utils/wompiHelpers";
+import { generateStripeReference } from "../../utils/stripeHelpers";
 import { WOMPI_CONFIG } from "../../api/wompiConfig";
+import { STRIPE_CONFIG } from "../../api/stripeConfig";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import PaymentSummary from "../../components/PaymentSummary";
 import AIAssistants from "../../components/AIAssistants";
+import PaymentGatewaySelector from "../../components/PaymentGatewaySelector";
 import PurchaseTypeSelector from "../../components/PurchaseTypeSelector";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./WompiPayment.css";
 import ConfirmedInfo from "../../components/ConfirmedInfo";
 import Complements from "../../components/Complements";
+import Swal from "sweetalert2";
+// import TestTransactionPanel from "../confirmation/TestTransactionPanel";
 // import TestTransactionPanel from "../confirmation/TestTransactionPanel";
 
 const WompiPayment = () => {
@@ -24,9 +29,12 @@ const WompiPayment = () => {
   const [purchaseType, setPurchaseType] = useState(null);
   const complementsRef = useRef(null);
   const [selectedComplements, setSelectedComplements] = useState([]);
-  const isUpdatingButton = useRef(false);
   const [showWompiWidget, setShowWompiWidget] = useState(false);
   const wompiButtonRef = useRef(null);
+  const isUpdatingButton = useRef(false);
+  const [paymentGateway, setPaymentGateway] = useState("wompi");
+  const [enableRecurringPayment, setEnableRecurringPayment] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const {
     plans,
@@ -125,8 +133,46 @@ const WompiPayment = () => {
     return false;
   };
 
+  // Función común para calcular los precios totales
+  const calculateTotals = () => {
+    const assistantPrice = 20;
+    let totalAssistantsPrice;
+
+    if (purchaseType === "plan") {
+      const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
+      const paidAssistants = Math.max(
+        0,
+        selectedAssistants.length - freeAssistants
+      );
+      totalAssistantsPrice = paidAssistants * assistantPrice;
+    } else {
+      totalAssistantsPrice = selectedAssistants.length * assistantPrice;
+    }
+
+    const planPrice = purchaseType === "plan" ? selectedPlan.priceUSD : 0;
+
+    // Cálculo del precio total de los complementos
+    const totalComplementsPrice = selectedComplements.reduce(
+      (total, complement) => total + complement.totalPrice,
+      0
+    );
+
+    // Suma total en USD
+    const totalUSD = planPrice + totalAssistantsPrice + totalComplementsPrice;
+
+    // Convertir a COP en centavos para las pasarelas
+    const priceCOPCents = convertUSDtoCOPCents(totalUSD, usdToCopRate);
+
+    return {
+      totalUSD,
+      priceCOPCents,
+      totalAssistantsPrice,
+      totalComplementsPrice,
+    };
+  };
+
   // Manejo del clic botón wompi
-  const handlePayButtonClick = () => {
+  const handleWompiButtonClick = () => {
     setShowWompiWidget(true);
     setTimeout(() => {
       const wompiButton = document.querySelector(
@@ -139,10 +185,117 @@ const WompiPayment = () => {
     }, 500);
   };
 
+  // Función para manejar el pago con Stripe
+  const handleStripePayment = async () => {
+    if (!shouldShowPayButton()) return;
+
+    try {
+      setIsProcessingPayment(true);
+
+      const { totalUSD, priceCOPCents } = calculateTotals();
+
+      // Generar la referencia que contiene toda la información del pedido
+      const reference = generateStripeReference(
+        purchaseType,
+        selectedPlan,
+        formData.workspace_id,
+        formData.workspace_name,
+        formData.owner_email,
+        formData.phone_number,
+        selectedAssistants,
+        selectedComplements,
+        enableRecurringPayment,
+        totalUSD
+      );
+
+      // Preparar los items para enviar a Stripe
+      let items = [];
+
+      // Agregar plan si corresponde
+      if (purchaseType === "plan" && selectedPlan) {
+        items.push({
+          id: selectedPlan.id,
+          name: `Plan ${selectedPlan.name}`,
+          price: priceCOPCents,
+          quantity: 1,
+        });
+      }
+
+      // Agregar asistentes como items separados si estamos solo comprando asistentes
+      if (purchaseType === "assistants" && selectedAssistants.length > 0) {
+        const { totalAssistantsPrice } = calculateTotals();
+        items.push({
+          id: "assistants",
+          name: `Asistentes de IA (${selectedAssistants.length})`,
+          price: convertUSDtoCOPCents(totalAssistantsPrice, usdToCopRate),
+          quantity: 1,
+        });
+      }
+
+      // Si no hay items (caso de solo complementos), agregar uno genérico
+      if (items.length === 0 && selectedComplements.length > 0) {
+        const { totalComplementsPrice } = calculateTotals();
+        items.push({
+          id: "complements",
+          name: "Complementos",
+          price: convertUSDtoCOPCents(totalComplementsPrice, usdToCopRate),
+          quantity: 1,
+        });
+      }
+
+      // Llamar al endpoint correcto según si es pago único o recurrente
+      const endpoint = enableRecurringPayment
+        ? `${STRIPE_CONFIG.CHECKOUT_URL}/create-subscription`
+        : `${STRIPE_CONFIG.CHECKOUT_URL}/create-checkout-session`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items,
+          customerEmail: formData.owner_email,
+          metadata: {
+            reference,
+            workspace_id: formData.workspace_id,
+            purchaseType,
+            isRecurring: enableRecurringPayment,
+            totalUSD: totalUSD.toString(),
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No se recibió la URL de checkout de Stripe");
+      }
+    } catch (error) {
+      console.error("Error al procesar el pago con Stripe:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Hubo un problema al procesar el pago. Por favor, intenta nuevamente.",
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Actualizar botón de Wompi cuando cambian las selecciones
   useEffect(() => {
     const updateWompiButton = async () => {
       const container = document.getElementById("wompi-button-container");
-      if (!container || !isDataConfirmed || !showWompiWidget) return;
+      if (
+        !container ||
+        !isDataConfirmed ||
+        !showWompiWidget ||
+        paymentGateway !== "wompi"
+      )
+        return;
 
       if (isUpdatingButton.current) return;
       isUpdatingButton.current = true;
@@ -160,32 +313,9 @@ const WompiPayment = () => {
           return;
         }
 
-        const assistantPrice = 20;
-        let totalAssistantsPrice;
-        if (purchaseType === "plan") {
-          const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
-          const paidAssistants = Math.max(
-            0,
-            selectedAssistants.length - freeAssistants
-          );
-          totalAssistantsPrice = paidAssistants * assistantPrice;
-        } else {
-          totalAssistantsPrice = selectedAssistants.length * assistantPrice;
-        }
+        // eslint-disable-next-line no-unused-vars
+        const { totalUSD, priceCOPCents } = calculateTotals();
 
-        const planPrice = purchaseType === "plan" ? selectedPlan.priceUSD : 0;
-
-        // Cálculo del precio total de los complementos
-        const totalComplementsPrice = selectedComplements.reduce(
-          (total, complement) => total + complement.totalPrice,
-          0
-        );
-
-        // Suma total en USD
-        const totalUSD =
-          planPrice + totalAssistantsPrice + totalComplementsPrice;
-
-        const priceCOPCents = convertUSDtoCOPCents(totalUSD, usdToCopRate);
         const workspaceId =
           urlParams?.workspace_id || WOMPI_CONFIG.DEFAULT_WORKSPACE_ID;
 
@@ -205,6 +335,9 @@ const WompiPayment = () => {
                 })
                 .join("+")}`
             : "";
+
+        // const gatewayString = "-gateway=wompi";
+        // const totalUSDString = `-totalUSD=${totalUSD}`;
 
         const reference =
           purchaseType === "plan"
@@ -227,12 +360,12 @@ const WompiPayment = () => {
           "COP"
         );
 
-        console.log('230  >>>>>>>>> ', reference);
+        console.log("355  >>>>>>>>> ", reference);
 
         if (!signature) return;
 
         const baseUrl = window.location.origin;
-        const redirectUrl = `${baseUrl}/transaction-summary`;
+        const redirectUrl = `${baseUrl}/transaction-summary-wompi`;
 
         const script = document.createElement("script");
         script.src = "https://checkout.wompi.co/widget.js";
@@ -264,6 +397,7 @@ const WompiPayment = () => {
     selectedComplements,
     purchaseType,
     showWompiWidget,
+    paymentGateway,
   ]);
 
   if (loading) {
@@ -353,26 +487,60 @@ const WompiPayment = () => {
                     selectedComplements={selectedComplements}
                   />
                 )}
+
                 <div className="mt-4">
                   {shouldShowPayButton() && (
                     <>
-                      {/* Botón personalizado visible cuando no se muestra el widget */}
-                      {!showWompiWidget && (
+                      <PaymentGatewaySelector
+                        selectedGateway={paymentGateway}
+                        onChange={setPaymentGateway}
+                        enableRecurring={enableRecurringPayment}
+                        setEnableRecurring={setEnableRecurringPayment}
+                      />
+
+                      {paymentGateway === "wompi" ? (
+                        <>
+                          {/* Botón personalizado visible cuando no se muestra el widget */}
+                          {!showWompiWidget && (
+                            <button
+                              className="wompi-button-custom"
+                              onClick={handleWompiButtonClick}
+                              disabled={isProcessingPayment}
+                            >
+                              <img width={22} src={wompi} alt="" /> Pagar con
+                              Wompi
+                            </button>
+                          )}
+
+                          <div
+                            id="wompi-button-container"
+                            style={{
+                              display: showWompiWidget ? "block" : "none",
+                              visibility: showWompiWidget
+                                ? "visible"
+                                : "hidden",
+                            }}
+                          ></div>
+                        </>
+                      ) : (
                         <button
-                          className="wompi-button-custom"
-                          onClick={handlePayButtonClick}
+                          className="stripe-button-custom"
+                          onClick={handleStripePayment}
+                          disabled={isProcessingPayment}
                         >
-                          <img width={22} src={wompi} alt="" /> Paga con Wompi
+                          {isProcessingPayment ? (
+                            <span>
+                              <i className="bx bx-loader-alt bx-spin me-2"></i>
+                              Procesando...
+                            </span>
+                          ) : (
+                            <span>
+                              <i className="bx bxl-stripe me-2"></i>
+                              Pagar con Stripe
+                            </span>
+                          )}
                         </button>
                       )}
-
-                      <div
-                        id="wompi-button-container"
-                        style={{
-                          display: showWompiWidget ? "block" : "none",
-                          visibility: showWompiWidget ? "visible" : "hidden",
-                        }}
-                      ></div>
                     </>
                   )}
                 </div>

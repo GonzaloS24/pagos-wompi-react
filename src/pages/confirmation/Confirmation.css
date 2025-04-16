@@ -57,11 +57,27 @@
   margin-bottom: 2rem;
 }
 
+@media (max-width: 280px) {
+  .transaction-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .transaction-info-item {
   background-color: #edf4ff;
   padding: 1rem;
   border-radius: 8px;
   border: 1px solid rgba(0, 158, 227, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.info-value {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .info-label {
