@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 import "./Confirmation.css";
+import { STRIPE_CONFIG } from "../../api/stripeConfig";
 
 const EXCHANGE_RATE_API = "https://api.exchangerate-api.com/v4/latest/USD";
 
@@ -43,7 +44,7 @@ const StripeConfirmation = () => {
       const currentRate = await fetchExchangeRate();
 
       const response = await fetch(
-        `http://localhost:4000/checkout-session/${sessionId}`
+        `${STRIPE_CONFIG.CHECKOUT_URL}/checkout-session/${sessionId}`
       );
       const session = await response.json();
 
