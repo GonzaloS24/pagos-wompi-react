@@ -94,13 +94,13 @@ const PaymentSummary = ({
         )}
 
         <div className="d-flex justify-content-between align-items-center mb-2">
-          <span className="text-muted">Total USD:</span>
-          <span className="fw-medium">${totalUSD}</span>
+          <span className="text-muted">Total en dólares:</span>
+          <span className="fw-medium">USD ${totalUSD}</span>
         </div>
         <div className="d-flex justify-content-between align-items-center">
-          <span className="text-muted">Total COP:</span>
+          <span className="text-muted">Total en pesos colombianos:</span>
           <span style={{ color: "#009ee3" }} className="fw-bold">
-            $
+            COP {" "}
             {Math.round(
               convertUSDtoCOPCents(totalUSD, usdToCopRate) / 100
             ).toLocaleString("es-CO")}
