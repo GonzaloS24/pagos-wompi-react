@@ -1,0 +1,112 @@
+.payment-gateway-selector {
+  margin-bottom: 1.5rem;
+  background-color: #edf4ff;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.gateway-selector-header {
+  margin-bottom: 1rem;
+}
+
+.gateway-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #4a5568;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.gateway-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gateway-option {
+  flex: 1;
+  min-width: 160px;
+  background-color: #fff;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+  border-radius: 10px;
+  padding-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.gateway-option:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+  border-color: #009ee3;
+}
+
+.gateway-option.selected {
+  border-color: #009ee3;
+  box-shadow: 0 5px 15px rgba(0, 158, 227, 0.15);
+  background-color: rgba(0, 158, 227, 0.05);
+}
+
+.gateway-option img {
+  height: 70px;
+  object-fit: contain;
+}
+
+.gateway-description {
+  font-size: 0.8rem;
+  color: #4a5568;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.recurring-label {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  background-color: rgb(255, 255, 255);
+  color: #009ee3;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.recurring-option {
+  display: flex;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+}
+
+.recurring-option .form-check-input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.recurring-option .form-check-label {
+  font-size: 0.9rem;
+  color: #4a5568;
+  cursor: pointer;
+}
+
+.recurring-option .bx-info-circle {
+  font-size: 1rem;
+  color: #009ee3;
+  cursor: help;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .gateway-options {
+    flex-direction: column;
+  }
+
+  .gateway-option {
+    width: 100%;
+  }
+}

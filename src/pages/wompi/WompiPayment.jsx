@@ -13,6 +13,8 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import PaymentSummary from "../../components/PaymentSummary";
 import AIAssistants from "../../components/AIAssistants";
 import PurchaseTypeSelector from "../../components/PurchaseTypeSelector";
+import PaymentGatewaySelector from "../../components/PaymentGatewaySelector";
+import PaymentsWayForm from "../../components/PaymentsWayForm";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./WompiPayment.css";
 import ConfirmedInfo from "../../components/ConfirmedInfo";
@@ -27,6 +29,8 @@ const WompiPayment = () => {
   const isUpdatingButton = useRef(false);
   const [showWompiWidget, setShowWompiWidget] = useState(false);
   const wompiButtonRef = useRef(null);
+  const [selectedGateway, setSelectedGateway] = useState("wompi");
+  const [enableRecurring, setEnableRecurring] = useState(false);
 
   const {
     plans,
@@ -139,8 +143,102 @@ const WompiPayment = () => {
     }, 500);
   };
 
+  // Cálculo de montos y referencia
+  const calculatePriceAndReference = () => {
+    const assistantPrice = 20;
+    let totalAssistantsPrice;
+
+    if (purchaseType === "plan") {
+      const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
+      const paidAssistants = Math.max(
+        0,
+        selectedAssistants.length - freeAssistants
+      );
+      totalAssistantsPrice = paidAssistants * assistantPrice;
+    } else {
+      totalAssistantsPrice = selectedAssistants.length * assistantPrice;
+    }
+
+    const planPrice = purchaseType === "plan" ? selectedPlan.priceUSD : 0;
+
+    // Cálculo del precio total de los complementos
+    const totalComplementsPrice = selectedComplements.reduce(
+      (total, complement) => total + complement.totalPrice,
+      0
+    );
+
+    // Suma total en USD
+    const totalUSD = planPrice + totalAssistantsPrice + totalComplementsPrice;
+
+    // Convertir a COP
+    const priceCOPCents = convertUSDtoCOPCents(totalUSD, usdToCopRate);
+    const priceInCOP = Math.round(priceCOPCents / 100);
+
+    // Generar la referencia
+    const workspaceId =
+      urlParams?.workspace_id || WOMPI_CONFIG.DEFAULT_WORKSPACE_ID;
+
+    const assistantsString =
+      selectedAssistants.length > 0
+        ? `-assistants=${selectedAssistants.join("+")}`
+        : "";
+
+    const complementsString =
+      selectedComplements.length > 0
+        ? `-complements=${selectedComplements
+            .map((c) => {
+              if (c.id === "webhooks") {
+                return `${c.id}_${c.quantity}_${c.selectedBot.flow_ns}`;
+              }
+              return `${c.id}_${c.quantity}`;
+            })
+            .join("+")}`
+        : "";
+
+    const recurringString = enableRecurring ? "-recurring=true" : "";
+
+    const reference =
+      purchaseType === "plan"
+        ? `plan_id=${
+            selectedPlan.id
+          }-workspace_id=${workspaceId}-workspace_name=${
+            urlParams?.workspace_name
+          }-owner_email=${urlParams?.owner_email}-phone_number=${
+            urlParams?.phone_number
+          }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`
+        : `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
+            urlParams?.workspace_name
+          }-owner_email=${urlParams?.owner_email}-phone_number=${
+            urlParams?.phone_number
+          }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`;
+
+    // Generar descripción legible
+    let orderDescription =
+      purchaseType === "plan"
+        ? `Plan ${selectedPlan.name}`
+        : "Asistentes adicionales";
+
+    if (selectedAssistants.length > 0) {
+      orderDescription += ` con ${selectedAssistants.length} asistente(s)`;
+    }
+
+    if (selectedComplements.length > 0) {
+      orderDescription += ` y ${selectedComplements.length} complemento(s)`;
+    }
+
+    return {
+      totalUSD,
+      priceInCOP,
+      priceCOPCents,
+      reference,
+      orderDescription,
+    };
+  };
+
   useEffect(() => {
     const updateWompiButton = async () => {
+      if (selectedGateway !== "wompi") return;
+
       const container = document.getElementById("wompi-button-container");
       if (!container || !isDataConfirmed || !showWompiWidget) return;
 
@@ -160,74 +258,13 @@ const WompiPayment = () => {
           return;
         }
 
-        const assistantPrice = 20;
-        let totalAssistantsPrice;
-        if (purchaseType === "plan") {
-          const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
-          const paidAssistants = Math.max(
-            0,
-            selectedAssistants.length - freeAssistants
-          );
-          totalAssistantsPrice = paidAssistants * assistantPrice;
-        } else {
-          totalAssistantsPrice = selectedAssistants.length * assistantPrice;
-        }
-
-        const planPrice = purchaseType === "plan" ? selectedPlan.priceUSD : 0;
-
-        // Cálculo del precio total de los complementos
-        const totalComplementsPrice = selectedComplements.reduce(
-          (total, complement) => total + complement.totalPrice,
-          0
-        );
-
-        // Suma total en USD
-        const totalUSD =
-          planPrice + totalAssistantsPrice + totalComplementsPrice;
-
-        const priceCOPCents = convertUSDtoCOPCents(totalUSD, usdToCopRate);
-        const workspaceId =
-          urlParams?.workspace_id || WOMPI_CONFIG.DEFAULT_WORKSPACE_ID;
-
-        const assistantsString =
-          selectedAssistants.length > 0
-            ? `-assistants=${selectedAssistants.join("+")}`
-            : "";
-
-        const complementsString =
-          selectedComplements.length > 0
-            ? `-complements=${selectedComplements
-                .map((c) => {
-                  if (c.id === "webhooks") {
-                    return `${c.id}_${c.quantity}_${c.selectedBot.flow_ns}`;
-                  }
-                  return `${c.id}_${c.quantity}`;
-                })
-                .join("+")}`
-            : "";
-
-        const reference =
-          purchaseType === "plan"
-            ? `plan_id=${
-                selectedPlan.id
-              }-workspace_id=${workspaceId}-workspace_name=${
-                urlParams?.workspace_name
-              }-owner_email=${urlParams?.owner_email}-phone_number=${
-                urlParams?.phone_number
-              }${assistantsString}${complementsString}-reference${Date.now()}`
-            : `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
-                urlParams?.workspace_name
-              }-owner_email=${urlParams?.owner_email}-phone_number=${
-                urlParams?.phone_number
-              }${assistantsString}${complementsString}-reference${Date.now()}`;
+        const { priceCOPCents, reference } = calculatePriceAndReference();
 
         const signature = await generateIntegritySignature(
           reference,
           priceCOPCents,
           "COP"
         );
-
-        console.log('230  >>>>>>>>> ', reference);
 
         if (!signature) return;
 
@@ -264,6 +301,8 @@ const WompiPayment = () => {
     selectedComplements,
     purchaseType,
     showWompiWidget,
+    selectedGateway,
+    enableRecurring,
   ]);
 
   if (loading) {
@@ -353,29 +392,50 @@ const WompiPayment = () => {
                     selectedComplements={selectedComplements}
                   />
                 )}
-                <div className="mt-4">
-                  {shouldShowPayButton() && (
-                    <>
-                      {/* Botón personalizado visible cuando no se muestra el widget */}
-                      {!showWompiWidget && (
-                        <button
-                          className="wompi-button-custom"
-                          onClick={handlePayButtonClick}
-                        >
-                          <img width={22} src={wompi} alt="" /> Paga con Wompi
-                        </button>
-                      )}
 
-                      <div
-                        id="wompi-button-container"
-                        style={{
-                          display: showWompiWidget ? "block" : "none",
-                          visibility: showWompiWidget ? "visible" : "hidden",
-                        }}
-                      ></div>
-                    </>
-                  )}
-                </div>
+                {shouldShowPayButton() && (
+                  <div className="mt-4">
+                    <PaymentGatewaySelector
+                      selectedGateway={selectedGateway}
+                      onChange={setSelectedGateway}
+                      enableRecurring={enableRecurring}
+                      setEnableRecurring={setEnableRecurring}
+                    />
+
+                    {selectedGateway === "wompi" ? (
+                      <>
+                        {/* Botón personalizado visible cuando no se muestra el widget */}
+                        {!showWompiWidget && (
+                          <button
+                            className="wompi-button-custom"
+                            onClick={handlePayButtonClick}
+                          >
+                            <img width={22} src={wompi} alt="" /> Paga con Wompi
+                          </button>
+                        )}
+
+                        <div
+                          id="wompi-button-container"
+                          style={{
+                            display: showWompiWidget ? "block" : "none",
+                            visibility: showWompiWidget ? "visible" : "hidden",
+                          }}
+                        ></div>
+                      </>
+                    ) : (
+                      /* Formulario de Payments Way */
+                      <PaymentsWayForm
+                        amount={calculatePriceAndReference().priceInCOP}
+                        orderDescription={
+                          calculatePriceAndReference().orderDescription
+                        }
+                        formData={formData}
+                        reference={calculatePriceAndReference().reference}
+                        enableRecurring={enableRecurring}
+                      />
+                    )}
+                  </div>
+                )}
                 {/* <TestTransactionPanel /> */}
               </div>
             </div>
