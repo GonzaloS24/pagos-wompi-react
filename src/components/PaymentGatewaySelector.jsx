@@ -28,7 +28,7 @@ const PaymentGatewaySelector = ({
         >
           <img src={wompiLogo} alt="Wompi" width={100} />
           <span className="gateway-description">
-            Tarjetas, PSE, Bancolombia Transfer
+            Tarjetas, PSE, <br /> Bancolombia Transfer
           </span>
         </div>
 
@@ -39,7 +39,7 @@ const PaymentGatewaySelector = ({
           onClick={() => onChange("paymentsway")}
         >
           <img src={paymentsWayLogo} alt="Payments Way" width={100} />
-          <span className="recurring-label">Pagos recurrentes</span>
+          <span className="gateway-description">Tarjetas, PSE, <br /> Pagos recurrentes</span>
         </div>
       </div>
 

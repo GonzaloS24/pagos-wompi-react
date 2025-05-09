@@ -3,7 +3,7 @@
 }
 
 .payments-way-form button {
-  background-color: #e0043c;
+  background-color: #801c2c;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -19,7 +19,7 @@
 }
 
 .payments-way-form button:hover {
-  background-color: #e0043bda;
+  background-color: #801c2de1;
 }
 
 .payments-way-form button i {

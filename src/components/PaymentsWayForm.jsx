@@ -6,7 +6,7 @@ const PAYMENTS_WAY_CONFIG = {
   MERCHANT_ID: "3192",
   FORM_ID: "3263",
   TERMINAL_ID: "2372",
-  COLOR_BASE: "#009ee3",
+  COLOR_BASE: "#801c2c",
   RESPONSE_URL: window.location.origin + "/transaction-summary",
 };
 
@@ -97,7 +97,7 @@ const PaymentsWayForm = ({
         <input
           name="client_numdoc"
           type="hidden"
-          value={formData.workspace_id || ""}
+          value={formData.document_number || ""}
         />
         <input
           name="response_url"
