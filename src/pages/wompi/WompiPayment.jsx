@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
@@ -9,17 +10,18 @@ import {
   convertUSDtoCOPCents,
 } from "../../utils/wompiHelpers";
 import { WOMPI_CONFIG } from "../../api/wompiConfig";
+import { hasRecurringPlan } from "../../api/paymentsWayRecurringConfig";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import PaymentSummary from "../../components/PaymentSummary";
 import AIAssistants from "../../components/AIAssistants";
 import PurchaseTypeSelector from "../../components/PurchaseTypeSelector";
 import PaymentGatewaySelector from "../../components/PaymentGatewaySelector";
 import PaymentsWayForm from "../../components/PaymentsWayForm";
+import RecurringPaymentButton from "../../components/RecurringPaymentButton";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./WompiPayment.css";
 import ConfirmedInfo from "../../components/ConfirmedInfo";
 import Complements from "../../components/Complements";
-// import TestTransactionPanel from "../confirmation/TestTransactionPanel";
 
 const WompiPayment = () => {
   const [selectedAssistants, setSelectedAssistants] = useState([]);
@@ -94,6 +96,8 @@ const WompiPayment = () => {
     setPurchaseType(type);
     setSelectedAssistants([]);
     setShowWompiWidget(false);
+    setEnableRecurring(false);
+    setSelectedGateway("wompi");
 
     if (complementsRef.current) {
       complementsRef.current.reset();
@@ -107,7 +111,35 @@ const WompiPayment = () => {
     }
   };
 
-  // Determinar si mostrar los asistentes y complementos
+  // Verificar si se puede mostrar la opción de pago recurrente
+  const canShowRecurringOption = () => {
+    if (purchaseType !== "plan" || !selectedPlan) return false;
+
+    // Solo mostrar si:
+    // 1. El plan tiene soporte para pagos recurrentes
+    // 2. Solo hay 1 asistente seleccionado (el gratuito)
+    // 3. No hay complementos seleccionados
+    const hasRecurringSupport = hasRecurringPlan(selectedPlan.id);
+    const onlyFreeAssistant = selectedAssistants.length === 1;
+    const noComplements = selectedComplements.length === 0;
+
+    return hasRecurringSupport && onlyFreeAssistant && noComplements;
+  };
+
+  const isRecurringPayment = () => {
+    return (
+      selectedGateway === "paymentsway" &&
+      enableRecurring &&
+      canShowRecurringOption()
+    );
+  };
+
+  useEffect(() => {
+    if (!canShowRecurringOption() && enableRecurring) {
+      setEnableRecurring(false);
+    }
+  }, [selectedAssistants, selectedComplements, selectedPlan, enableRecurring]);
+
   const shouldShowAssistants = () => {
     if (purchaseType === "assistants") return true;
     if (purchaseType === "plan") return selectedPlan !== null;
@@ -237,7 +269,7 @@ const WompiPayment = () => {
 
   useEffect(() => {
     const updateWompiButton = async () => {
-      if (selectedGateway !== "wompi") return;
+      if (selectedGateway !== "wompi" || isRecurringPayment()) return;
 
       const container = document.getElementById("wompi-button-container");
       if (!container || !isDataConfirmed || !showWompiWidget) return;
@@ -349,6 +381,7 @@ const WompiPayment = () => {
                         const plan = plans.find((p) => p.id === e.target.value);
                         setSelectedPlan(plan);
                         setShowWompiWidget(false);
+                        setEnableRecurring(false); // Reset recurring when plan changes
                       }}
                       value={selectedPlan?.id || ""}
                       disabled={Boolean(urlParams?.plan_id)}
@@ -400,11 +433,18 @@ const WompiPayment = () => {
                       onChange={setSelectedGateway}
                       enableRecurring={enableRecurring}
                       setEnableRecurring={setEnableRecurring}
+                      showRecurringOption={canShowRecurringOption()}
+                      isRecurringPayment={isRecurringPayment()}
                     />
 
-                    {selectedGateway === "wompi" ? (
+                    {isRecurringPayment() ? (
+                      // Mostrar botón de pago recurrente
+                      <RecurringPaymentButton
+                        planId={selectedPlan.id}
+                        enableRecurring={enableRecurring}
+                      />
+                    ) : selectedGateway === "wompi" ? (
                       <>
-                        {/* Botón personalizado visible cuando no se muestra el widget */}
                         {!showWompiWidget && (
                           <button
                             className="wompi-button-custom"
@@ -423,7 +463,7 @@ const WompiPayment = () => {
                         ></div>
                       </>
                     ) : (
-                      /* Formulario de Payments Way */
+                      // Mostrar formulario de Payments Way normal
                       <PaymentsWayForm
                         amount={calculatePriceAndReference().priceInCOP}
                         orderDescription={
@@ -436,7 +476,6 @@ const WompiPayment = () => {
                     )}
                   </div>
                 )}
-                {/* <TestTransactionPanel /> */}
               </div>
             </div>
           )}

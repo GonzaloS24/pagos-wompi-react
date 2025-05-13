@@ -81,6 +81,7 @@ export const useWompiPayment = () => {
         // Obtener los planes desde fetchPlans
         const fetchedPlans = await fetchPlans();
         setPlans(fetchedPlans);
+        console.log('84  >>>>>>>>> ', fetchedPlans);
 
         // Buscar plan seleccionado desde los parámetros de la URL
         const params = new URLSearchParams(window.location.search);

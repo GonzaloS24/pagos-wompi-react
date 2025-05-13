@@ -341,18 +341,18 @@ input[type="checkbox"]:checked {
   .form-check {
     padding-right: 10px;
   }
-  
+
   .form-check-label {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
   }
-  
+
   .assistant-description {
     margin-top: 4px;
     margin-bottom: 4px;
   }
-  
+
   .badge {
     margin-top: 4px;
   }
@@ -363,7 +363,7 @@ input[type="checkbox"]:checked {
     display: flex;
     flex-direction: column;
   }
-  
+
   .form-check {
     margin-bottom: 15px !important;
   }
@@ -495,5 +495,59 @@ input[type="checkbox"]:checked {
   border: 0px;
   color: white;
   line-height: 40px;
+  display: inline-block;
+}
+
+/* Estilos para pagos recurrentes */
+.recurring-payment-container {
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.recurring-payment-option.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.recurring-payment-option.disabled .form-check-input {
+  cursor: not-allowed;
+}
+
+.recurring-alert {
+  background-color: #e3f2fd;
+  border: 1px solid rgba(25, 118, 210, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recurring-alert .alert-title {
+  color: #1976d2;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.recurring-alert .alert-content {
+  color: #424242;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.payment-gateway-selector .gateway-option.selected.recurring {
+  background-color: rgba(25, 118, 210, 0.05);
+  border-color: #1976d2;
+}
+
+.payment-gateway-selector .recurring-label {
+  background-color: #1976d2;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 4px;
   display: inline-block;
 }

@@ -9,7 +9,62 @@ const PaymentGatewaySelector = ({
   onChange,
   enableRecurring,
   setEnableRecurring,
+  showRecurringOption,
+  isRecurringPayment,
 }) => {
+  const handleRecurringChange = (e) => {
+    const isChecked = e.target.checked;
+    setEnableRecurring(isChecked);
+
+    // Si se activa el pago recurrente, cambiar automáticamente a Payments Way
+    if (isChecked) {
+      onChange("paymentsway");
+    }
+  };
+
+  // Si es pago recurrente, solo mostrar Payments Way
+  if (isRecurringPayment) {
+    return (
+      <div className="payment-gateway-selector mb-3">
+        <div className="gateway-selector-header mb-2">
+          <span className="gateway-label">Método de pago seleccionado:</span>
+        </div>
+
+        <div className="gateway-options">
+          <div className="gateway-option selected">
+            <img src={paymentsWayLogo} alt="Payments Way" width={100} />
+            <span className="gateway-description">
+              Pago Recurrente
+              <br />
+              <span className="recurring-label">Automático Mensual</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Mostrar opción de pago recurrente activada */}
+        <div className="recurring-option mt-2 recurring-active">
+          <input
+            type="checkbox"
+            id="recurringPaymentCheck"
+            className="form-check-input"
+            checked={enableRecurring}
+            onChange={handleRecurringChange}
+          />
+          <label
+            htmlFor="recurringPaymentCheck"
+            className="form-check-label ms-2"
+          >
+            <strong>✓ Pago automático mensual habilitado</strong>
+          </label>
+          <i
+            className="bx bx-info-circle ms-1"
+            title="Desactiva esta opción si no quieres pago recurrente"
+          ></i>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="payment-gateway-selector mb-3">
       <div className="gateway-selector-header mb-2">
@@ -20,15 +75,24 @@ const PaymentGatewaySelector = ({
         <div
           className={`gateway-option ${
             selectedGateway === "wompi" ? "selected" : ""
-          }`}
+          } ${enableRecurring ? "disabled" : ""}`}
           onClick={() => {
-            onChange("wompi");
-            if (enableRecurring) setEnableRecurring(false);
+            if (!enableRecurring) {
+              onChange("wompi");
+            }
           }}
         >
           <img src={wompiLogo} alt="Wompi" width={100} />
           <span className="gateway-description">
             Tarjetas, PSE, <br /> Bancolombia Transfer
+            {enableRecurring && (
+              <>
+                <br />
+                <small className="text-muted">
+                  (No disponible con pago recurrente)
+                </small>
+              </>
+            )}
           </span>
         </div>
 
@@ -39,18 +103,20 @@ const PaymentGatewaySelector = ({
           onClick={() => onChange("paymentsway")}
         >
           <img src={paymentsWayLogo} alt="Payments Way" width={100} />
-          <span className="gateway-description">Tarjetas, PSE, <br /> Pagos recurrentes</span>
+          <span className="gateway-description">
+            Tarjetas, PSE, <br /> Pagos recurrentes
+          </span>
         </div>
       </div>
 
-      {/* {selectedGateway === "paymentsway" && (
+      {showRecurringOption && (
         <div className="recurring-option mt-2">
           <input
             type="checkbox"
             id="recurringPaymentCheck"
             className="form-check-input"
             checked={enableRecurring}
-            onChange={(e) => setEnableRecurring(e.target.checked)}
+            onChange={handleRecurringChange}
           />
           <label
             htmlFor="recurringPaymentCheck"
@@ -60,10 +126,10 @@ const PaymentGatewaySelector = ({
           </label>
           <i
             className="bx bx-info-circle ms-1"
-            title="Los pagos automáticos permiten que se cargue automáticamente tu tarjeta de forma mensual"
+            title="Los pagos automáticos permiten que se cargue automáticamente tu tarjeta de forma mensual. Solo disponible con Payments Way."
           ></i>
         </div>
-      )} */}
+      )}
     </div>
   );
 };
@@ -73,6 +139,13 @@ PaymentGatewaySelector.propTypes = {
   onChange: PropTypes.func.isRequired,
   enableRecurring: PropTypes.bool.isRequired,
   setEnableRecurring: PropTypes.func.isRequired,
+  showRecurringOption: PropTypes.bool,
+  isRecurringPayment: PropTypes.bool,
+};
+
+PaymentGatewaySelector.defaultProps = {
+  showRecurringOption: false,
+  isRecurringPayment: false,
 };
 
 export default memo(PaymentGatewaySelector);
