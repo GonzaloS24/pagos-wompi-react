@@ -381,7 +381,7 @@ const WompiPayment = () => {
                         const plan = plans.find((p) => p.id === e.target.value);
                         setSelectedPlan(plan);
                         setShowWompiWidget(false);
-                        setEnableRecurring(false); // Reset recurring when plan changes
+                        setEnableRecurring(false);
                       }}
                       value={selectedPlan?.id || ""}
                       disabled={Boolean(urlParams?.plan_id)}
@@ -463,7 +463,7 @@ const WompiPayment = () => {
                         ></div>
                       </>
                     ) : (
-                      // Mostrar formulario de Payments Way normal
+                      // Mostrar formulario de Payments Way
                       <PaymentsWayForm
                         amount={calculatePriceAndReference().priceInCOP}
                         orderDescription={

@@ -34,9 +34,9 @@ const PaymentGatewaySelector = ({
           <div className="gateway-option selected">
             <img src={paymentsWayLogo} alt="Payments Way" width={100} />
             <span className="gateway-description">
-              Pago Recurrente
+              <span className="recurring-label">Pago Automático Mensual</span>
               <br />
-              <span className="recurring-label">Automático Mensual</span>
+              Solo disponible con Payments Way
             </span>
           </div>
         </div>
@@ -54,12 +54,8 @@ const PaymentGatewaySelector = ({
             htmlFor="recurringPaymentCheck"
             className="form-check-label ms-2"
           >
-            <strong>✓ Pago automático mensual habilitado</strong>
+            <span>Pago automático mensual habilitado</span>
           </label>
-          <i
-            className="bx bx-info-circle ms-1"
-            title="Desactiva esta opción si no quieres pago recurrente"
-          ></i>
         </div>
       </div>
     );

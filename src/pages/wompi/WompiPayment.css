@@ -498,15 +498,6 @@ input[type="checkbox"]:checked {
   display: inline-block;
 }
 
-/* Estilos para pagos recurrentes */
-.recurring-payment-container {
-  background-color: #f8f9fa;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
 .recurring-payment-option.disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -542,7 +533,7 @@ input[type="checkbox"]:checked {
 }
 
 .payment-gateway-selector .recurring-label {
-  background-color: #1976d2;
+  background-color: #009ee3;
   color: white;
   padding: 2px 8px;
   border-radius: 12px;
