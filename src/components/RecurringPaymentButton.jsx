@@ -19,15 +19,6 @@ const RecurringPaymentButton = ({ planId, enableRecurring }) => {
 
   return (
     <div className="recurring-payment-container">
-      {/* <div className="recurring-payment-info mb-3">
-        <div className="alert alert-info">
-          <strong>🔄 Pago Recurrente Automático</strong>
-          <p className="mb-0 mt-2">
-            Tu plan se renovará automáticamente cada mes.
-          </p>
-        </div>
-      </div> */}
-
       <button
         className="btn-recurring-payment"
         onClick={handleRecurringPayment}

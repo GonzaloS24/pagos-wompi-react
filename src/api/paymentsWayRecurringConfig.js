@@ -1,5 +1,6 @@
 export const RECURRING_PLANS_URLS = {
   'business': 'https://links.paymentsway.com.co/quv9be',      // Chatea Pro Start - 1000 usuarios
+  // business': 'https://links.paymentsway.com.co/ujbrts',    // 1000 usuarios - sandbox
   'business_lite': 'https://links.paymentsway.com.co/h25q95', // Chatea Pro Advanced - 10000 usuarios  
   'custom_plan3': 'https://links.paymentsway.com.co/q6r2gm',  // Chatea Pro Plus - 20000 usuarios
   'business_large': 'https://links.paymentsway.com.co/auqtbs' // Chatea Pro Master - 50000 usuarios
