@@ -111,19 +111,41 @@ const WompiPayment = () => {
     }
   };
 
-  // Verificar si se puede mostrar la opción de pago recurrente
   const canShowRecurringOption = () => {
-    if (purchaseType !== "plan" || !selectedPlan) return false;
+    if (purchaseType !== "plan" || !selectedPlan) {
+      console.log(
+        "No se puede mostrar recurrente: no es plan o no hay plan seleccionado"
+      );
+      return false;
+    }
 
     // Solo mostrar si:
-    // 1. El plan tiene soporte para pagos recurrentes
-    // 2. Solo hay 1 asistente seleccionado (el gratuito)
-    // 3. No hay complementos seleccionados
-    const hasRecurringSupport = hasRecurringPlan(selectedPlan.id);
-    const onlyFreeAssistant = selectedAssistants.length === 1;
+    // 1. Hay al menos 1 asistente seleccionado
+    // 2. No hay complementos seleccionados
+    const hasAssistants = selectedAssistants.length > 0;
     const noComplements = selectedComplements.length === 0;
+    const additionalAssistants = Math.max(0, selectedAssistants.length - 1);
 
-    return hasRecurringSupport && onlyFreeAssistant && noComplements;
+    // Verificar si hay configuración para esta combinación
+    const hasRecurringConfig = hasRecurringPlan(
+      selectedPlan.id,
+      additionalAssistants
+    );
+
+    console.log("Verificando condiciones para recurrente:", {
+      planId: selectedPlan.id,
+      hasAssistants,
+      additionalAssistants,
+      hasRecurringConfig,
+      noComplements,
+      assistantsCount: selectedAssistants.length,
+      complementsCount: selectedComplements.length,
+    });
+
+    // verificamos que haya al menos un asistente y no haya complementos
+    const result = hasAssistants && noComplements;
+    console.log("Resultado canShowRecurringOption:", result);
+    return result;
   };
 
   const isRecurringPayment = () => {
@@ -135,10 +157,11 @@ const WompiPayment = () => {
   };
 
   useEffect(() => {
-    if (!canShowRecurringOption() && enableRecurring) {
+    if (selectedComplements.length > 0 && enableRecurring) {
+      console.log("Reseteando enableRecurring porque hay complementos");
       setEnableRecurring(false);
     }
-  }, [selectedAssistants, selectedComplements, selectedPlan, enableRecurring]);
+  }, [selectedComplements, enableRecurring]);
 
   const shouldShowAssistants = () => {
     if (purchaseType === "assistants") return true;
@@ -442,6 +465,7 @@ const WompiPayment = () => {
                       <RecurringPaymentButton
                         planId={selectedPlan.id}
                         enableRecurring={enableRecurring}
+                        selectedAssistants={selectedAssistants}
                       />
                     ) : selectedGateway === "wompi" ? (
                       <>

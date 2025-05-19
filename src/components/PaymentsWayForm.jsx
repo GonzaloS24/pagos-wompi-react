@@ -11,20 +11,10 @@ const PAYMENTS_WAY_CONFIG = {
   RESPONSE_URL: "http://www.test.com/response",
 };
 
-// production
-
-// const PAYMENTS_WAY_CONFIG = {
-//   MERCHANT_ID: "3192",
-//   FORM_ID: "3263",
-//   TERMINAL_ID: "2372",
-//   COLOR_BASE: "#801c2c",
-//   RESPONSE_URL: window.location.origin + "/transaction-summary",
-// };
-
 const PaymentsWayForm = ({
   amount,
   orderDescription,
-  // formData,
+  formData,
   reference,
   enableRecurring,
   onSubmit,
@@ -42,6 +32,15 @@ const PaymentsWayForm = ({
 
   const additionalData = JSON.stringify({
     reference: reference,
+  });
+
+  // Log para debugging
+  console.log("PaymentsWayForm - Preparando formulario:", {
+    amount: formattedAmount,
+    orderDescription: fullDescription,
+    reference,
+    enableRecurring,
+    orderNumber,
   });
 
   useEffect(() => {
@@ -87,12 +86,32 @@ const PaymentsWayForm = ({
           type="hidden"
           value={enableRecurring ? "true" : "false"}
         />
-        <input name="client_email" type="hidden" />
-        <input name="client_phone" type="hidden" />
-        <input name="client_firstname" type="hidden" />
-        <input name="client_lastname" type="hidden" />
-        <input name="client_doctype" type="hidden" value="4" />{" "}
-        <input name="client_numdoc" type="hidden" />
+        <input
+          name="client_email"
+          type="hidden"
+          value={formData?.owner_email || ""}
+        />
+        <input
+          name="client_phone"
+          type="hidden"
+          value={formData?.phone_number || ""}
+        />
+        <input
+          name="client_firstname"
+          type="hidden"
+          value={formData?.owner_name?.split(" ")[0] || ""}
+        />
+        <input
+          name="client_lastname"
+          type="hidden"
+          value={formData?.owner_name?.split(" ").slice(1).join(" ") || ""}
+        />
+        <input name="client_doctype" type="hidden" value="4" />
+        <input
+          name="client_numdoc"
+          type="hidden"
+          value={formData?.document_number || ""}
+        />
         <input
           name="response_url"
           type="hidden"

@@ -1,20 +1,40 @@
 /* eslint-disable react/prop-types */
-import { getRecurringPlanUrl } from "../api/paymentsWayRecurringConfig";
+import {
+  getRecurringPlanUrl,
+  getPlanDescription,
+} from "../api/paymentsWayRecurringConfig";
 import "./RecurringPaymentButton.css";
 
-const RecurringPaymentButton = ({ planId, enableRecurring }) => {
+const RecurringPaymentButton = ({ planId, selectedAssistants }) => {
+  const additionalAssistants = Math.max(0, selectedAssistants.length - 1);
+
   const handleRecurringPayment = () => {
-    const url = getRecurringPlanUrl(planId);
-    console.log("Intentando abrir URL de pago recurrente:", url);
+    const url = getRecurringPlanUrl(planId, additionalAssistants);
+
     if (url) {
+      console.log("Redirigiendo a URL de pago recurrente:", url);
       window.location.href = url;
     } else {
-      console.error("No se encontró URL para el plan:", planId);
+      alert(
+        `Lo sentimos, aún no tenemos configurado el pago recurrente para ${getPlanDescription(
+          planId,
+          selectedAssistants.length
+        )}. Por favor, contacta a soporte para más información.`
+      );
     }
   };
 
-  if (!enableRecurring || !getRecurringPlanUrl(planId)) {
-    return null;
+  if (!getRecurringPlanUrl(planId, additionalAssistants)) {
+    return (
+      <div className="recurring-payment-container">
+        <button
+          className="btn-recurring-payment btn-recurring-disabled"
+          disabled
+        >
+          Configuración No Disponible
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -23,7 +43,8 @@ const RecurringPaymentButton = ({ planId, enableRecurring }) => {
         className="btn-recurring-payment"
         onClick={handleRecurringPayment}
       >
-        Pago Automático Mensual
+        <i className="bx bx-credit-card"></i>
+        Pago automático mensual
       </button>
     </div>
   );

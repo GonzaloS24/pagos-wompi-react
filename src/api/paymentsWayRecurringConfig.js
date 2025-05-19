@@ -1,22 +1,65 @@
+const PLAN_IDS = {
+  BUSINESS: "business",
+  BUSINESS_LITE: "business_lite",
+  CUSTOM_PLAN3: "custom_plan3",
+  BUSINESS_LARGE: "business_large",
+};
+
+const PLAN_NAMES = {
+  [PLAN_IDS.BUSINESS]: "Chatea Pro Start (1000 usuarios)",
+  [PLAN_IDS.BUSINESS_LITE]: "Chatea Pro Advanced (10000 usuarios)",
+  [PLAN_IDS.CUSTOM_PLAN3]: "Chatea Pro Plus (20000 usuarios)",
+  [PLAN_IDS.BUSINESS_LARGE]: "Chatea Pro Master (50000 usuarios)",
+};
+
 export const RECURRING_PLANS_URLS = {
-  'business': 'https://links.paymentsway.com.co/quv9be',      // Chatea Pro Start - 1000 usuarios
-  // business': 'https://links.paymentsway.com.co/ujbrts',    // 1000 usuarios - sandbox
-  'business_lite': 'https://links.paymentsway.com.co/h25q95', // Chatea Pro Advanced - 10000 usuarios  
-  'custom_plan3': 'https://links.paymentsway.com.co/q6r2gm',  // Chatea Pro Plus - 20000 usuarios
-  'business_large': 'https://links.paymentsway.com.co/auqtbs' // Chatea Pro Master - 50000 usuarios
+  // Chatea Pro Start (1000 usuarios)
+  [`${PLAN_IDS.BUSINESS}_0`]: "https://links.paymentsway.com.co/phh6ym", // Solo asistente gratuito
+  [`${PLAN_IDS.BUSINESS}_1`]: "https://links.paymentsway.com.co/l1eril", // 1 asistente adicional (total 2)
+  [`${PLAN_IDS.BUSINESS}_2`]: "https://links.paymentsway.com.co/1c0l5b", // 2 asistentes adicionales (total 3)
+
+  // Chatea Pro Advanced (10000 usuarios)
+  [`${PLAN_IDS.BUSINESS_LITE}_0`]: "https://links.paymentsway.com.co/pr0tx9", // Solo asistente gratuito
+  [`${PLAN_IDS.BUSINESS_LITE}_1`]: "https://links.paymentsway.com.co/5mxqyd", // 1 asistente adicional (total 2)
+  [`${PLAN_IDS.BUSINESS_LITE}_2`]: "https://links.paymentsway.com.co/pscpao", // 2 asistentes adicionales (total 3)
+
+  // Chatea Pro Plus (20000 usuarios)
+  [`${PLAN_IDS.CUSTOM_PLAN3}_0`]: "https://links.paymentsway.com.co/6tghut", // Solo asistente gratuito
+  [`${PLAN_IDS.CUSTOM_PLAN3}_1`]: "https://links.paymentsway.com.co/9sutww", // 1 asistente adicional (total 2)
+  [`${PLAN_IDS.CUSTOM_PLAN3}_2`]: "https://links.paymentsway.com.co/qzvuct", // 2 asistentes adicionales (total 3)
+
+  // Chatea Pro Master (50000 usuarios)
+  [`${PLAN_IDS.BUSINESS_LARGE}_0`]: "https://links.paymentsway.com.co/4h0zdl", // Solo asistente gratuito
+  [`${PLAN_IDS.BUSINESS_LARGE}_1`]: "https://links.paymentsway.com.co/enzthr", // 1 asistente adicional (total 2)
+  [`${PLAN_IDS.BUSINESS_LARGE}_2`]: "https://links.paymentsway.com.co/xs0t9e", // 2 asistentes adicionales (total 3)
 };
 
-// Función para obtener la URL de pago recurrente según el plan
-export const getRecurringPlanUrl = (planId) => {
-  console.log('Buscando URL para plan:', planId);
-  const url = RECURRING_PLANS_URLS[planId];
-  console.log('URL encontrada:', url);
-  return url || null;
+export const getRecurringPlanUrl = (planId, additionalAssistants = 0) => {
+  const recurringPlanKey = `${planId}_${additionalAssistants}`;
+  const url = RECURRING_PLANS_URLS[recurringPlanKey];
+  return url;
 };
 
-// Función para verificar si un plan tiene pago recurrente disponible
-export const hasRecurringPlan = (planId) => {
-  const result = Boolean(RECURRING_PLANS_URLS[planId]);
-  console.log(`Plan ${planId} tiene pago recurrente:`, result);
+export const hasRecurringPlan = (planId, additionalAssistants = 0) => {
+  const result = Boolean(getRecurringPlanUrl(planId, additionalAssistants));
+  console.log(
+    `Combinación ${planId} con ${additionalAssistants} asistentes adicionales tiene pago recurrente:`,
+    result
+  );
   return result;
+};
+
+export const getPlanDescription = (planId, totalAssistants) => {
+  const planName = PLAN_NAMES[planId] || planId;
+  const additionalAssistants = Math.max(0, totalAssistants - 1);
+
+  let description = `${planName} + 1 asistente gratuito`;
+
+  if (additionalAssistants > 0) {
+    description += ` + ${additionalAssistants} asistente${
+      additionalAssistants > 1 ? "s" : ""
+    } adicional${additionalAssistants > 1 ? "es" : ""}`;
+  }
+
+  return description;
 };
