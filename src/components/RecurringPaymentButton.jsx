@@ -43,7 +43,6 @@ const RecurringPaymentButton = ({ planId, selectedAssistants }) => {
         className="btn-recurring-payment"
         onClick={handleRecurringPayment}
       >
-        <i className="bx bx-credit-card"></i>
         Pago automático mensual
       </button>
     </div>

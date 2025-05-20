@@ -3,18 +3,26 @@ import PropTypes from "prop-types";
 import "./PaymentsWayForm.css";
 
 // sandbox
+// const PAYMENTS_WAY_CONFIG = {
+//   MERCHANT_ID: "647",
+//   FORM_ID: "542",
+//   TERMINAL_ID: "529",
+//   COLOR_BASE: "#801c2c",
+//   RESPONSE_URL: "https://chateapro.app/",
+// };
+
+// production
 const PAYMENTS_WAY_CONFIG = {
-  MERCHANT_ID: "647",
-  FORM_ID: "542",
-  TERMINAL_ID: "529",
+  MERCHANT_ID: "3192",
+  FORM_ID: "3234",
+  TERMINAL_ID: "2372",
   COLOR_BASE: "#801c2c",
-  RESPONSE_URL: "http://www.test.com/response",
+  RESPONSE_URL: "https://chateapro.app/",
 };
 
 const PaymentsWayForm = ({
   amount,
   orderDescription,
-  formData,
   reference,
   enableRecurring,
   onSubmit,
@@ -54,7 +62,8 @@ const PaymentsWayForm = ({
       <form
         ref={formRef}
         method="post"
-        action="https://merchantpruebas.vepay.com.co/cartaspago/redirect"
+        action="https://merchant.paymentsway.co/cartaspago/redirect"
+        // action="https://merchantpruebas.vepay.com.co/cartaspago/redirect"
         className="payments-way-form"
       >
         <input
@@ -89,28 +98,23 @@ const PaymentsWayForm = ({
         <input
           name="client_email"
           type="hidden"
-          value={formData?.owner_email || ""}
         />
         <input
           name="client_phone"
           type="hidden"
-          value={formData?.phone_number || ""}
         />
         <input
           name="client_firstname"
           type="hidden"
-          value={formData?.owner_name?.split(" ")[0] || ""}
         />
         <input
           name="client_lastname"
           type="hidden"
-          value={formData?.owner_name?.split(" ").slice(1).join(" ") || ""}
         />
         <input name="client_doctype" type="hidden" value="4" />
         <input
           name="client_numdoc"
           type="hidden"
-          value={formData?.document_number || ""}
         />
         <input
           name="response_url"
