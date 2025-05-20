@@ -42,7 +42,6 @@ const PaymentsWayForm = ({
     reference: reference,
   });
 
-  // Log para debugging
   console.log("PaymentsWayForm - Preparando formulario:", {
     amount: formattedAmount,
     orderDescription: fullDescription,
@@ -63,7 +62,6 @@ const PaymentsWayForm = ({
         ref={formRef}
         method="post"
         action="https://merchant.paymentsway.co/cartaspago/redirect"
-        // action="https://merchantpruebas.vepay.com.co/cartaspago/redirect"
         className="payments-way-form"
       >
         <input

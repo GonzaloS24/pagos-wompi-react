@@ -15,7 +15,6 @@ const PLAN_NAMES = {
 export const RECURRING_PLANS_URLS = {
   // Chatea Pro Start (1000 usuarios)
   [`${PLAN_IDS.BUSINESS}_0`]: "https://links.paymentsway.com.co/czyf0a", // Solo asistente gratuito
-  // [`${PLAN_IDS.BUSINESS}_0`]: "https://links.paymentsway.com.co/phh6ym", // Solo asistente gratuito
   [`${PLAN_IDS.BUSINESS}_1`]: "https://links.paymentsway.com.co/l1eril", // 1 asistente adicional (total 2)
   [`${PLAN_IDS.BUSINESS}_2`]: "https://links.paymentsway.com.co/1c0l5b", // 2 asistentes adicionales (total 3)
 
