@@ -1,8 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from "react";
-import { fetchWorkspaceAssistants } from "../api/wompiConfig";
+import { fetchWorkspaceAssistants } from "../../services/api/assistantsApi";
+import {
+  ASSISTANTS_CONFIG,
+  ASSISTANT_NAME_MAPPING,
+} from "../../utils/constants";
+import LoadingSpinner from "../common/LoadingSpinner";
 import Swal from "sweetalert2";
-import { PuffLoader } from "react-spinners";
 
 const AIAssistants = ({
   selectedAssistants,
@@ -12,49 +16,6 @@ const AIAssistants = ({
 }) => {
   const [existingAssistants, setExistingAssistants] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const assistantMapping = {
-    "Whatsapp IA": "ventas",
-    Logistica: "logistica",
-    "Comentarios IA": "comentarios",
-    "Carritos IA": "carritos",
-    Marketing: "marketing",
-  };
-
-  const assistantsData = [
-    {
-      id: "ventas",
-      type: "Asistente de ventas por WhatsApp",
-      label: "Asistente de ventas por WhatsApp",
-      description: "Logra CPAs hasta de 5.000",
-    },
-    {
-      id: "comentarios",
-      type: "asistente de comentarios",
-      label: "Asistente de comentarios",
-      description: "Convierte en ventas los comentarios de Facebook.",
-    },
-    {
-      id: "carritos",
-      type: "asistente de carritos abandonados",
-      label: "Asistente de carritos abandonados",
-      description: "Recupera hasta el 50% de los carritos abandonados.",
-    },
-    {
-      id: "remarketing",
-      type: "asistente de Remarketing",
-      label: "Asistente de Remarketing",
-      description: "Aumenta tus ventas usando tu base de datos.",
-      comingSoon: true,
-    },
-    {
-      id: "voz",
-      type: "asistente de Voz con IA",
-      label: "Asistente de Voz con IA",
-      description: "Contacta al cliente con un agente de voz IA",
-      comingSoon: true,
-    },
-  ];
 
   // Determinar cuál es el primer asistente seleccionado (gratis)
   const freeAssistant =
@@ -72,13 +33,13 @@ const AIAssistants = ({
           if (data && data.assistants_names) {
             const existingIds = data.assistants_names
               .filter((name) => name !== "Logistica")
-              .map((name) => assistantMapping[name])
+              .map((name) => ASSISTANT_NAME_MAPPING[name])
               .filter((id) => id);
 
             setExistingAssistants(existingIds);
           }
         } catch (error) {
-          console.error("Error loading workspace assistants:", error);
+          console.error("Error cargando los asistentes:", error);
           Swal.fire({
             icon: "error",
             title: "Error",
@@ -113,15 +74,12 @@ const AIAssistants = ({
       </h5>
 
       {loading ? (
-        <div className="assistant-loading">
-          <PuffLoader
-            color="#009ee3"
-            loading={true}
-            size={50}
-            margin={2}
-            speedMultiplier={4}
-          />
-        </div>
+        <LoadingSpinner
+          loading={true}
+          size={50}
+          containerClass="assistant-loading"
+          speedMultiplier={4}
+        />
       ) : (
         <>
           <p className="text-muted mb-3">
@@ -149,7 +107,7 @@ const AIAssistants = ({
           )}
 
           <div className="assistants-grid">
-            {assistantsData.map((assistant) => {
+            {ASSISTANTS_CONFIG.map((assistant) => {
               const isExisting =
                 isStandalone && isAssistantExisting(assistant.id);
               const isComingSoon = assistant.comingSoon === true;

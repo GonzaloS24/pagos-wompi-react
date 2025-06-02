@@ -1,43 +1,5 @@
-import { WOMPI_CONFIG } from "../api/wompiConfig";
+import { WOMPI_CONFIG } from "./wompiConfig";
 import Swal from "sweetalert2";
-
-export const sanitizeString = (str) => {
-  if (!str) return "";
-  return str.replace(/[<>]/g, "");
-};
-
-export const validateForm = (formData) => {
-  const errors = {};
-
-  if (!formData.workspace_id.trim()) {
-    errors.workspace_id = "El ID del espacio es requerido";
-  } else if (!/^\d+$/.test(formData.workspace_id)) {
-    errors.workspace_id = "El ID del espacio solo debe contener números";
-  }
-
-  if (!formData.workspace_name.trim())
-    errors.workspace_name = "El nombre del espacio es requerido";
-
-  if (!formData.owner_name.trim())
-    errors.owner_name = "El nombre del dueño es requerido";
-
-  if (
-    !formData.owner_email.trim() ||
-    !/\S+@\S+\.\S+/.test(formData.owner_email)
-  ) {
-    errors.owner_email = "Email inválido";
-  }
-
-  if (
-    !formData.phone_number.trim() ||
-    !/^\+?\d{5,15}$/.test(formData.phone_number)
-  ) {
-    errors.phone_number =
-      "Número de teléfono inválido";
-  }
-
-  return errors;
-};
 
 export const generateIntegritySignature = async (
   reference,
@@ -45,7 +7,6 @@ export const generateIntegritySignature = async (
   currency
 ) => {
   try {
-    // Validar que los parámetros no sean undefined o null
     if (!reference || !amountInCents || !currency) {
       console.error("Parámetros inválidos:", {
         reference,
@@ -88,4 +49,23 @@ export const convertUSDtoCOPCents = (usdAmount, usdToCopRate) => {
   if (!usdAmount || !usdToCopRate) return 0;
   const copAmount = Math.round(usdAmount * usdToCopRate);
   return copAmount * 100;
+};
+
+export const getPaymentMethodName = (methodType) => {
+  switch (methodType) {
+    case "CARD":
+      return "";
+    case "NEQUI":
+      return "Nequi";
+    case "PSE":
+      return "PSE";
+    case "BANCOLOMBIA_TRANSFER":
+      return "Transferencia Bancolombia";
+    case "BANCOLOMBIA_COLLECT":
+      return "Recaudo Bancolombia";
+    case "DAVIPLATA":
+      return "Daviplata";
+    default:
+      return methodType;
+  }
 };

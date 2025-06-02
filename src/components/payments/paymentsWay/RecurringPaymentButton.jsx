@@ -1,30 +1,22 @@
 /* eslint-disable react/prop-types */
-import {
-  getRecurringPlanUrl,
-  getPlanDescription,
-} from "../api/paymentsWayRecurringConfig";
-import "./RecurringPaymentButton.css";
+import { paymentsWayService } from "../../../services/payments/paymentsWay/paymentsWayService";
+import "../../../styles/components/RecurringPaymentButton.css";
 
 const RecurringPaymentButton = ({ planId, selectedAssistants }) => {
   const additionalAssistants = Math.max(0, selectedAssistants.length - 1);
 
   const handleRecurringPayment = () => {
-    const url = getRecurringPlanUrl(planId, additionalAssistants);
+    const success = paymentsWayService.redirectToRecurringPayment(
+      planId,
+      selectedAssistants
+    );
 
-    if (url) {
-      console.log("Redirigiendo a URL de pago recurrente:", url);
-      window.location.href = url;
-    } else {
-      alert(
-        `Lo sentimos, aún no tenemos configurado el pago recurrente para ${getPlanDescription(
-          planId,
-          selectedAssistants.length
-        )}. Por favor, contacta a soporte para más información.`
-      );
+    if (!success) {
+      console.error("No se pudo procesar el pago recurrente");
     }
   };
 
-  if (!getRecurringPlanUrl(planId, additionalAssistants)) {
+  if (!paymentsWayService.hasRecurringSupport(planId, additionalAssistants)) {
     return (
       <div className="recurring-payment-container">
         <button

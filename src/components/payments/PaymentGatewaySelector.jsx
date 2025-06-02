@@ -1,8 +1,8 @@
 import { memo } from "react";
 import PropTypes from "prop-types";
-import wompiLogo from "../assets/wompi-logo.png";
-import paymentsWayLogo from "../assets/paymentsway-logo.svg";
-import "./PaymentGatewaySelector.css";
+import wompiLogo from "../../assets/wompi-logo.png";
+import paymentsWayLogo from "../../assets/paymentsway-logo.svg";
+import "../../styles/components/PaymentGatewaySelector.css";
 
 const PaymentGatewaySelector = ({
   selectedGateway,

@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
-import { WOMPI_CONFIG, fetchPlans } from "../api/wompiConfig";
-import { sanitizeString } from "../utils/wompiHelpers";
+import { fetchPlans } from "../services/api/plansApi";
+import { fetchUSDtoCOPRate } from "../services/api/exchangeRateApi";
+import { sanitizeString } from "../services/validation/formValidation";
 import Swal from "sweetalert2";
 
 export const useWompiPayment = () => {
@@ -72,33 +74,43 @@ export const useWompiPayment = () => {
     const initializeData = async () => {
       setLoading(true);
       try {
-        // Obtener tasa de cambio
-        const response = await fetch(WOMPI_CONFIG.EXCHANGE_RATE_API);
-        if (!response.ok) throw new Error("Error al obtener tasa de cambio");
-        const data = await response.json();
-        setUsdToCopRate(data.rates.COP);
+        // Obtener tasa de cambio y planes en paralelo
+        const [exchangeRate, fetchedPlans] = await Promise.all([
+          fetchUSDtoCOPRate(),
+          fetchPlans(),
+        ]);
 
-        // Obtener los planes desde fetchPlans
-        const fetchedPlans = await fetchPlans();
+        // Verificar que la tasa sea válida, si no, usar fallback
+        const validRate =
+          exchangeRate && exchangeRate > 100 ? exchangeRate : 4200;
+
+        setUsdToCopRate(validRate);
         setPlans(fetchedPlans);
-        console.log('84  >>>>>>>>> ', fetchedPlans);
 
         // Buscar plan seleccionado desde los parámetros de la URL
         const params = new URLSearchParams(window.location.search);
         const planId = sanitizeString(params.get("plan_id"));
         if (planId) {
-          const plan = fetchedPlans.find((p) => p.id === planId); // Usamos los planes recién obtenidos
+          const plan = fetchedPlans.find((p) => p.id === planId);
           if (plan) {
             setSelectedPlan(plan);
           }
         }
       } catch (error) {
         console.error("Error en la inicialización:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Error al cargar los datos necesarios",
-        });
+        setUsdToCopRate(4200);
+
+        try {
+          const fetchedPlans = await fetchPlans();
+          setPlans(fetchedPlans);
+        } catch (planError) {
+          console.error("Error cargando planes:", planError);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Error al cargar los datos necesarios",
+          });
+        }
       } finally {
         setLoading(false);
       }

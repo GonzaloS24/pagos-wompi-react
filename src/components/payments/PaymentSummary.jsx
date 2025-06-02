@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { convertUSDtoCOPCents } from "../utils/wompiHelpers";
+import { PRICING } from "../../utils/constants";
 
 const PaymentSummary = ({
   selectedPlan,
@@ -8,14 +8,14 @@ const PaymentSummary = ({
   isAssistantsOnly,
   selectedComplements = [],
 }) => {
-  const assistantPrice = 20;
+  const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
 
   let totalAssistantsPrice;
   let assistantsLabel;
 
   if (isAssistantsOnly) {
     totalAssistantsPrice = selectedAssistants.length * assistantPrice;
-    assistantsLabel = `${selectedAssistants.length} adicional ($${totalAssistantsPrice})`;
+    assistantsLabel = `${selectedAssistants.length} adicional (${totalAssistantsPrice})`;
   } else {
     // Para la sección de Plan, el primero es gratis
     const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
@@ -32,7 +32,7 @@ const PaymentSummary = ({
     } else {
       assistantsLabel = `1 gratis + ${paidAssistants} adicional${
         paidAssistants !== 1 ? "es" : ""
-      } ($${totalAssistantsPrice})`;
+      } (${totalAssistantsPrice})`;
     }
   }
 
@@ -45,6 +45,12 @@ const PaymentSummary = ({
   );
 
   const totalUSD = planPrice + totalAssistantsPrice + totalComplementsPrice;
+
+  // Cálculo del precio en COP
+  const totalCOP =
+    usdToCopRate && usdToCopRate > 0
+      ? Math.round(totalUSD * usdToCopRate)
+      : totalUSD * 4000;
 
   return (
     <div
@@ -100,10 +106,7 @@ const PaymentSummary = ({
         <div className="d-flex justify-content-between align-items-center">
           <span className="text-muted">Total en pesos colombianos:</span>
           <span style={{ color: "#009ee3" }} className="fw-bold">
-            COP {" "}
-            {Math.round(
-              convertUSDtoCOPCents(totalUSD, usdToCopRate) / 100
-            ).toLocaleString("es-CO")}
+            COP ${totalCOP.toLocaleString("es-CO")}
           </span>
         </div>
       </div>

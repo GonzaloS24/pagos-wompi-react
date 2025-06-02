@@ -1,8 +1,9 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/display-name */
 import { useState, forwardRef, useImperativeHandle, useEffect } from "react";
+import { fetchWorkspaceBots } from "../../services/api/assistantsApi";
+import { COMPLEMENTS_CONFIG, PRICING } from "../../utils/constants";
 import Swal from "sweetalert2";
-import { fetchWorkspaceBots } from "../api/wompiConfig";
 
 const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
   const [selectedComplement, setSelectedComplement] = useState("");
@@ -11,28 +12,6 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
   const [botsList, setBotsList] = useState([]);
   const [selectedBot, setSelectedBot] = useState("");
   const [loadingBots, setLoadingBots] = useState(false);
-  const MAX_QUANTITY = 100;
-
-  const complementsData = [
-    {
-      id: "bot",
-      name: "🤖 1 Bot Adicional 🤖",
-      description: "(Permite agregar un nuevo canal como FB, IG o WP)",
-      priceUSD: 10,
-    },
-    {
-      id: "member",
-      name: "🙋‍♀️1 Miembro Adicional 🙋‍♀️",
-      description: "(Permite agregar un nuevo asesor)",
-      priceUSD: 10,
-    },
-    {
-      id: "webhooks",
-      name: "1.000 Webhooks Diarios 🔗",
-      description: "",
-      priceUSD: 20,
-    },
-  ];
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -74,11 +53,11 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
 
   const validateQuantity = (currentQuantity, addingQuantity = 0) => {
     const total = currentQuantity + addingQuantity;
-    if (total > MAX_QUANTITY) {
+    if (total > PRICING.MAX_QUANTITY) {
       Swal.fire({
         icon: "warning",
         title: "Límite alcanzado",
-        text: `No puedes agregar más de ${MAX_QUANTITY} unidades`,
+        text: `No puedes agregar más de ${PRICING.MAX_QUANTITY} unidades`,
       });
       return false;
     }
@@ -87,7 +66,7 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
 
   const handleAddComplement = () => {
     if (selectedComplement) {
-      const complement = complementsData.find(
+      const complement = COMPLEMENTS_CONFIG.find(
         (c) => c.id === selectedComplement
       );
 
@@ -199,13 +178,13 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
 
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 1 && value <= MAX_QUANTITY) {
+    if (!isNaN(value) && value >= 1 && value <= PRICING.MAX_QUANTITY) {
       setQuantity(value);
-    } else if (value > MAX_QUANTITY) {
+    } else if (value > PRICING.MAX_QUANTITY) {
       Swal.fire({
         icon: "warning",
         title: "Límite alcanzado",
-        text: `No puedes agregar más de ${MAX_QUANTITY} unidades`,
+        text: `No puedes agregar más de ${PRICING.MAX_QUANTITY} unidades`,
       });
     }
   };
@@ -219,11 +198,11 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
 
             if (newQuantity <= 0) return null;
 
-            if (newQuantity > MAX_QUANTITY) {
+            if (newQuantity > PRICING.MAX_QUANTITY) {
               Swal.fire({
                 icon: "warning",
                 title: "Límite alcanzado",
-                text: `No puedes agregar más de ${MAX_QUANTITY} unidades`,
+                text: `No puedes agregar más de ${PRICING.MAX_QUANTITY} unidades`,
               });
               return comp;
             }
@@ -259,7 +238,7 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
           aria-label="Seleccionar complemento"
         >
           <option value="">Seleccionar complemento</option>
-          {complementsData.map((complement) => (
+          {COMPLEMENTS_CONFIG.map((complement) => (
             <option key={complement.id} value={complement.id}>
               {complement.name} {complement.description} (${complement.priceUSD}{" "}
               USD)
@@ -306,7 +285,7 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
 
             <div className="quantity-section mb-3">
               <label className="form-label text-muted mb-2">
-                Cantidad (Máx. {MAX_QUANTITY})
+                Cantidad (Máx. {PRICING.MAX_QUANTITY})
               </label>
               <div className="quantity-controls d-flex align-items-center gap-3">
                 <button
@@ -325,19 +304,19 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
                   value={quantity}
                   onChange={handleQuantityChange}
                   min="1"
-                  max={MAX_QUANTITY}
+                  max={PRICING.MAX_QUANTITY}
                   aria-label="Cantidad de complementos"
                 />
                 <button
                   className="quantity-btn"
                   onClick={() => {
-                    if (quantity < MAX_QUANTITY) {
+                    if (quantity < PRICING.MAX_QUANTITY) {
                       setQuantity((prev) => prev + 1);
                     } else {
                       Swal.fire({
                         icon: "warning",
                         title: "Límite alcanzado",
-                        text: `No puedes agregar más de ${MAX_QUANTITY} unidades`,
+                        text: `No puedes agregar más de ${PRICING.MAX_QUANTITY} unidades`,
                       });
                     }
                   }}

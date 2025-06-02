@@ -7,7 +7,7 @@ import { useLocation } from "react-router-dom";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 import "./Confirmation.css";
-import { WOMPI_CONFIG } from "../../api/wompiConfig";
+import { WOMPI_CONFIG } from "../../services/payments/wompi/wompiConfig";
 
 const TransactionConfirmation = () => {
   const [transactionData, setTransactionData] = useState(null);
