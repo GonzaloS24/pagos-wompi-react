@@ -16,6 +16,7 @@ export const PURCHASE_TYPES = {
 export const PAYMENT_GATEWAYS = {
   WOMPI: "wompi",
   PAYMENTS_WAY: "paymentsway",
+  WALLET: "wallet",
 };
 
 // Estados de transacciones

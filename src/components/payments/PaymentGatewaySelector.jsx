@@ -2,6 +2,7 @@ import { memo } from "react";
 import PropTypes from "prop-types";
 import wompiLogo from "../../assets/wompi-logo.png";
 import paymentsWayLogo from "../../assets/paymentsway-logo.svg";
+import walletLogo from "../../assets/wallet-icon.png";
 import "../../styles/components/PaymentGatewaySelector.css";
 
 const PaymentGatewaySelector = ({
@@ -101,6 +102,30 @@ const PaymentGatewaySelector = ({
           <img src={paymentsWayLogo} alt="Payments Way" width={100} />
           <span className="gateway-description">
             Tarjetas, PSE, <br /> Pagos recurrentes
+          </span>
+        </div>
+
+        <div
+          className={`gateway-option ${
+            selectedGateway === "wallet" ? "selected" : ""
+          }`}
+          onClick={() => onChange("wallet")}
+        >
+          <div
+            style={{
+              width: "50px",
+              height: "50px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "2rem",
+              margin: "10px auto",
+            }}
+          >
+            <img src={walletLogo} alt="" />
+          </div>
+          <span className="gateway-description">
+            Pago por Wallet <br /> Manual
           </span>
         </div>
       </div>

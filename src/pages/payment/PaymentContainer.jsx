@@ -20,6 +20,8 @@ import WompiPaymentButton from "../../components/payments/wompi/WompiPaymentButt
 import WompiWidget from "../../components/payments/wompi/WompiWidget";
 import PaymentsWayForm from "../../components/payments/paymentsway/PaymentsWayForm";
 import RecurringPaymentButton from "../../components/payments/paymentsway/RecurringPaymentButton";
+import WalletPaymentButton from "../../components/payments/wallet/WalletPaymentButton";
+import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
 
 // Services
 import { validateForm } from "../../services/validation/formValidation";
@@ -34,6 +36,7 @@ const PaymentContainer = () => {
   const [purchaseType, setPurchaseType] = useState(null);
   const [selectedComplements, setSelectedComplements] = useState([]);
   const [showWompiWidget, setShowWompiWidget] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Referencias
   const complementsRef = useRef(null);
@@ -150,6 +153,14 @@ const PaymentContainer = () => {
 
   const handleWompiPaymentClick = () => {
     setShowWompiWidget(true);
+  };
+
+  const handleWalletPaymentClick = () => {
+    setShowWalletModal(true);
+  };
+
+  const handleWalletModalClose = () => {
+    setShowWalletModal(false);
   };
 
   const handleWompiWidgetReady = (success) => {
@@ -299,6 +310,11 @@ const PaymentContainer = () => {
                           shouldUpdate={true}
                         />
                       </>
+                    ) : selectedGateway === "wallet" ? (
+                      <WalletPaymentButton
+                        onPaymentClick={handleWalletPaymentClick}
+                        disabled={!shouldShowPayButton()}
+                      />
                     ) : (
                       <PaymentsWayForm
                         amount={paymentCalculations.priceInCOP}
@@ -324,6 +340,23 @@ const PaymentContainer = () => {
         formErrors={formErrors}
         onSubmit={handleSubmit}
         onFormChange={handleFormChange}
+      />
+
+      {/* Modal de Wallet Payment */}
+      <WalletPaymentModal
+        show={showWalletModal}
+        onHide={handleWalletModalClose}
+        paymentData={{
+          totalUSD: paymentCalculations.totalUSD,
+          priceInCOP: paymentCalculations.priceInCOP,
+          orderDescription: paymentCalculations.orderDescription,
+          reference: paymentCalculations.reference,
+          formData: formData,
+        }}
+        selectedPlan={purchaseType === "plan" ? selectedPlan : null}
+        selectedAssistants={selectedAssistants}
+        selectedComplements={selectedComplements}
+        isAssistantsOnly={purchaseType === "assistants"}
       />
     </div>
   );
