@@ -18,8 +18,8 @@ import PaymentSummary from "../../components/payments/PaymentSummary";
 import PaymentGatewaySelector from "../../components/payments/PaymentGatewaySelector";
 import WompiPaymentButton from "../../components/payments/wompi/WompiPaymentButton";
 import WompiWidget from "../../components/payments/wompi/WompiWidget";
-import PaymentsWayForm from "../../components/payments/paymentsway/PaymentsWayForm";
-import RecurringPaymentButton from "../../components/payments/paymentsway/RecurringPaymentButton";
+import PaymentsWayForm from "../../components/payments/paymentsWay/PaymentsWayForm";
+import RecurringPaymentButton from "../../components/payments/paymentsWay/RecurringPaymentButton";
 import WalletPaymentButton from "../../components/payments/wallet/WalletPaymentButton";
 import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
 
