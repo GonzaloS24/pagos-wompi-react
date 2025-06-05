@@ -45,9 +45,8 @@ export class WalletService {
     };
   }
 
+  // eslint-disable-next-line no-unused-vars
   async processWalletPayment(paymentData) {
-    console.log("Wallet payment initiated:", paymentData);
-
     return {
       success: true,
       message: "Instrucciones de pago generadas correctamente",

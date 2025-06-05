@@ -42,10 +42,6 @@ export const getRecurringPlanUrl = (planId, additionalAssistants = 0) => {
 
 export const hasRecurringPlan = (planId, additionalAssistants = 0) => {
   const result = Boolean(getRecurringPlanUrl(planId, additionalAssistants));
-  console.log(
-    `Combinación ${planId} con ${additionalAssistants} asistentes adicionales tiene pago recurrente:`,
-    result
-  );
   return result;
 };
 

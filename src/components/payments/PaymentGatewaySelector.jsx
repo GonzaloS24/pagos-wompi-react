@@ -2,7 +2,7 @@ import { memo } from "react";
 import PropTypes from "prop-types";
 import wompiLogo from "../../assets/wompi-logo.png";
 import paymentsWayLogo from "../../assets/paymentsway-logo.svg";
-import walletLogo from "../../assets/wallet-icon.png";
+import walletLogo from "../../assets/wallet.png";
 import "../../styles/components/PaymentGatewaySelector.css";
 
 const PaymentGatewaySelector = ({
@@ -10,7 +10,7 @@ const PaymentGatewaySelector = ({
   onChange,
   enableRecurring,
   setEnableRecurring,
-  showRecurringOption,
+  // showRecurringOption,
   isRecurringPayment,
 }) => {
   const handleRecurringChange = (e) => {
@@ -93,7 +93,7 @@ const PaymentGatewaySelector = ({
           </span>
         </div>
 
-        <div
+        {/* <div
           className={`gateway-option ${
             selectedGateway === "paymentsway" ? "selected" : ""
           }`}
@@ -103,7 +103,7 @@ const PaymentGatewaySelector = ({
           <span className="gateway-description">
             Tarjetas, PSE, <br /> Pagos recurrentes
           </span>
-        </div>
+        </div> */}
 
         <div
           className={`gateway-option ${
@@ -130,7 +130,7 @@ const PaymentGatewaySelector = ({
         </div>
       </div>
 
-      {showRecurringOption && (
+      {/* {showRecurringOption && (
         <div className="recurring-option mt-2">
           <input
             type="checkbox"
@@ -150,7 +150,7 @@ const PaymentGatewaySelector = ({
             title="Los pagos automáticos permiten que se cargue automáticamente tu tarjeta de forma mensual. Solo disponible con Payments Way."
           ></i>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

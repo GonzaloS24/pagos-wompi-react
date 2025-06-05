@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { walletService } from "../../../services/payments/wallet/walletService";
 import Swal from "sweetalert2";
+import wapp from "../../../assets/whatsapp.png";
 
 const WalletPaymentModal = ({
   show,
@@ -67,6 +68,8 @@ const WalletPaymentModal = ({
   const copyPurchaseSummary = () => {
     let summary = "RESUMEN DE COMPRA:\n\n";
 
+    summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
+
     if (hasPlan) {
       summary += `Plan: ${selectedPlan.name}\n`;
     }
@@ -77,11 +80,11 @@ const WalletPaymentModal = ({
 
     if (hasComplements) {
       summary += `Complementos: ${selectedComplements
-        .map((c) => c.id)
+        .map((c) => `${c.id} (${c.quantity})`)
         .join(", ")}\n`;
     }
 
-    summary += `Total: $${walletData.amount.toLocaleString("es-CO")} COP`;
+    summary += `Total: ${walletData.amount.toLocaleString("es-CO")} COP`;
 
     navigator.clipboard.writeText(summary).then(() => {
       Swal.fire({
@@ -92,6 +95,35 @@ const WalletPaymentModal = ({
         showConfirmButton: false,
       });
     });
+  };
+
+  const openWhatsAppWithSummary = () => {
+    let summary =
+      "¡Hola! Te envío el comprobante de pago junto con el resumen de mi compra:\n\n";
+
+    summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
+
+    if (hasPlan) {
+      summary += `Plan: ${selectedPlan.name}\n`;
+    }
+
+    if (hasAssistants) {
+      summary += `Asistentes: ${selectedAssistants.join(", ")}\n`;
+    }
+
+    if (hasComplements) {
+      summary += `Complementos: ${selectedComplements
+        .map((c) => `${c.id} (${c.quantity})`)
+        .join(", ")}\n`;
+    }
+
+    summary += `Total: ${walletData.amount.toLocaleString("es-CO")} COP\n\n`;
+    summary += "Adjunto el comprobante de pago. ¡Gracias!";
+
+    const phoneNumber = walletData.contactWhatsApp.replace(/\D/g, "");
+    const encodedMessage = encodeURIComponent(summary);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
   };
 
   const nextStep = () => {
@@ -176,7 +208,11 @@ const WalletPaymentModal = ({
               {hasComplements && (
                 <div className="d-flex justify-content-between mb-1">
                   <span className="text-muted">Complementos:</span>
-                  <span>{selectedComplements.map((c) => c.id).join(", ")}</span>
+                  <span>
+                    {selectedComplements
+                      .map((c) => `${c.id} (${c.quantity})`)
+                      .join(", ")}
+                  </span>
                 </div>
               )}
 
@@ -202,9 +238,7 @@ const WalletPaymentModal = ({
             </h5>
 
             <div className="mb-3">
-              <p className="mb-2">
-                <p>Envía el dinero a esta wallet:</p>
-              </p>
+              <p className="mb-2">Envía el dinero a esta wallet:</p>
               <div
                 style={{
                   background: "#edf4ff",
@@ -216,7 +250,7 @@ const WalletPaymentModal = ({
                   alignItems: "center",
                 }}
               >
-                <span className="text-truncate me-2">
+                <span className="text-muted me-2">
                   {walletData.walletAddress}
                 </span>
                 <Button
@@ -234,9 +268,7 @@ const WalletPaymentModal = ({
             </div>
 
             <div className="mb-3">
-              <p className="mb-2">
-                <p>Incluye este resumen en las notas:</p>
-              </p>
+              <p className="mb-2">Incluye este resumen en las notas:</p>
               <div
                 style={{
                   background: "#edf4ff",
@@ -269,8 +301,8 @@ const WalletPaymentModal = ({
               className="alert alert-warning py-2 text-center"
               style={{ fontSize: "0.9rem" }}
             >
-              💡 <strong>Importante:</strong> No olvides incluir el resumen en
-              las notas del pago
+              {String.fromCodePoint(0x1f4a1)} <strong>Importante:</strong> No
+              olvides incluir el resumen en las notas del pago
             </div>
           </div>
         );
@@ -285,9 +317,9 @@ const WalletPaymentModal = ({
             <div className="text-center mb-3">
               <div className="mb-3">
                 <p className="mb-2">
-                  <p>Envía tu comprobante de pago a:</p>
+                  Envía tu comprobante de pago y resumen de compra a:
                 </p>
-                <div
+                {/* <div
                   style={{
                     background: "#edf4ff",
                     padding: "1rem",
@@ -304,18 +336,43 @@ const WalletPaymentModal = ({
                       justifyContent: "center",
                     }}
                   >
-                    📧{" "}
+                    {String.fromCodePoint(0x1f4e7)}{" "}
                     <strong style={{ fontWeight: "400" }}>
                       {walletData.contactEmail}
                     </strong>
                   </div>
                   <div style={{ fontSize: "1.1rem" }}>
-                    📱{" "}
+                    {String.fromCodePoint(0x1f4f1)}{" "}
                     <strong style={{ fontWeight: "400" }}>
                       {walletData.contactWhatsApp}
                     </strong>
                   </div>
-                </div>
+                </div> */}
+              </div>
+
+              <div className="mb-3">
+                <Button
+                  variant="success"
+                  onClick={openWhatsAppWithSummary}
+                  size="lg"
+                  style={{
+                    backgroundColor: "#25D366",
+                    width: "100%",
+                    borderColor: "#25D366",
+                    padding: "0.75rem 2rem",
+                    fontSize: "1.1rem",
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 4px rgba(37, 211, 102, 0.3)",
+                  }}
+                  className="d-flex align-items-center justify-content-center mx-auto"
+                >
+                  <img src={wapp} width={30} />
+                  ­­ ­Enviar por WhatsApp
+                </Button>
+                <small className="text-muted d-block mt-2">
+                  Se abrirá WhatsApp con el mensaje del resumen de compra
+                  pre-cargado
+                </small>
               </div>
             </div>
 
@@ -324,7 +381,9 @@ const WalletPaymentModal = ({
               style={{ fontSize: "0.9rem" }}
             >
               <div className="mb-2">
-                <strong>🔍 Verificación Manual</strong>
+                <strong>
+                  {String.fromCodePoint(0x1f50d)} Verificación Manual
+                </strong>
               </div>
               <p className="mb-0">
                 Tu pago será verificado manualmente. Te notificaremos una vez
@@ -384,7 +443,7 @@ const WalletPaymentModal = ({
                 padding: "0.5rem 1.5rem",
               }}
             >
-              ✅ Confirmar Pago
+              Confirmar Pago
             </Button>
           )}
         </div>

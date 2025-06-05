@@ -1,6 +1,5 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import walletIcon from "../../../assets/wallet-icon.png";
 
 const WalletPaymentButton = ({ onPaymentClick, disabled = false }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,9 +25,9 @@ const WalletPaymentButton = ({ onPaymentClick, disabled = false }) => {
         borderRadius: "8px",
         fontWeight: "500",
         letterSpacing: "0.5px",
-        backgroundColor: "#6f42c1",
+        backgroundColor: "#40c4cc",
         color: "white",
-        border: "1px solid #6f42c1",
+        border: "1px solid #40c4cc",
         padding: "8px 16px",
         height: "40px",
         fontSize: "14px",
@@ -39,14 +38,7 @@ const WalletPaymentButton = ({ onPaymentClick, disabled = false }) => {
         cursor: disabled ? "not-allowed" : "pointer",
       }}
     >
-      {isLoading ? (
-        <span>Procesando...</span>
-      ) : (
-        <>
-          <img src={walletIcon} width={20} />
-          Pagar con Wallet
-        </>
-      )}
+      {isLoading ? <span>Procesando...</span> : <>Pagar con Wallet</>}
     </button>
   );
 };

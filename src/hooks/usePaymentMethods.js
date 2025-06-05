@@ -31,7 +31,6 @@ export const usePaymentMethods = ({
     );
 
     const result = hasAssistants && noComplements;
-    console.log("Resultado canShowRecurringOption:", result);
     return result;
   }, [purchaseType, selectedPlan, selectedAssistants, selectedComplements]);
 
@@ -62,7 +61,6 @@ export const usePaymentMethods = ({
   // Reset cuando cambian los complementos
   const resetRecurringIfNeeded = useCallback(() => {
     if (selectedComplements.length > 0 && enableRecurring) {
-      console.log("Reseteando enableRecurring porque hay complementos");
       setEnableRecurring(false);
     }
   }, [selectedComplements, enableRecurring]);
