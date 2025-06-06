@@ -66,7 +66,7 @@ const WalletPaymentModal = ({
   };
 
   const copyPurchaseSummary = () => {
-    let summary = "RESUMEN DE COMPRA:\n\n";
+    let summary = "RESUMEN DEL PLAN:\n\n";
 
     summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
 
@@ -84,7 +84,13 @@ const WalletPaymentModal = ({
         .join(", ")}\n`;
     }
 
-    summary += `Total: ${walletData.amount.toLocaleString("es-CO")} COP`;
+    summary += `Total: $${walletData.amount.toLocaleString(
+      "es-CO"
+    )} Dolares \n`;
+
+    summary += `Total: $${walletData.amount.toLocaleString(
+      "es-CO"
+    )} Pesos Colombianos\n`;
 
     navigator.clipboard.writeText(summary).then(() => {
       Swal.fire({
@@ -95,6 +101,36 @@ const WalletPaymentModal = ({
         showConfirmButton: false,
       });
     });
+  };
+
+  const generatePurchaseSummary = () => {
+    let summary = "RESUMEN DEL PLAN:\n\n";
+
+    summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
+
+    if (hasPlan) {
+      summary += `Plan: ${selectedPlan.name}\n`;
+    }
+
+    if (hasAssistants) {
+      summary += `Asistentes: ${selectedAssistants.join(", ")}\n`;
+    }
+
+    if (hasComplements) {
+      summary += `Complementos: ${selectedComplements
+        .map((c) => `${c.id} (${c.quantity})`)
+        .join(", ")}\n`;
+    }
+
+    summary += `Total en dólares: $${walletData.amountUSD.toLocaleString(
+      "es-CO"
+    )} USD \n`;
+
+    summary += `Total en pesos colombianos: $${walletData.amount.toLocaleString(
+      "es-CO"
+    )} COP\n`;
+
+    return summary;
   };
 
   const openWhatsAppWithSummary = () => {
@@ -117,8 +153,15 @@ const WalletPaymentModal = ({
         .join(", ")}\n`;
     }
 
-    summary += `Total: ${walletData.amount.toLocaleString("es-CO")} COP\n\n`;
-    summary += "Adjunto el comprobante de pago. ¡Gracias!";
+    summary += `Total en dólares: $${walletData.amountUSD.toLocaleString(
+      "es-CO"
+    )} USD \n`;
+
+    summary += `Total en pesos colombianos: $${walletData.amount.toLocaleString(
+      "es-CO"
+    )} COP\n`;
+
+    summary += "¡Gracias!";
 
     const phoneNumber = walletData.contactWhatsApp.replace(/\D/g, "");
     const encodedMessage = encodeURIComponent(summary);
@@ -217,7 +260,14 @@ const WalletPaymentModal = ({
               )}
 
               <div className="d-flex justify-content-between mb-1">
-                <span className="text-muted">Total:</span>
+                <span className="text-muted">Total en dólares:</span>
+                <span className="fw-bold" style={{ color: "#009ee3" }}>
+                  ${walletData.amountUSD.toLocaleString("es-CO")} USD
+                </span>
+              </div>
+
+              <div className="d-flex justify-content-between mb-1">
+                <span className="text-muted">Total en pesos colombianos:</span>
                 <span className="fw-bold" style={{ color: "#009ee3" }}>
                   ${walletData.amount.toLocaleString("es-CO")} COP
                 </span>
@@ -237,72 +287,131 @@ const WalletPaymentModal = ({
               Paso 2: Realizar el Pago
             </h5>
 
-            <div className="mb-3">
-              <p className="mb-2">Envía el dinero a esta wallet:</p>
+            {/* Sección 1: Dirección de Wallet */}
+            <div className="mb-4">
+              <div className="d-flex align-items-center mb-2">
+                <span className="bold">
+                  1. {String.fromCodePoint(0x1f4b3)} Envía el dinero a esta
+                  dirección:
+                </span>
+              </div>
               <div
                 style={{
                   background: "#edf4ff",
-                  padding: "0.55rem",
-                  borderRadius: "8px",
                   border: "1px solid #009ee3",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  borderRadius: "8px",
+                  padding: "1rem",
+                  position: "relative",
                 }}
               >
-                <span className="text-muted me-2">
-                  {walletData.walletAddress}
-                </span>
-                <Button
-                  variant="primary"
-                  onClick={() => copyToClipboard(walletData.walletAddress)}
-                  style={{
-                    backgroundColor: "#009ee3",
-                    borderColor: "#009ee3",
-                    padding: "0.3rem 1rem",
-                  }}
-                >
-                  📋 Copiar
-                </Button>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div className="flex-grow-1 me-3">
+                    <small className="text-muted d-block mb-1">
+                      Dirección de Wallet:
+                    </small>
+                    <code
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "#495057",
+                        wordBreak: "break-all",
+                        background: "transparent",
+                        padding: 0,
+                      }}
+                    >
+                      {walletData.walletAddress}
+                    </code>
+                  </div>
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => copyToClipboard(walletData.walletAddress)}
+                    style={{
+                      borderColor: "#009ee3",
+                      color: "#009ee3",
+                      minWidth: "80px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "#009ee3";
+                      e.target.style.color = "white";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "";
+                      e.target.style.color = "#009ee3";
+                    }}
+                  >
+                    📋 Copiar
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <div className="mb-3">
-              <p className="mb-2">Incluye este resumen en las notas:</p>
+            {/* Sección 2: Resumen del plan */}
+            <div className="mb-4">
+              <div className="d-flex align-items-center mb-2">
+                <span className="bold">
+                  2. {String.fromCodePoint(0x1f4dd)} Incluye este resumen en las
+                  notas del pago:
+                </span>
+              </div>
               <div
                 style={{
-                  background: "#edf4ff",
-                  padding: "0.55rem",
+                  background: "#fef9e7",
+                  border: "1px solid #f0c674",
                   borderRadius: "8px",
-                  border: "1px solid #009ee3",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  padding: "1rem",
                 }}
               >
-                <span className="text-muted me-2">
-                  Resumen de compra completo
-                </span>
-                <Button
-                  variant="primary"
-                  onClick={copyPurchaseSummary}
-                  style={{
-                    backgroundColor: "#009ee3",
-                    borderColor: "#009ee3",
-                    padding: "0.3rem 1rem",
-                  }}
-                >
-                  📋 Copiar
-                </Button>
+                <div className="d-flex justify-content-between align-items-start">
+                  <div className="flex-grow-1 me-3">
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        whiteSpace: "pre-line",
+                        lineHeight: "1.4",
+                        flex: 1,
+                      }}
+                    >
+                      {generatePurchaseSummary()}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline-warning"
+                    size="sm"
+                    onClick={copyPurchaseSummary}
+                    style={{
+                      borderColor: "#ffc107",
+                      color: "#856404",
+                      minWidth: "80px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.color = "white";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "";
+                      e.target.style.color = "";
+                    }}
+                  >
+                    📋 Copiar
+                  </Button>
+                </div>
               </div>
             </div>
 
             <div
-              className="alert alert-warning py-2 text-center"
-              style={{ fontSize: "0.9rem" }}
+              className="alert alert-info py-3 text-center"
+              style={{
+                fontSize: "0.9rem",
+                color: "#0c5460",
+              }}
             >
-              {String.fromCodePoint(0x1f4a1)} <strong>Importante:</strong> No
-              olvides incluir el resumen en las notas del pago
+              <div className="mb-2">
+                <strong>{String.fromCodePoint(0x1f4a1)} Importante:</strong>
+              </div>
+              <p className="mb-0">
+                Asegúrate de incluir el resumen completo en las notas cuando
+                realices el pago por wallet
+                <br />
+              </p>
             </div>
           </div>
         );
@@ -319,35 +428,6 @@ const WalletPaymentModal = ({
                 <p className="mb-2">
                   Envía tu comprobante de pago y resumen de compra a:
                 </p>
-                {/* <div
-                  style={{
-                    background: "#edf4ff",
-                    padding: "1rem",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(0, 158, 227, 0.2)",
-                  }}
-                >
-                  <div
-                    className="mb-2"
-                    style={{
-                      fontSize: "1.1rem",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {String.fromCodePoint(0x1f4e7)}{" "}
-                    <strong style={{ fontWeight: "400" }}>
-                      {walletData.contactEmail}
-                    </strong>
-                  </div>
-                  <div style={{ fontSize: "1.1rem" }}>
-                    {String.fromCodePoint(0x1f4f1)}{" "}
-                    <strong style={{ fontWeight: "400" }}>
-                      {walletData.contactWhatsApp}
-                    </strong>
-                  </div>
-                </div> */}
               </div>
 
               <div className="mb-3">
