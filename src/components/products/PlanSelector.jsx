@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import PlanPeriodToggle from "../common/PlanPeriodToggle";
 
 const PlanSelector = ({
   plans,
@@ -32,6 +33,14 @@ const PlanSelector = ({
           </option>
         ))}
       </select>
+
+      {selectedPlan && (
+        <PlanPeriodToggle
+          selectedPlan={selectedPlan}
+          disabled={disabled}
+          className="mb-3"
+        />
+      )}
     </div>
   );
 };
