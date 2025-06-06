@@ -84,13 +84,13 @@ const WalletPaymentModal = ({
         .join(", ")}\n`;
     }
 
-    summary += `Total: $${walletData.amount.toLocaleString(
+    summary += `Total en dólares: $${walletData.amountUSD.toLocaleString(
       "es-CO"
-    )} Dolares \n`;
+    )} USD \n`;
 
-    summary += `Total: $${walletData.amount.toLocaleString(
+    summary += `Total en pesos colombianos: $${walletData.amount.toLocaleString(
       "es-CO"
-    )} Pesos Colombianos\n`;
+    )} COP\n`;
 
     navigator.clipboard.writeText(summary).then(() => {
       Swal.fire({
@@ -159,7 +159,7 @@ const WalletPaymentModal = ({
 
     summary += `Total en pesos colombianos: $${walletData.amount.toLocaleString(
       "es-CO"
-    )} COP\n`;
+    )} COP\n\n`;
 
     summary += "¡Gracias!";
 
