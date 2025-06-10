@@ -4,12 +4,20 @@ export const PRICING = {
   FREE_ASSISTANTS_IN_PLAN: 1,
   MIN_QUANTITY: 1,
   MAX_QUANTITY: 100,
+  ANNUAL_DISCOUNT_PERCENTAGE: 15,
+  MONTHS_IN_YEAR: 12,
 };
 
 // Tipos de compra
 export const PURCHASE_TYPES = {
   PLAN: "plan",
   ASSISTANTS: "assistants",
+};
+
+// Periodicidad de pago
+export const PAYMENT_PERIODS = {
+  MONTHLY: "monthly",
+  ANNUAL: "annual",
 };
 
 // Métodos de pago
@@ -151,6 +159,7 @@ export const THEME_COLORS = {
   INFO: "#17a2b8",
   LIGHT: "#f8f9fa",
   DARK: "#343a40",
+  ANNUAL_DISCOUNT: "#28a745",
 };
 
 // Mensajes de estado

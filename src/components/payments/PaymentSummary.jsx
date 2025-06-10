@@ -7,8 +7,10 @@ const PaymentSummary = ({
   selectedAssistants,
   isAssistantsOnly,
   selectedComplements = [],
+  paymentCalculations,
 }) => {
   const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
+  const isAnnual = paymentCalculations?.isAnnual || false;
 
   let totalAssistantsPrice;
   let assistantsLabel;
@@ -32,7 +34,7 @@ const PaymentSummary = ({
     } else {
       assistantsLabel = `1 gratis + ${paidAssistants} adicional${
         paidAssistants !== 1 ? "es" : ""
-      } (${totalAssistantsPrice})`;
+      } ($${totalAssistantsPrice})`;
     }
   }
 
@@ -44,13 +46,16 @@ const PaymentSummary = ({
     0
   );
 
-  const totalUSD = planPrice + totalAssistantsPrice + totalComplementsPrice;
+  const totalUSD =
+    paymentCalculations?.totalUSD ||
+    planPrice + totalAssistantsPrice + totalComplementsPrice;
 
   // Cálculo del precio en COP
   const totalCOP =
-    usdToCopRate && usdToCopRate > 0
+    paymentCalculations?.priceInCOP ||
+    (usdToCopRate && usdToCopRate > 0
       ? Math.round(totalUSD * usdToCopRate)
-      : totalUSD * 4000;
+      : totalUSD * 4000);
 
   return (
     <div
@@ -78,33 +83,115 @@ const PaymentSummary = ({
                 {selectedPlan.bot_users}
               </span>
             </div>
+
+            {/* Mostrar información de periodicidad */}
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-muted">Precio plan:</span>
-              <span className="fw-medium">${selectedPlan.priceUSD}</span>
+              <span className="text-muted">Periodicidad:</span>
+              <span className="fw-medium">
+                {isAnnual ? (
+                  <>
+                    Anual
+                    <span className="annual-badge ms-2">
+                      <i className="bx bx-gift"></i>
+                      -15%
+                    </span>
+                  </>
+                ) : (
+                  "Mensual"
+                )}
+              </span>
+            </div>
+
+            {/* Precio del plan con comparación si es anual */}
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <span className="text-muted">
+                {isAnnual ? "Plan (anual):" : "Precio plan:"}
+              </span>
+              <span className={`fw-medium ${isAnnual ? "text-success" : ""}`}>
+                {isAnnual && paymentCalculations?.planPriceInfo ? (
+                  <>
+                    ${paymentCalculations.planPriceInfo.finalPrice.toFixed(2)}{" "}
+                    USD
+                    <span className="ms-2 text-muted text-decoration-line-through small">
+                      ${(selectedPlan.priceUSD * 12).toFixed(2)} USD
+                    </span>
+                  </>
+                ) : (
+                  `$${planPrice.toFixed(2)}`
+                )}
+              </span>
             </div>
           </>
         )}
 
         {selectedAssistants.length > 0 && (
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <span className="text-muted">Asistentes:</span>
-            <span className="fw-medium">{assistantsLabel}</span>
+            <span className="text-muted">
+              Asistentes{isAnnual && !isAssistantsOnly ? "(anual):" : ":"}
+            </span>
+            <span className="fw-medium">
+              {isAnnual && !isAssistantsOnly
+                ? `$${(paymentCalculations.baseAssistantsPrice * 12).toFixed(
+                    2
+                  )}`
+                : assistantsLabel}
+            </span>
           </div>
         )}
 
         {selectedComplements.length > 0 && (
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <span className="text-muted">Complementos:</span>
-            <span className="fw-medium">${totalComplementsPrice}</span>
+            <span className="text-muted">
+              Complementos{isAnnual && !isAssistantsOnly ? "(anual):" : ":"}
+            </span>
+            <span className="fw-medium">
+              $
+              {isAnnual && !isAssistantsOnly
+                ? (totalComplementsPrice * 12).toFixed(2)
+                : totalComplementsPrice}
+            </span>
           </div>
         )}
 
+        {/* Mostrar ahorro solo si es anual */}
+        {isAnnual && paymentCalculations?.totalAnnualSavings > 0 && (
+          <div
+            className="d-flex justify-content-between align-items-center mb-2"
+            style={{
+              backgroundColor: "rgba(40, 167, 69, 0.1)",
+              padding: "0.5rem",
+              borderRadius: "6px",
+            }}
+          >
+            <span className="text-success fw-medium">
+              <i className="bx bx-gift me-1"></i>
+              Ahorro anual:
+            </span>
+            <span className="fw-bold text-success">
+              -${paymentCalculations.totalAnnualSavings.toFixed(2)}
+            </span>
+          </div>
+        )}
+
+        <hr
+          style={{
+            margin: "0.75rem 0",
+            borderColor: "rgba(0, 158, 227)",
+          }}
+        />
+
+        {/* Totales */}
         <div className="d-flex justify-content-between align-items-center mb-2">
-          <span className="text-muted">Total en dólares:</span>
-          <span className="fw-medium">USD ${totalUSD}</span>
+          <span className="text-muted">
+            Total en dólares{isAnnual ? "(anual)" : ""}:
+          </span>
+          <span className="fw-medium">USD ${totalUSD.toFixed(2)}</span>
         </div>
+
         <div className="d-flex justify-content-between align-items-center">
-          <span className="text-muted">Total en pesos colombianos:</span>
+          <span className="text-muted">
+            Total en pesos colombianos{isAnnual ? "(anual)" : ""}:
+          </span>
           <span style={{ color: "#009ee3" }} className="fw-bold">
             COP ${totalCOP.toLocaleString("es-CO")}
           </span>

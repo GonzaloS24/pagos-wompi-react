@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { WOMPI_CONFIG } from "../services/payments/wompi/wompiConfig";
+import { PRICING, PAYMENT_PERIODS } from "../utils/constants";
+import { calculateDiscountedPrice, getPriceInfo } from "../utils/discounts";
 
 export const usePaymentCalculations = ({
   purchaseType,
@@ -9,9 +11,10 @@ export const usePaymentCalculations = ({
   usdToCopRate,
   urlParams,
   enableRecurring,
+  paymentPeriod = PAYMENT_PERIODS.MONTHLY,
 }) => {
   const calculations = useMemo(() => {
-    const assistantPrice = 20;
+    const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
     let totalAssistantsPrice;
 
     // Cálculo de precio de asistentes según tipo de compra
@@ -26,21 +29,66 @@ export const usePaymentCalculations = ({
       totalAssistantsPrice = selectedAssistants.length * assistantPrice;
     }
 
-    const planPrice = purchaseType === "plan" ? selectedPlan?.priceUSD || 0 : 0;
+    // Precio base del plan (mensual)
+    const basePlanPrice =
+      purchaseType === "plan" ? selectedPlan?.priceUSD || 0 : 0;
 
-    // Cálculo del precio total de los complementos
-    const totalComplementsPrice = selectedComplements.reduce(
+    // Aplicar descuento anual al plan si corresponde
+    const planPrice =
+      purchaseType === "plan" && selectedPlan
+        ? calculateDiscountedPrice(basePlanPrice, paymentPeriod)
+        : basePlanPrice;
+
+    // Los asistentes adicionales también se ven afectados por el descuento anual
+    const assistantsPriceWithPeriod =
+      purchaseType === "plan"
+        ? calculateDiscountedPrice(totalAssistantsPrice, paymentPeriod)
+        : totalAssistantsPrice;
+
+    // Cálculo del precio total de los complementos (también afectados por periodo)
+    const baseComplementsPrice = selectedComplements.reduce(
       (total, complement) => total + complement.totalPrice,
       0
     );
 
-    // Suma total en USD
-    const totalUSD = planPrice + totalAssistantsPrice + totalComplementsPrice;
+    const complementsPriceWithPeriod =
+      purchaseType === "plan"
+        ? calculateDiscountedPrice(baseComplementsPrice, paymentPeriod)
+        : baseComplementsPrice;
 
-    // Verificar que tenemos una tasa válida
+    // Suma total en USD
+    const totalUSD =
+      planPrice + assistantsPriceWithPeriod + complementsPriceWithPeriod;
+
+    // Información detallada de precios para el plan
+    const planPriceInfo =
+      purchaseType === "plan" && selectedPlan
+        ? getPriceInfo(basePlanPrice, paymentPeriod)
+        : null;
+
+    // Información de descuento para asistentes
+    const assistantsPriceInfo =
+      purchaseType === "plan" && totalAssistantsPrice > 0
+        ? getPriceInfo(totalAssistantsPrice, paymentPeriod)
+        : null;
+
+    // Información de descuento para complementos
+    const complementsPriceInfo =
+      purchaseType === "plan" && baseComplementsPrice > 0
+        ? getPriceInfo(baseComplementsPrice, paymentPeriod)
+        : null;
+
+    // Calcular ahorros totales
+    const totalAnnualSavings =
+      paymentPeriod === PAYMENT_PERIODS.ANNUAL && purchaseType === "plan"
+        ? (basePlanPrice + totalAssistantsPrice + baseComplementsPrice) *
+          PRICING.MONTHS_IN_YEAR *
+          (PRICING.ANNUAL_DISCOUNT_PERCENTAGE / 100)
+        : 0;
+
     const validRate = usdToCopRate && usdToCopRate > 0 ? usdToCopRate : 4000;
 
-    // Convertir a COP (precio final para las pasarelas)
+    // Convertir a COP
     const priceInCOP = Math.round(totalUSD * validRate);
     const priceCOPCents = priceInCOP * 100;
 
@@ -49,9 +97,39 @@ export const usePaymentCalculations = ({
       priceInCOP,
       priceCOPCents,
       planPrice,
-      totalAssistantsPrice,
-      totalComplementsPrice,
+      basePlanPrice,
+      totalAssistantsPrice: assistantsPriceWithPeriod,
+      baseAssistantsPrice: totalAssistantsPrice,
+      totalComplementsPrice: complementsPriceWithPeriod,
+      baseComplementsPrice,
       assistantPrice,
+
+      // Información de descuentos
+      planPriceInfo,
+      assistantsPriceInfo,
+      complementsPriceInfo,
+      totalAnnualSavings,
+
+      // Información de periodo
+      paymentPeriod,
+      isAnnual: paymentPeriod === PAYMENT_PERIODS.ANNUAL,
+
+      // Totales sin descuento para comparación
+      totalUSDWithoutDiscount:
+        purchaseType === "plan"
+          ? (basePlanPrice + totalAssistantsPrice + baseComplementsPrice) *
+            (paymentPeriod === PAYMENT_PERIODS.ANNUAL
+              ? PRICING.MONTHS_IN_YEAR
+              : 1)
+          : totalUSD,
+
+      // Descuento aplicado
+      discountApplied:
+        purchaseType === "plan" && paymentPeriod === PAYMENT_PERIODS.ANNUAL
+          ? (basePlanPrice + totalAssistantsPrice + baseComplementsPrice) *
+              PRICING.MONTHS_IN_YEAR -
+            totalUSD
+          : 0,
     };
   }, [
     purchaseType,
@@ -59,6 +137,7 @@ export const usePaymentCalculations = ({
     selectedAssistants,
     selectedComplements,
     usdToCopRate,
+    paymentPeriod,
   ]);
 
   const generateReference = useMemo(() => {
@@ -84,6 +163,11 @@ export const usePaymentCalculations = ({
 
     const recurringString = enableRecurring ? "-recurring=true" : "";
 
+    // información del periodo de pago
+    const periodString = calculations.isAnnual
+      ? "-period=annual"
+      : "-period=monthly";
+
     if (purchaseType === "plan") {
       return `plan_id=${
         selectedPlan?.id
@@ -91,13 +175,13 @@ export const usePaymentCalculations = ({
         urlParams?.workspace_name
       }-owner_email=${urlParams?.owner_email}-phone_number=${
         urlParams?.phone_number
-      }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`;
+      }${assistantsString}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
     } else {
       return `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
         urlParams?.workspace_name
       }-owner_email=${urlParams?.owner_email}-phone_number=${
         urlParams?.phone_number
-      }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`;
+      }${assistantsString}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
     }
   }, [
     purchaseType,
@@ -106,6 +190,7 @@ export const usePaymentCalculations = ({
     selectedComplements,
     urlParams,
     enableRecurring,
+    calculations.isAnnual,
   ]);
 
   const generateOrderDescription = useMemo(() => {
@@ -122,8 +207,20 @@ export const usePaymentCalculations = ({
       orderDescription += ` y ${selectedComplements.length} complemento(s)`;
     }
 
+    if (calculations.isAnnual) {
+      orderDescription += " (Plan Anual - Descuento 15%)";
+    } else {
+      orderDescription += " (Plan Mensual)";
+    }
+
     return orderDescription;
-  }, [purchaseType, selectedPlan, selectedAssistants, selectedComplements]);
+  }, [
+    purchaseType,
+    selectedPlan,
+    selectedAssistants,
+    selectedComplements,
+    calculations.isAnnual,
+  ]);
 
   return {
     ...calculations,

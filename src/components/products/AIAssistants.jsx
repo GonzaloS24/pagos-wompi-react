@@ -4,6 +4,7 @@ import { fetchWorkspaceAssistants } from "../../services/api/assistantsApi";
 import {
   ASSISTANTS_CONFIG,
   ASSISTANT_NAME_MAPPING,
+  PRICING,
 } from "../../utils/constants";
 import LoadingSpinner from "../common/LoadingSpinner";
 import Swal from "sweetalert2";
@@ -84,7 +85,7 @@ const AIAssistants = ({
         <>
           <p className="text-muted mb-3">
             {!isStandalone
-              ? "Tu plan incluye un asistente gratuito. Asistentes adicionales tienen un costo de $20 USD cada uno."
+              ? `Tu plan incluye un asistente gratuito. Asistentes adicionales tienen un costo de $${PRICING.ASSISTANT_PRICE_USD} USD cada uno.`
               : "Cada asistente tiene un costo adicional de $20 USD"}
           </p>
 

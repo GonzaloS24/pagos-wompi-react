@@ -25,6 +25,8 @@ import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentMo
 
 // Services
 import { validateForm } from "../../services/validation/formValidation";
+import { PAYMENT_PERIODS } from "../../utils/constants";
+import { canApplyAnnualDiscount } from "../../utils/discounts";
 
 // Styles
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -58,6 +60,8 @@ const PaymentContainer = () => {
     setFormErrors,
     isDataConfirmed,
     setIsDataConfirmed,
+    paymentPeriod,
+    setPaymentPeriod,
   } = useWompiPayment();
 
   const {
@@ -83,6 +87,7 @@ const PaymentContainer = () => {
     usdToCopRate,
     urlParams,
     enableRecurring,
+    paymentPeriod,
   });
 
   // Event handlers
@@ -93,6 +98,7 @@ const PaymentContainer = () => {
       setUrlParams({
         ...formData,
         plan_id: urlParams?.plan_id,
+        period: paymentPeriod,
       });
       setIsDataConfirmed(true);
       setShowModal(false);
@@ -133,6 +139,11 @@ const PaymentContainer = () => {
     handleRecurringChange(false);
     handleGatewayChange("wompi");
 
+    // Resetear el periodo si no se puede aplicar descuento anual
+    if (!canApplyAnnualDiscount(type)) {
+      setPaymentPeriod(PAYMENT_PERIODS.MONTHLY);
+    }
+
     if (complementsRef.current) {
       complementsRef.current.reset();
     }
@@ -149,6 +160,17 @@ const PaymentContainer = () => {
     setSelectedPlan(plan);
     setShowWompiWidget(false);
     handleRecurringChange(false);
+  };
+
+  // Handler para cambio de periodo
+  const handlePeriodChange = (period) => {
+    setPaymentPeriod(period);
+    setShowWompiWidget(false);
+
+    // Si se cambia a anual, resetear pago recurrente ya que no son compatibles
+    if (period === PAYMENT_PERIODS.ANNUAL && enableRecurring) {
+      handleRecurringChange(false);
+    }
   };
 
   const handleWompiPaymentClick = () => {
@@ -196,9 +218,21 @@ const PaymentContainer = () => {
     return false;
   };
 
+  // Verificar si el pago recurrente es compatible con plan anual
+  const isRecurringCompatibleWithPeriod = () => {
+    return paymentPeriod === PAYMENT_PERIODS.MONTHLY;
+  };
+
   useEffect(() => {
     resetRecurringIfNeeded();
   }, [resetRecurringIfNeeded]);
+
+  // Efecto para resetear pago recurrente si se selecciona plan anual
+  useEffect(() => {
+    if (paymentPeriod === PAYMENT_PERIODS.ANNUAL && enableRecurring) {
+      handleRecurringChange(false);
+    }
+  }, [paymentPeriod, enableRecurring, handleRecurringChange]);
 
   if (loading) {
     return (
@@ -238,7 +272,10 @@ const PaymentContainer = () => {
                       plans={plans}
                       selectedPlan={selectedPlan}
                       onPlanChange={handlePlanChange}
-                      disabled={Boolean(urlParams?.plan_id)}
+                      paymentPeriod={paymentPeriod}
+                      onPeriodChange={handlePeriodChange}
+                      planSelectorDisabled={Boolean(urlParams?.plan_id)}
+                      periodToggleDisabled={false}
                     />
                   </div>
                 )}
@@ -271,6 +308,7 @@ const PaymentContainer = () => {
                     selectedAssistants={selectedAssistants}
                     isAssistantsOnly={purchaseType === "assistants"}
                     selectedComplements={selectedComplements}
+                    paymentCalculations={paymentCalculations}
                   />
                 )}
 
@@ -279,13 +317,20 @@ const PaymentContainer = () => {
                     <PaymentGatewaySelector
                       selectedGateway={selectedGateway}
                       onChange={handleGatewayChange}
-                      enableRecurring={enableRecurring}
+                      enableRecurring={
+                        enableRecurring && isRecurringCompatibleWithPeriod()
+                      }
                       setEnableRecurring={handleRecurringChange}
-                      showRecurringOption={canShowRecurringOption}
-                      isRecurringPayment={isRecurringPayment}
+                      showRecurringOption={
+                        canShowRecurringOption &&
+                        isRecurringCompatibleWithPeriod()
+                      }
+                      isRecurringPayment={
+                        isRecurringPayment && isRecurringCompatibleWithPeriod()
+                      }
                     />
 
-                    {isRecurringPayment ? (
+                    {isRecurringPayment && isRecurringCompatibleWithPeriod() ? (
                       <RecurringPaymentButton
                         planId={selectedPlan.id}
                         enableRecurring={enableRecurring}
@@ -321,7 +366,9 @@ const PaymentContainer = () => {
                         orderDescription={paymentCalculations.orderDescription}
                         formData={formData}
                         reference={paymentCalculations.reference}
-                        enableRecurring={enableRecurring}
+                        enableRecurring={
+                          enableRecurring && isRecurringCompatibleWithPeriod()
+                        }
                       />
                     )}
                   </div>

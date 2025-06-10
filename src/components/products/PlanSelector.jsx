@@ -5,7 +5,10 @@ const PlanSelector = ({
   plans,
   selectedPlan,
   onPlanChange,
-  disabled = false,
+  paymentPeriod,
+  onPeriodChange,
+  planSelectorDisabled = false,
+  periodToggleDisabled = false,
   className = "",
 }) => {
   const handlePlanChange = (e) => {
@@ -24,7 +27,7 @@ const PlanSelector = ({
         className="form-select form-select-lg mb-3"
         onChange={handlePlanChange}
         value={selectedPlan?.id || ""}
-        disabled={disabled}
+        disabled={planSelectorDisabled}
       >
         <option value="">Seleccionar plan</option>
         {plans.map((plan) => (
@@ -36,8 +39,10 @@ const PlanSelector = ({
 
       {selectedPlan && (
         <PlanPeriodToggle
+          period={paymentPeriod}
+          onPeriodChange={onPeriodChange}
           selectedPlan={selectedPlan}
-          disabled={disabled}
+          disabled={periodToggleDisabled}
           className="mb-3"
         />
       )}
@@ -57,7 +62,10 @@ PlanSelector.propTypes = {
   ).isRequired,
   selectedPlan: PropTypes.object,
   onPlanChange: PropTypes.func.isRequired,
-  disabled: PropTypes.bool,
+  paymentPeriod: PropTypes.string,
+  onPeriodChange: PropTypes.func,
+  planSelectorDisabled: PropTypes.bool,
+  periodToggleDisabled: PropTypes.bool,
   className: PropTypes.string,
 };
 

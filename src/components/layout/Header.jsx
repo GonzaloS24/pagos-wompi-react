@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import chateaLogo from "../../assets/";
+import chateaLogo from "../../assets/chatea.png";
 
 const Header = ({
   title = "Chatea Pro",
