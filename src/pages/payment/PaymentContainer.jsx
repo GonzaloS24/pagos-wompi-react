@@ -404,6 +404,7 @@ const PaymentContainer = () => {
         selectedAssistants={selectedAssistants}
         selectedComplements={selectedComplements}
         isAssistantsOnly={purchaseType === "assistants"}
+        paymentCalculations={paymentCalculations}
       />
     </div>
   );

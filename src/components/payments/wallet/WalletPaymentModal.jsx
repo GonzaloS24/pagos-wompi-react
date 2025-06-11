@@ -13,6 +13,7 @@ const WalletPaymentModal = ({
   selectedAssistants,
   selectedComplements,
   isAssistantsOnly,
+  paymentCalculations,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
@@ -22,6 +23,10 @@ const WalletPaymentModal = ({
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
   const hasPlan = !isAssistantsOnly && selectedPlan;
+
+  // información de periodicidad de paymentCalculations
+  const isAnnual = paymentCalculations?.isAnnual || false;
+  const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
 
   const handleConfirmPayment = async () => {
     try {
@@ -66,32 +71,7 @@ const WalletPaymentModal = ({
   };
 
   const copyPurchaseSummary = () => {
-    let summary = "RESUMEN DEL PLAN:\n\n";
-
-    summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
-
-    if (hasPlan) {
-      summary += `Plan: ${selectedPlan.name}\n`;
-    }
-
-    if (hasAssistants) {
-      summary += `Asistentes: ${selectedAssistants.join(", ")}\n`;
-    }
-
-    if (hasComplements) {
-      summary += `Complementos: ${selectedComplements
-        .map((c) => `${c.id} (${c.quantity})`)
-        .join(", ")}\n`;
-    }
-
-    summary += `Total en dólares: $${walletData.amountUSD.toLocaleString(
-      "es-CO"
-    )} USD \n`;
-
-    summary += `Total en pesos colombianos: $${walletData.amount.toLocaleString(
-      "es-CO"
-    )} COP\n`;
-
+    const summary = generatePurchaseSummary();
     navigator.clipboard.writeText(summary).then(() => {
       Swal.fire({
         icon: "success",
@@ -122,13 +102,19 @@ const WalletPaymentModal = ({
         .join(", ")}\n`;
     }
 
-    summary += `Total en dólares: $${walletData.amountUSD.toLocaleString(
-      "es-CO"
-    )} USD \n`;
+    summary += `Periodicidad: ${isAnnual ? "Anual" : "Mensual"}\n`;
 
-    summary += `Total en pesos colombianos: $${walletData.amount.toLocaleString(
-      "es-CO"
-    )} COP\n`;
+    if (isAnnual && totalAnnualSavings > 0) {
+      summary += `Ahorro anual: -$${totalAnnualSavings.toFixed(2)} USD\n`;
+    }
+
+    summary += `Total en dólares${
+      isAnnual ? " (anual)" : ""
+    }: $${walletData.amountUSD.toLocaleString("es-CO")} USD\n`;
+
+    summary += `Total en pesos colombianos${
+      isAnnual ? " (anual)" : ""
+    }: $${walletData.amount.toLocaleString("es-CO")} COP\n`;
 
     return summary;
   };
@@ -152,14 +138,19 @@ const WalletPaymentModal = ({
         .map((c) => `${c.id} (${c.quantity})`)
         .join(", ")}\n`;
     }
+    summary += `Periodicidad: ${isAnnual ? "Anual" : "Mensual"}\n`;
 
-    summary += `Total en dólares: $${walletData.amountUSD.toLocaleString(
-      "es-CO"
-    )} USD \n`;
+    if (isAnnual && totalAnnualSavings > 0) {
+      summary += `Ahorro anual: -$${totalAnnualSavings.toFixed(2)} USD\n`;
+    }
 
-    summary += `Total en pesos colombianos: $${walletData.amount.toLocaleString(
-      "es-CO"
-    )} COP\n\n`;
+    summary += `Total en dólares${
+      isAnnual ? " (anual)" : ""
+    }: $${walletData.amountUSD.toLocaleString("es-CO")} USD\n`;
+
+    summary += `Total en pesos colombianos${
+      isAnnual ? " (anual)" : ""
+    }: $${walletData.amount.toLocaleString("es-CO")} COP\n\n`;
 
     summary += "¡Gracias!";
 
@@ -235,10 +226,44 @@ const WalletPaymentModal = ({
               </h6>
 
               {hasPlan && (
-                <div className="d-flex justify-content-between mb-1">
-                  <span className="text-muted">Plan:</span>
-                  <span>{selectedPlan.name}</span>
-                </div>
+                <>
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted">Plan:</span>
+                    <span>{selectedPlan.name}</span>
+                  </div>
+
+                  {/* Mostrar información de periodicidad */}
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted">Periodicidad:</span>
+                    <span>
+                      {isAnnual ? (
+                        <>
+                          Anual
+                          <span
+                            className="ms-2"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #28a745, #20c997)",
+                              color: "white",
+                              padding: "0.2rem 0.5rem",
+                              borderRadius: "10px",
+                              fontSize: "0.7rem",
+                              fontWeight: "600",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.3rem",
+                            }}
+                          >
+                            <i className="bx bx-gift"></i>
+                            -15%
+                          </span>
+                        </>
+                      ) : (
+                        "Mensual"
+                      )}
+                    </span>
+                  </div>
+                </>
               )}
 
               {hasAssistants && (
@@ -259,15 +284,40 @@ const WalletPaymentModal = ({
                 </div>
               )}
 
+              {/* Mostrar ahorro solo si es anual */}
+              {isAnnual && totalAnnualSavings > 0 && (
+                <div
+                  className="d-flex justify-content-between mb-1"
+                  style={{
+                    backgroundColor: "rgba(40, 167, 69, 0.1)",
+                    padding: "0.5rem",
+                    borderRadius: "6px",
+                    margin: "0.5rem -0.5rem",
+                  }}
+                >
+                  <span className="text-success fw-medium">
+                    <i className="bx bx-gift me-1"></i>
+                    Ahorro anual:
+                  </span>
+                  <span className="fw-bold text-success">
+                    -${totalAnnualSavings.toFixed(2)} USD
+                  </span>
+                </div>
+              )}
+
               <div className="d-flex justify-content-between mb-1">
-                <span className="text-muted">Total en dólares:</span>
+                <span className="text-muted">
+                  Total en dólares{isAnnual ? " (anual)" : ""}:
+                </span>
                 <span className="fw-bold" style={{ color: "#009ee3" }}>
                   ${walletData.amountUSD.toLocaleString("es-CO")} USD
                 </span>
               </div>
 
               <div className="d-flex justify-content-between mb-1">
-                <span className="text-muted">Total en pesos colombianos:</span>
+                <span className="text-muted">
+                  Total en pesos colombianos{isAnnual ? " (anual)" : ""}:
+                </span>
                 <span className="fw-bold" style={{ color: "#009ee3" }}>
                   ${walletData.amount.toLocaleString("es-CO")} COP
                 </span>
@@ -540,6 +590,7 @@ WalletPaymentModal.propTypes = {
   selectedAssistants: PropTypes.array.isRequired,
   selectedComplements: PropTypes.array.isRequired,
   isAssistantsOnly: PropTypes.bool.isRequired,
+  paymentCalculations: PropTypes.object,
 };
 
 export default WalletPaymentModal;
