@@ -1,13 +1,16 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import PaymentContainer from "./pages/payment/PaymentContainer";
-import Confirmation from "./pages/confirmation/Confirmation";
+import TransactionConfirmation from "./pages/confirmation/TransactionConfirmation";
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<PaymentContainer />} />
-        <Route path="/transaction-summary" element={<Confirmation />} />
+        <Route
+          path="/transaction-summary"
+          element={<TransactionConfirmation />}
+        />
       </Routes>
     </Router>
   );
