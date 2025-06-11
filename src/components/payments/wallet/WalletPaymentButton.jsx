@@ -38,7 +38,13 @@ const WalletPaymentButton = ({ onPaymentClick, disabled = false }) => {
         cursor: disabled ? "not-allowed" : "pointer",
       }}
     >
-      {isLoading ? <span>Procesando...</span> : <>Pagar con Wallet</>}
+      {isLoading ? (
+        <span>Procesando...</span>
+      ) : (
+        <>
+          <i className="bx bx-wallet"></i>­­­ ­Pagar con Wallet
+        </>
+      )}
     </button>
   );
 };

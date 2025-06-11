@@ -110,11 +110,11 @@ const WalletPaymentModal = ({
 
     summary += `Total en dólares${
       isAnnual ? " (anual)" : ""
-    }: $${walletData.amountUSD.toLocaleString("es-CO")} USD\n`;
+    }: $${walletData.amountUSD.toFixed(2)} USD\n`;
 
     summary += `Total en pesos colombianos${
       isAnnual ? " (anual)" : ""
-    }: $${walletData.amount.toLocaleString("es-CO")} COP\n`;
+    }: ${Math.round(walletData.amount)} COP\n`;
 
     return summary;
   };
@@ -146,11 +146,11 @@ const WalletPaymentModal = ({
 
     summary += `Total en dólares${
       isAnnual ? " (anual)" : ""
-    }: $${walletData.amountUSD.toLocaleString("es-CO")} USD\n`;
+    }: $${walletData.amountUSD.toFixed(2)} USD\n`;
 
     summary += `Total en pesos colombianos${
       isAnnual ? " (anual)" : ""
-    }: $${walletData.amount.toLocaleString("es-CO")} COP\n\n`;
+    }: ${Math.round(walletData.amount)} COP\n\n`;
 
     summary += "¡Gracias!";
 
@@ -310,7 +310,7 @@ const WalletPaymentModal = ({
                   Total en dólares{isAnnual ? " (anual)" : ""}:
                 </span>
                 <span className="fw-bold" style={{ color: "#009ee3" }}>
-                  ${walletData.amountUSD.toLocaleString("es-CO")} USD
+                  ${walletData.amountUSD.toFixed(2)} USD
                 </span>
               </div>
 
@@ -319,7 +319,7 @@ const WalletPaymentModal = ({
                   Total en pesos colombianos{isAnnual ? " (anual)" : ""}:
                 </span>
                 <span className="fw-bold" style={{ color: "#009ee3" }}>
-                  ${walletData.amount.toLocaleString("es-CO")} COP
+                  ${Math.round(walletData.amount)} COP
                 </span>
               </div>
             </div>

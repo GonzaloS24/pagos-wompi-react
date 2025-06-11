@@ -9,7 +9,10 @@ export const transactionService = {
     try {
       // Verificar si estamos en modo de prueba simulada
       if (isSimulatedTest(searchParams)) {
-        return getSimulatedTransactionData(transactionId, this.processAssistants);
+        return getSimulatedTransactionData(
+          transactionId,
+          this.processAssistants
+        );
       }
 
       if (!transactionId) {
@@ -41,24 +44,28 @@ export const transactionService = {
         if (transaction.currency === "COP") {
           amountCOP = transaction.amount_in_cents / 100;
 
-          try {
-            const exchangeResponse = await fetch(
-              WOMPI_CONFIG.EXCHANGE_RATE_API
-            );
-            if (exchangeResponse.ok) {
-              const exchangeData = await exchangeResponse.json();
-              const copRate = exchangeData.rates.COP;
-              amountUSD = amountCOP / copRate;
-            } else {
+          amountUSD = this.calculateOriginalUSDFromReference(referenceData);
+
+          if (!amountUSD) {
+            try {
+              const exchangeResponse = await fetch(
+                WOMPI_CONFIG.EXCHANGE_RATE_API
+              );
+              if (exchangeResponse.ok) {
+                const exchangeData = await exchangeResponse.json();
+                const copRate = exchangeData.rates.COP;
+                amountUSD = amountCOP / copRate;
+              } else {
+                amountUSD = referenceData.totalUSD
+                  ? parseFloat(referenceData.totalUSD)
+                  : amountCOP / 4000;
+              }
+            } catch (error) {
+              console.error("Error obteniendo tasa de cambio:", error);
               amountUSD = referenceData.totalUSD
                 ? parseFloat(referenceData.totalUSD)
                 : amountCOP / 4000;
             }
-          } catch (error) {
-            console.error("Error obteniendo tasa de cambio:", error);
-            amountUSD = referenceData.totalUSD
-              ? parseFloat(referenceData.totalUSD)
-              : amountCOP / 4000;
           }
         } else {
           amountUSD = transaction.amount_in_cents / 100;
@@ -93,11 +100,100 @@ export const transactionService = {
           plan_id: referenceData.plan_id,
           workspace_id: referenceData.workspace_id,
           recurring: referenceData.recurring,
+          // Datos adicionales para el modal de Wallet
+          workspaceData: {
+            workspace_id: referenceData.workspace_id,
+            workspace_name: referenceData.workspace_name,
+            owner_email: referenceData.owner_email,
+            owner_name: referenceData.owner_name,
+            phone_number: referenceData.phone_number,
+          },
+          // Determinar si es plan anual basado en la referencia
+          isAnnual: referenceData.period === "annual",
+          period: referenceData.period || "monthly",
         };
       }
       return null;
     } catch (error) {
       console.error("Error fetching transaction details:", error);
+      return null;
+    }
+  },
+
+  calculateOriginalUSDFromReference(referenceData) {
+    try {
+      let totalUSD = 0;
+
+      const PLAN_PRICES = {
+        business: 49, // Chatea Pro Start
+        business_lite: 109, // Chatea Pro Advanced
+        custom_plan3: 189, // Chatea Pro Plus
+        business_large: 399, // Chatea Pro Master
+      };
+
+      // Agregar precio del plan si existe
+      if (referenceData.plan_id && PLAN_PRICES[referenceData.plan_id]) {
+        let planPrice = PLAN_PRICES[referenceData.plan_id];
+
+        // Si es plan anual, calcular precio anual con descuento
+        if (referenceData.period === "annual") {
+          const annualPrice = planPrice * 12;
+          planPrice = annualPrice * 0.85;
+        }
+
+        totalUSD += planPrice;
+      }
+
+      if (referenceData.assistants && referenceData.assistants.length > 0) {
+        const assistantPrice = 20;
+        let assistantsTotal = 0;
+
+        if (referenceData.plan_id) {
+          const paidAssistants = Math.max(
+            0,
+            referenceData.assistants.length - 1
+          );
+          assistantsTotal = paidAssistants * assistantPrice;
+        } else {
+          assistantsTotal = referenceData.assistants.length * assistantPrice;
+        }
+
+        // Si es plan anual, calcular precio anual con descuento para asistentes
+        if (referenceData.period === "annual" && referenceData.plan_id) {
+          const annualAssistantsPrice = assistantsTotal * 12;
+          assistantsTotal = annualAssistantsPrice * 0.85;
+        }
+
+        totalUSD += assistantsTotal;
+      }
+
+      // Agregar precio de complementos
+      if (referenceData.complements && referenceData.complements.length > 0) {
+        for (const complement of referenceData.complements) {
+          const parts = complement.split("_");
+          const type = parts[0];
+          const quantity = parseInt(parts[1] || "1", 10);
+
+          let complementPrice = 0;
+          if (type === "bot" || type === "member") {
+            complementPrice = 10 * quantity;
+          } else if (type === "webhooks") {
+            complementPrice = 20 * quantity;
+          }
+
+          // Si es plan anual, calcular precio anual con descuento para complementos
+          if (referenceData.period === "annual" && referenceData.plan_id) {
+            const annualComplementPrice = complementPrice * 12;
+            complementPrice = annualComplementPrice * 0.85;
+          }
+
+          totalUSD += complementPrice;
+        }
+      }
+
+      return totalUSD > 0 ? totalUSD : null;
+    } catch (error) {
+      console.error("Error calculando precio original USD:", error);
       return null;
     }
   },
@@ -251,5 +347,11 @@ export const transactionService = {
       default:
         return methodType;
     }
+  },
+
+  // verificar si un pago falló
+  isFailedPayment(status) {
+    const failedStatuses = ["DECLINED", "ERROR", "VOIDED"];
+    return failedStatuses.includes(status);
   },
 };

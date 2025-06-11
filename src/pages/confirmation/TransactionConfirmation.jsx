@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import chatea from "../../assets/chatea.png";
-import "./Confirmation.css";
+import "./styles/Confirmation.css";
 import { useTransactionData } from "./hooks/useTransactionData";
 import { TransactionDetails } from "./components/TransactionDetails";
+import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
 import {
   LoadingState,
   ErrorState,
@@ -12,8 +13,15 @@ import {
 
 const TransactionConfirmation = () => {
   const location = useLocation();
-  const { transactionData, loading, pollingCount } =
-    useTransactionData(location);
+  const {
+    transactionData,
+    loading,
+    pollingCount,
+    showWalletModal,
+    showWalletButton,
+    handleWalletModalClose,
+    handleWalletButtonClick,
+  } = useTransactionData(location);
 
   useEffect(() => {
     const originalTitle = document.title;
@@ -29,6 +37,37 @@ const TransactionConfirmation = () => {
     setTimeout(() => {
       document.title = originalTitle;
     }, 100);
+  };
+
+  // Generar datos para el modal de Wallet
+  const generateWalletPaymentData = () => {
+    if (!transactionData) return null;
+
+    return {
+      totalUSD: transactionData.amountUSD,
+      priceInCOP: transactionData.amountCOP,
+      orderDescription: `Transacción ${transactionData.id} - Pago alternativo por Wallet`,
+      reference: transactionData.reference,
+      formData: transactionData.workspaceData || {
+        workspace_id: transactionData.workspace_id || "",
+        workspace_name: "N/A",
+        owner_email: "N/A",
+        owner_name: "N/A",
+        phone_number: "N/A",
+      },
+    };
+  };
+
+  // Generar cálculos de pago para el modal
+  const generatePaymentCalculations = () => {
+    if (!transactionData) return null;
+
+    return {
+      totalUSD: transactionData.amountUSD,
+      priceInCOP: transactionData.amountCOP,
+      isAnnual: transactionData.isAnnual || false,
+      totalAnnualSavings: 0,
+    };
   };
 
   if (loading) {
@@ -50,12 +89,41 @@ const TransactionConfirmation = () => {
         <ErrorState />
       ) : (
         <div className="confirmation-card p-4 bg-white rounded">
-          <TransactionHeader transactionData={transactionData} />
+          <TransactionHeader
+            transactionData={transactionData}
+            showWalletButton={showWalletButton}
+            onWalletButtonClick={handleWalletButtonClick}
+          />
           <TransactionDetails
             transactionData={transactionData}
             onPrint={handlePrint}
           />
         </div>
+      )}
+
+      {/* Modal de Wallet Payment */}
+      {transactionData && (
+        <WalletPaymentModal
+          show={showWalletModal}
+          onHide={handleWalletModalClose}
+          paymentData={generateWalletPaymentData()}
+          selectedPlan={
+            transactionData.plan_id
+              ? {
+                  id: transactionData.plan_id,
+                  name: transactionData.plan_id,
+                }
+              : null
+          }
+          selectedAssistants={
+            transactionData.assistants
+              ? transactionData.assistants.map((a) => a.id)
+              : []
+          }
+          selectedComplements={transactionData.complements || []}
+          isAssistantsOnly={!transactionData.plan_id}
+          paymentCalculations={generatePaymentCalculations()}
+        />
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import { PuffLoader } from "react-spinners";
+import WalletHeaderButton from "./WalletHeaderButton";
 
 export const LoadingState = ({ pollingCount }) => (
   <div className="loader-container">
@@ -39,9 +40,16 @@ export const ErrorState = () => (
   </div>
 );
 
-export const TransactionHeader = ({ transactionData }) => {
+export const TransactionHeader = ({
+  transactionData,
+  showWalletButton,
+  onWalletButtonClick,
+}) => {
   const isSuccessful = transactionData?.status === "APPROVED";
   const isPending = transactionData?.status === "PENDING";
+  const isFailed = ["DECLINED", "ERROR", "VOIDED"].includes(
+    transactionData?.status
+  );
 
   return (
     <>
@@ -83,6 +91,13 @@ export const TransactionHeader = ({ transactionData }) => {
               {transactionData.statusMessage}
             </h2>
             <p className="text-muted">Hubo un problema con tu pago</p>
+
+            {/* Botón de Wallet justo después del mensaje de error */}
+            {isFailed && showWalletButton && (
+              <div className="mt-3">
+                <WalletHeaderButton onClick={onWalletButtonClick} />
+              </div>
+            )}
           </>
         )}
       </div>

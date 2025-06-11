@@ -114,7 +114,10 @@ const AIAssistants = ({
               const isComingSoon = assistant.comingSoon === true;
 
               return (
-                <div key={assistant.id} className="form-check mb-2">
+                <div
+                  key={assistant.id}
+                  className="form-check mb-2 d-flex align-items-center"
+                >
                   <input
                     className="form-check-input"
                     type="checkbox"
@@ -141,10 +144,12 @@ const AIAssistants = ({
                         Ya adquirido
                       </span>
                     )}
-                    {isComingSoon && (
-                      <span className="ms-2 badge">Próximamente</span>
-                    )}
                   </label>
+                  {isComingSoon && (
+                    <span className="badge badge-coming-soon">
+                      Próximamente
+                    </span>
+                  )}
                 </div>
               );
             })}

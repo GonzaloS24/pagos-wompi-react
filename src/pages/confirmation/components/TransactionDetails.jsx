@@ -8,9 +8,19 @@ export const TransactionDetails = ({ transactionData, onPrint }) => {
     return now.toLocaleDateString() + " " + now.toLocaleTimeString();
   };
 
-  //   const isRecurringValid = (data) => {
-  //     return data.recurring && data.paymentMethod === "CARD";
-  //   };
+  // Función para determinar la periodicidad
+  const getPaymentPeriod = () => {
+    if (transactionData?.isAnnual) {
+      return "Anual";
+    } else if (transactionData?.period === "annual") {
+      return "Anual";
+    } else {
+      return "Mensual";
+    }
+  };
+
+  const isAnnualPayment =
+    transactionData?.isAnnual || transactionData?.period === "annual";
 
   return (
     <div
@@ -41,6 +51,25 @@ export const TransactionDetails = ({ transactionData, onPrint }) => {
         <div className="transaction-info-item">
           <div className="info-label">Fecha</div>
           <div className="info-value">{transactionData.createdAt}</div>
+        </div>
+
+        <div className="transaction-info-item">
+          <div className="info-label">Periodicidad</div>
+          <div className="info-value">
+            <span
+              className={`period-badge ${
+                isAnnualPayment ? "annual" : "monthly"
+              }`}
+            >
+              {getPaymentPeriod()}
+              {isAnnualPayment && (
+                <span className="discount-indicator">
+                  <i className="bx bx-gift"></i>
+                  -15%
+                </span>
+              )}
+            </span>
+          </div>
         </div>
 
         <div className="transaction-info-item">
@@ -102,33 +131,6 @@ export const TransactionDetails = ({ transactionData, onPrint }) => {
             <div className="info-value">{transactionData.workspace_id}</div>
           </div>
         )}
-
-        {/* Estatus de pago recurrente */}
-        {/* <div className="transaction-info-item">
-          <div className="info-label">Pago Recurrente</div>
-          <div className="info-value">
-            {isRecurringValid(transactionData) ? (
-              <span className="recurring-badge active">
-                Activo
-                {transactionData.cardType && (
-                  <span className="ms-1 card-type-small">
-                    (Tarjeta{" "}
-                    {transactionData.cardType === "CREDIT"
-                      ? "Crédito"
-                      : "Débito"}
-                    )
-                  </span>
-                )}
-              </span>
-            ) : transactionData.recurring ? (
-              <span className="recurring-badge inactive">
-                No disponible con {transactionData.paymentMethodName}
-              </span>
-            ) : (
-              <span className="recurring-badge inactive">Inactivo</span>
-            )}
-          </div>
-        </div> */}
       </div>
 
       {/* Asistentes */}
