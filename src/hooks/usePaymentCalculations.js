@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from "react";
 import { WOMPI_CONFIG } from "../services/payments/wompi/wompiConfig";
 import { PRICING, PAYMENT_PERIODS } from "../utils/constants";
@@ -164,9 +165,9 @@ export const usePaymentCalculations = ({
     const recurringString = enableRecurring ? "-recurring=true" : "";
 
     // información del periodo de pago
-    const periodString = calculations.isAnnual
-      ? "-period=annual"
-      : "-period=monthly";
+    // const periodString = calculations.isAnnual
+    //   ? "-period=annual"
+    //   : "-period=monthly";
 
     if (purchaseType === "plan") {
       return `plan_id=${
@@ -175,13 +176,13 @@ export const usePaymentCalculations = ({
         urlParams?.workspace_name
       }-owner_email=${urlParams?.owner_email}-phone_number=${
         urlParams?.phone_number
-      }${assistantsString}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
+      }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`;
     } else {
       return `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
         urlParams?.workspace_name
       }-owner_email=${urlParams?.owner_email}-phone_number=${
         urlParams?.phone_number
-      }${assistantsString}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
+      }${assistantsString}${complementsString}${recurringString}-reference${Date.now()}`;
     }
   }, [
     purchaseType,
