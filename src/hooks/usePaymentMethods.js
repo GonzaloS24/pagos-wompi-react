@@ -12,26 +12,25 @@ export const usePaymentMethods = ({
 
   // Determina si se puede mostrar la opción de pago recurrente
   const canShowRecurringOption = useCallback(() => {
-    if (purchaseType !== "plan" || !selectedPlan) {
-      return false;
+    if (purchaseType === "plan") {
+      if (!selectedPlan || selectedAssistants.length === 0) {
+        return false;
+      }
+
+      const additionalAssistants = Math.max(0, selectedAssistants.length - 1);
+
+      const hasRecurringConfig = hasRecurringPlan(
+        selectedPlan.id,
+        additionalAssistants
+      );
+      return hasRecurringConfig;
     }
 
-    // Solo mostrar si:
-    // 1. Hay al menos 1 asistente seleccionado
-    // 2. NO hay complementos seleccionados
-    const hasAssistants = selectedAssistants.length > 0;
-    const noComplements = selectedComplements.length === 0;
-    const additionalAssistants = Math.max(0, selectedAssistants.length - 1);
+    if (purchaseType === "assistants") {
+      return selectedAssistants.length > 0 || selectedComplements.length > 0;
+    }
 
-    // Verificar si hay configuración para esta combinación
-    // eslint-disable-next-line no-unused-vars
-    const hasRecurringConfig = hasRecurringPlan(
-      selectedPlan.id,
-      additionalAssistants
-    );
-
-    const result = hasAssistants && noComplements;
-    return result;
+    return false;
   }, [purchaseType, selectedPlan, selectedAssistants, selectedComplements]);
 
   // Determina si es un pago recurrente
@@ -58,12 +57,11 @@ export const usePaymentMethods = ({
     }
   }, []);
 
-  // Reset cuando cambian los complementos
   const resetRecurringIfNeeded = useCallback(() => {
-    if (selectedComplements.length > 0 && enableRecurring) {
+    if (enableRecurring && !canShowRecurringOption()) {
       setEnableRecurring(false);
     }
-  }, [selectedComplements, enableRecurring]);
+  }, [enableRecurring, canShowRecurringOption]);
 
   return {
     selectedGateway,

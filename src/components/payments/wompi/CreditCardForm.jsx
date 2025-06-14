@@ -20,13 +20,11 @@ const CreditCardForm = ({ onSubmit, loading = false, onCancel }) => {
   const amexCardMask = "#### ###### #####";
   const otherCardMask = "#### #### #### ####";
 
-  // Referencias para los elementos del DOM
   const cardNumberRef = useRef(null);
   const cardNameRef = useRef(null);
   const cardDateRef = useRef(null);
   const focusElementRef = useRef(null);
 
-  // Focus inicial
   useEffect(() => {
     if (cardNumberRef.current) {
       cardNumberRef.current.focus();
@@ -147,38 +145,50 @@ const CreditCardForm = ({ onSubmit, loading = false, onCancel }) => {
   const renderCardNumber = () => {
     const mask = generateCardNumberMask();
     const cardType = getCardType();
+    const cardNumber = cardData.cardNumber;
 
-    return mask.split("").map((char, index) => {
-      const isActive = char === " ";
-      const shouldHide =
-        cardType === "amex"
-          ? index > 4 &&
-            index < 14 &&
-            cardData.cardNumber.length > index &&
-            char !== " "
-          : index > 4 &&
-            index < 15 &&
-            cardData.cardNumber.length > index &&
-            char !== " ";
+    let numberIndex = 0;
 
-      let displayChar = char;
-      if (char === "#") {
-        if (cardData.cardNumber[index] !== undefined) {
-          displayChar = shouldHide ? "*" : cardData.cardNumber[index];
-        } else {
-          displayChar = char;
+    return mask
+      .split("")
+      .map((char, maskIndex) => {
+        if (char === " ") {
+          return (
+            <span key={maskIndex} className="card-item__numberItem">
+              {char}
+            </span>
+          );
+        } else if (char === "#") {
+          let displayChar = "#";
+          const isActive = false;
+
+          if (numberIndex < cardNumber.length) {
+            const currentDigit = cardNumber[numberIndex];
+
+            // Lógica para mostrar asteriscos en posiciones del medio
+            const shouldHide =
+              cardType === "amex"
+                ? numberIndex >= 4 && numberIndex < 10 // Amex: ocultar posiciones 4-9
+                : numberIndex >= 4 && numberIndex < 12; // Otras: ocultar posiciones 4-11
+
+            displayChar = shouldHide ? "*" : currentDigit;
+          }
+
+          numberIndex++;
+
+          return (
+            <span
+              key={maskIndex}
+              className={`card-item__numberItem ${isActive ? "-active" : ""}`}
+            >
+              {displayChar}
+            </span>
+          );
         }
-      }
 
-      return (
-        <span
-          key={index}
-          className={`card-item__numberItem ${isActive ? "-active" : ""}`}
-        >
-          {displayChar}
-        </span>
-      );
-    });
+        return null;
+      })
+      .filter(Boolean);
   };
 
   // Validar formulario
@@ -443,7 +453,7 @@ const CreditCardForm = ({ onSubmit, loading = false, onCancel }) => {
                 className="card-form__button -submit"
                 disabled={loading || !validateForm()}
               >
-                {loading ? "Procesando..." : "Configurar Pago"}
+                {loading ? "Procesando..." : "Confirmar"}
               </button>
             </div>
           </form>

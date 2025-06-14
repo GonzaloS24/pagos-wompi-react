@@ -17,7 +17,6 @@ const WompiRecurringModal = ({
     setLoading(true);
 
     try {
-      console.log("🚀 Iniciando configuración de pago recurrente...");
       const result = await wompiRecurringService.processRecurringPayment(
         cardData,
         paymentCalculations,

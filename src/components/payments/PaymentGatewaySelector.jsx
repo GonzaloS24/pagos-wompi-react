@@ -9,7 +9,7 @@ const PaymentGatewaySelector = ({
   onChange,
   enableRecurring,
   setEnableRecurring,
-  showRecurringOption,
+  // showRecurringOption,
   isRecurringPayment,
 }) => {
   const handleRecurringChange = (e) => {
@@ -106,7 +106,7 @@ const PaymentGatewaySelector = ({
       </div>
 
       {/* Opción de pago recurrente */}
-      {showRecurringOption && (
+      {/* {showRecurringOption && (
         <div className="recurring-option mt-2">
           <input
             type="checkbox"
@@ -126,7 +126,7 @@ const PaymentGatewaySelector = ({
             title="Los pagos automáticos permiten que se cargue automáticamente tu tarjeta de forma mensual."
           ></i>
         </div>
-      )}
+      )} */}
 
       {/* Información adicional sobre pagos recurrentes */}
       {enableRecurring && selectedGateway === "wompi" && (

@@ -8,7 +8,7 @@ export class WompiRecurringService {
     this.config = WOMPI_RECURRING_CONFIG;
   }
 
-  // Paso 1: Tokenizar la tarjeta (Frontend)
+  // Paso 1: Tokenizar la tarjeta
   async tokenizeCard(cardData) {
     try {
       const response = await fetch(WOMPI_RECURRING_ENDPOINTS.TOKENIZE_CARD, {
@@ -49,7 +49,7 @@ export class WompiRecurringService {
     }
   }
 
-  // Obtener token de aceptación (Frontend)
+  // Obtener token de aceptación
   async getAcceptanceToken() {
     try {
       const url = WOMPI_RECURRING_ENDPOINTS.ACCEPTANCE_TOKEN.replace(

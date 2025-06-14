@@ -128,13 +128,11 @@
 .card-form__button.-submit {
   background: #009ee3;
   color: #fff;
-  box-shadow: 3px 10px 20px 0px rgba(0, 158, 227, 0.3);
 }
 
 .card-form__button.-submit:hover:not(:disabled) {
   background: #007ab3;
   transform: translateY(-2px);
-  box-shadow: 3px 15px 25px 0px rgba(0, 158, 227, 0.4);
 }
 
 .card-form__button.-submit:disabled {
@@ -620,7 +618,7 @@
   transition: all 0.3s ease-in-out;
   font-size: 18px;
   padding: 5px 15px;
-  background: none;
+  background: white;
   color: #1a3b5d;
   font-family: "Source Sans Pro", sans-serif;
 }
@@ -707,17 +705,6 @@
   box-shadow: 0px 10px 20px -13px rgba(40, 167, 69, 0.35);
 }
 
-/* Mejoras de accesibilidad */
-.card-input__input:focus-visible {
-  outline: 2px solid #009ee3;
-  outline-offset: 2px;
-}
-
-.card-form__button:focus-visible {
-  outline: 2px solid #009ee3;
-  outline-offset: 2px;
-}
-
 @media screen and (max-width: 320px) {
   .card-form__inner {
     padding: 10px;
@@ -742,4 +729,62 @@
     height: 45px;
     font-size: 16px;
   }
+}
+
+.stripe-checkout-page .credit-card-form {
+  background: transparent;
+}
+
+.stripe-checkout-page .card-list {
+  margin-bottom: 1.5rem;
+}
+
+.stripe-checkout-page .card-form__inner {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.stripe-checkout-page .card-form__buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.stripe-checkout-page .card-form__button {
+  flex: 1;
+  height: 50px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.stripe-checkout-page .card-form__button.-submit {
+  background: #009ee3;
+  border: 1px solid #009ee3;
+  color: white;
+}
+
+.stripe-checkout-page .card-form__button.-submit:hover:not(:disabled) {
+  background: #0088cc;
+  border-color: #0088cc;
+  transform: translateY(-1px);
+}
+
+.stripe-checkout-page .card-form__button.-submit:disabled {
+  background: #0088cc;
+  border-color: #0088cc;
+  cursor: not-allowed;
+}
+
+.stripe-checkout-page .card-form__button.-cancel {
+  background: white;
+  border: 1px solid #dee2e6;
+  color: #6c757d;
+}
+
+.stripe-checkout-page .card-form__button.-cancel:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }

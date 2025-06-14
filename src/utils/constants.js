@@ -186,3 +186,104 @@ export const CACHE_CONFIG = {
   PLANS_DURATION: 10 * 60 * 1000, // 10 minutos
   ASSISTANTS_DURATION: 5 * 60 * 1000, // 5 minutos
 };
+
+/**
+ * Obtiene la configuración de un asistente por su ID exacto
+ * @param {string} id - ID exacto del asistente
+ * @returns {object|null} - Configuración del asistente o null si no se encuentra
+ */
+export const getAssistantConfig = (id) => {
+  return ASSISTANTS_CONFIG.find((config) => config.id === id) || null;
+};
+
+/**
+ * Obtiene la configuración de un complemento por su ID
+ * @param {string|number} id - ID del complemento
+ * @returns {object|null} - Configuración del complemento o null si no se encuentra
+ */
+export const getComplementConfig = (id) => {
+  return COMPLEMENTS_CONFIG.find((config) => config.id === id) || null;
+};
+
+/**
+ * Obtiene una lista de todos los asistentes disponibles
+ * @returns {array} - Array de configuraciones de asistentes
+ */
+export const getAvailableAssistants = () => {
+  return ASSISTANTS_CONFIG.filter((config) => !config.comingSoon);
+};
+
+/**
+ * Obtiene una lista de todos los complementos disponibles
+ * @returns {array} - Array de configuraciones de complementos
+ */
+export const getAvailableComplements = () => {
+  return COMPLEMENTS_CONFIG;
+};
+
+/**
+ * Convierte IDs de asistentes a objetos completos con información
+ * @param {array} assistantIds - Array de IDs de asistentes
+ * @returns {array} - Array de objetos con información completa de asistentes
+ */
+export const mapAssistantsToFullData = (assistantIds) => {
+  return assistantIds.map((id) => {
+    // Buscar por ID exacto
+    const config = ASSISTANTS_CONFIG.find((config) => {
+      return config.id === id;
+    });
+
+    if (config) {
+      const result = {
+        id: id,
+        name: config.label,
+        type: config.type,
+        description: config.description,
+        icon: config.icon,
+        comingSoon: config.comingSoon || false,
+      };
+
+      return result;
+    } else {
+      const fallback = {
+        id: id,
+        name: `Asistente ${id}`,
+        type: "Asistente personalizado",
+        description: "",
+        icon: "bx-bot",
+      };
+
+      return fallback;
+    }
+  });
+};
+
+/**
+ * Convierte IDs de complementos a objetos completos con información
+ * @param {array} complements - Array de IDs o objetos de complementos
+ * @returns {array} - Array de objetos con información completa de complementos
+ */
+export const mapComplementsToFullData = (complements) => {
+  return complements.map((complement) => {
+    if (typeof complement === "object" && complement.name) {
+      return complement;
+    }
+
+    const id = typeof complement === "object" ? complement.id : complement;
+    const config = getComplementConfig(id);
+
+    return config
+      ? {
+          id: id,
+          name: config.name,
+          description: config.description,
+          priceUSD: config.priceUSD,
+        }
+      : {
+          id: id,
+          name: `Complemento ${id}`,
+          description: "",
+          priceUSD: 0,
+        };
+  });
+};

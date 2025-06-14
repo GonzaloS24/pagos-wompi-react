@@ -5,9 +5,9 @@ const PlanSelector = ({
   plans,
   selectedPlan,
   onPlanChange,
+  planSelectorDisabled = false,
   // paymentPeriod,
   // onPeriodChange,
-  planSelectorDisabled = false,
   // periodToggleDisabled = false,
   className = "",
 }) => {

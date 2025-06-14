@@ -41,7 +41,7 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
             title: "Error",
             text: "No se pudieron cargar los bots disponibles",
           });
-          console.log(e);
+          console.error("Error", e);
         } finally {
           setLoadingBots(false);
         }

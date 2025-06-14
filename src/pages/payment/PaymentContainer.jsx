@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PuffLoader } from "react-spinners";
 import chatea from "../../assets/chatea.png";
 
@@ -19,7 +20,6 @@ import PaymentGatewaySelector from "../../components/payments/PaymentGatewaySele
 import WompiPaymentButton from "../../components/payments/wompi/WompiPaymentButton";
 import WompiWidget from "../../components/payments/wompi/WompiWidget";
 import WompiRecurringButton from "../../components/payments/wompi/WompiRecurringButton";
-import WompiRecurringModal from "../../components/payments/wompi/WompiRecurringModal";
 import PaymentsWayForm from "../../components/payments/paymentsWay/PaymentsWayForm";
 import RecurringPaymentButton from "../../components/payments/paymentsWay/RecurringPaymentButton";
 import WalletPaymentButton from "../../components/payments/wallet/WalletPaymentButton";
@@ -27,7 +27,11 @@ import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentMo
 
 // Services
 import { validateForm } from "../../services/validation/formValidation";
-import { PAYMENT_PERIODS } from "../../utils/constants";
+import {
+  PAYMENT_PERIODS,
+  mapAssistantsToFullData,
+  mapComplementsToFullData,
+} from "../../utils/constants";
 import { canApplyAnnualDiscount } from "../../utils/discounts";
 
 // Styles
@@ -35,13 +39,15 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/components/WompiPayment.css";
 
 const PaymentContainer = () => {
+  // Navigate hook
+  const navigate = useNavigate();
+
   // Estados locales
   const [selectedAssistants, setSelectedAssistants] = useState([]);
   const [purchaseType, setPurchaseType] = useState(null);
   const [selectedComplements, setSelectedComplements] = useState([]);
   const [showWompiWidget, setShowWompiWidget] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [showWompiRecurringModal, setShowWompiRecurringModal] = useState(false);
 
   // Referencias
   const complementsRef = useRef(null);
@@ -70,8 +76,6 @@ const PaymentContainer = () => {
   const {
     selectedGateway,
     enableRecurring,
-    canShowRecurringOption,
-    // isRecurringPayment,
     handleGatewayChange,
     handleRecurringChange,
     resetRecurringIfNeeded,
@@ -92,6 +96,34 @@ const PaymentContainer = () => {
     enableRecurring,
     paymentPeriod,
   });
+
+  // FUNCIÓN HELPER para obtener datos completos de asistentes
+  const getSelectedAssistantsWithNames = useCallback(() => {
+    return mapAssistantsToFullData(selectedAssistants);
+  }, [selectedAssistants]);
+
+  // FUNCIÓN HELPER para obtener datos completos de complementos
+  const getSelectedComplementsWithNames = useCallback(() => {
+    return selectedComplements.map((complement) => {
+
+      if (typeof complement === "object" && complement.name) {
+        return {
+          id: complement.id,
+          name: complement.name,
+          description: complement.description || "",
+          priceUSD: complement.priceUSD || 0,
+          quantity: complement.quantity || 1,
+          ...complement,
+        };
+      } else {
+        const mapped = mapComplementsToFullData([complement]);
+        return {
+          ...mapped[0],
+          quantity: complement.quantity || 1,
+        };
+      }
+    });
+  }, [selectedComplements]);
 
   // Event handlers
   const handleSubmit = (e) => {
@@ -139,7 +171,6 @@ const PaymentContainer = () => {
     setPurchaseType(type);
     setSelectedAssistants([]);
     setShowWompiWidget(false);
-    setShowWompiRecurringModal(false);
     handleRecurringChange(false);
     handleGatewayChange("wompi");
 
@@ -163,7 +194,6 @@ const PaymentContainer = () => {
   const handlePlanChange = (plan) => {
     setSelectedPlan(plan);
     setShowWompiWidget(false);
-    setShowWompiRecurringModal(false);
     handleRecurringChange(false);
   };
 
@@ -171,7 +201,6 @@ const PaymentContainer = () => {
   const handlePeriodChange = (period) => {
     setPaymentPeriod(period);
     setShowWompiWidget(false);
-    setShowWompiRecurringModal(false);
 
     // Si se cambia a anual, resetear pago recurrente ya que no son compatibles
     if (period === PAYMENT_PERIODS.ANNUAL && enableRecurring) {
@@ -196,13 +225,22 @@ const PaymentContainer = () => {
     }
   };
 
-  // Handlers para Wompi Recurring
+  // Handler para Wompi Recurring
   const handleWompiRecurringClick = () => {
-    setShowWompiRecurringModal(true);
-  };
+    const assistantsWithNames = getSelectedAssistantsWithNames();
+    const complementsWithNames = getSelectedComplementsWithNames();
 
-  const handleWompiRecurringModalClose = () => {
-    setShowWompiRecurringModal(false);
+    // Navegar a la nueva página con datos completos
+    navigate("/recurring-payment", {
+      state: {
+        paymentCalculations,
+        formData,
+        selectedPlan: purchaseType === "plan" ? selectedPlan : null,
+        selectedAssistants: assistantsWithNames,
+        selectedComplements: complementsWithNames,
+        purchaseType,
+      },
+    });
   };
 
   // Handlers para Wallet
@@ -359,7 +397,7 @@ const PaymentContainer = () => {
                       }
                       setEnableRecurring={handleRecurringChange}
                       showRecurringOption={
-                        canShowRecurringOption &&
+                        shouldShowPayButton() &&
                         isRecurringCompatibleWithPeriod()
                       }
                       isRecurringPayment={
@@ -456,14 +494,6 @@ const PaymentContainer = () => {
         selectedComplements={selectedComplements}
         isAssistantsOnly={purchaseType === "assistants"}
         paymentCalculations={paymentCalculations}
-      />
-
-      {/* Modal de Wompi Recurring */}
-      <WompiRecurringModal
-        show={showWompiRecurringModal}
-        onHide={handleWompiRecurringModalClose}
-        paymentCalculations={paymentCalculations}
-        formData={formData}
       />
     </div>
   );
