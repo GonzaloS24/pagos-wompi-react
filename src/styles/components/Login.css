@@ -40,7 +40,7 @@
 .login__form {
   background-color: var(--white-color);
   padding: 30px;
-  width: 400px;
+  width: 370px;
   border-radius: 15px;
   border: 2px solid var(--primary-color);
 }
