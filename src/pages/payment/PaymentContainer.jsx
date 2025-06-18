@@ -39,7 +39,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/components/WompiPayment.css";
 
 const PaymentContainer = () => {
-  // Navigate hook
   const navigate = useNavigate();
 
   // Estados locales
@@ -48,6 +47,7 @@ const PaymentContainer = () => {
   const [selectedComplements, setSelectedComplements] = useState([]);
   const [showWompiWidget, setShowWompiWidget] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [freeAssistant, setFreeAssistant] = useState(null);
 
   // Referencias
   const complementsRef = useRef(null);
@@ -95,6 +95,7 @@ const PaymentContainer = () => {
     urlParams,
     enableRecurring,
     paymentPeriod,
+    freeAssistant
   });
 
   // FUNCIÓN HELPER para obtener datos completos de asistentes
@@ -148,20 +149,43 @@ const PaymentContainer = () => {
   };
 
   const handleAssistantChange = useCallback((assistantId) => {
-    setSelectedAssistants((prev) => {
-      if (prev.includes(assistantId)) {
-        if (assistantId === prev[0] && prev.length > 1) {
-          const newSelection = [...prev];
-          newSelection.splice(prev.indexOf(assistantId), 1);
-          return newSelection;
-        } else {
-          return prev.filter((id) => id !== assistantId);
+    setSelectedAssistants((prevSelected) => {
+      const isCurrentlySelected = prevSelected.includes(assistantId);
+      
+      if (isCurrentlySelected) {
+        const newSelection = prevSelected.filter((id) => id !== assistantId);
+        
+        // Si era el asistente gratuito, actualizar el gratuito
+        if (freeAssistant === assistantId) {
+          if (newSelection.length > 0 && purchaseType === "plan") {
+            // El primer asistente restante se vuelve gratuito
+            setFreeAssistant(newSelection[0]);
+          } else {
+            setFreeAssistant(null);
+          }
         }
+        
+        return newSelection;
       } else {
-        return [...prev, assistantId];
+        const newSelection = [...prevSelected, assistantId];
+        
+        // Si es el primer asistente en un plan, se vuelve gratuito
+        if (prevSelected.length === 0 && purchaseType === "plan") {
+          setFreeAssistant(assistantId);
+        }
+        
+        return newSelection;
       }
     });
-  }, []);
+  }, [freeAssistant, purchaseType]);
+
+    const resetFreeAssistant = useCallback(() => {
+    if (purchaseType === "plan" && selectedAssistants.length > 0) {
+      setFreeAssistant(selectedAssistants[0]);
+    } else {
+      setFreeAssistant(null);
+    }
+  }, [purchaseType, selectedAssistants]);
 
   const handleComplementsChange = (complements) => {
     setSelectedComplements(complements);
@@ -171,6 +195,7 @@ const PaymentContainer = () => {
     setPurchaseType(type);
     setSelectedAssistants([]);
     setShowWompiWidget(false);
+    setFreeAssistant(null);
     handleRecurringChange(false);
     handleGatewayChange("wompi");
 
@@ -190,6 +215,10 @@ const PaymentContainer = () => {
       setSelectedPlan(null);
     }
   };
+
+   useEffect(() => {
+    resetFreeAssistant();
+  }, [resetFreeAssistant]);
 
   const handlePlanChange = (plan) => {
     setSelectedPlan(plan);

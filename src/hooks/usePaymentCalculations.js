@@ -1,7 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from "react";
 import { WOMPI_CONFIG } from "../services/payments/wompi/wompiConfig";
-import { PRICING, PAYMENT_PERIODS } from "../utils/constants";
+import {
+  PRICING,
+  PAYMENT_PERIODS,
+  getAssistantConfig,
+} from "../utils/constants";
 import { calculateDiscountedPrice, getPriceInfo } from "../utils/discounts";
 
 export const usePaymentCalculations = ({
@@ -13,20 +17,20 @@ export const usePaymentCalculations = ({
   urlParams,
   enableRecurring,
   paymentPeriod = PAYMENT_PERIODS.MONTHLY,
+  freeAssistant,
 }) => {
   const calculations = useMemo(() => {
     const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
     let totalAssistantsPrice;
+    let paidAssistants = [];
 
-    // Cálculo de precio de asistentes según tipo de compra
     if (purchaseType === "plan") {
-      const freeAssistants = selectedAssistants.length > 0 ? 1 : 0;
-      const paidAssistants = Math.max(
-        0,
-        selectedAssistants.length - freeAssistants
-      );
-      totalAssistantsPrice = paidAssistants * assistantPrice;
+      // Identificar asistentes pagados
+      paidAssistants = selectedAssistants.filter((id) => id !== freeAssistant);
+      totalAssistantsPrice = paidAssistants.length * assistantPrice;
     } else {
+      // En compra de solo asistentes, todos son pagados
+      paidAssistants = [...selectedAssistants];
       totalAssistantsPrice = selectedAssistants.length * assistantPrice;
     }
 
@@ -115,6 +119,14 @@ export const usePaymentCalculations = ({
       paymentPeriod,
       isAnnual: paymentPeriod === PAYMENT_PERIODS.ANNUAL,
 
+      freeAssistant,
+      paidAssistants,
+      freeAssistantName: freeAssistant
+        ? getAssistantConfig(freeAssistant)?.label || freeAssistant
+        : null,
+      paidAssistantsCount: paidAssistants.length,
+      freeAssistantsCount: freeAssistant ? 1 : 0,
+
       // Totales sin descuento para comparación
       totalUSDWithoutDiscount:
         purchaseType === "plan"
@@ -139,6 +151,7 @@ export const usePaymentCalculations = ({
     selectedComplements,
     usdToCopRate,
     paymentPeriod,
+    freeAssistant,
   ]);
 
   const generateReference = useMemo(() => {
@@ -164,10 +177,28 @@ export const usePaymentCalculations = ({
 
     const recurringString = enableRecurring ? "-recurring=true" : "";
 
-    // información del periodo de pago
+    // const freeAssistant =
+    //   purchaseType === "plan" && freeAssistant ? `-free=${freeAssistant}` : "";
+
     // const periodString = calculations.isAnnual
     //   ? "-period=annual"
     //   : "-period=monthly";
+
+    // if (purchaseType === "plan") {
+    //   return `plan_id=${
+    //     selectedPlan?.id
+    //   }-workspace_id=${workspaceId}-workspace_name=${
+    //     urlParams?.workspace_name
+    //   }-owner_email=${urlParams?.owner_email}-phone_number=${
+    //     urlParams?.phone_number
+    //   }${assistantsString}${freeAssistant}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
+    // } else {
+    //   return `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
+    //     urlParams?.workspace_name
+    //   }-owner_email=${urlParams?.owner_email}-phone_number=${
+    //     urlParams?.phone_number
+    //   }${assistantsString}${complementsString}${recurringString}-${periodString}-reference${Date.now()}`;
+    // }
 
     if (purchaseType === "plan") {
       return `plan_id=${
@@ -192,6 +223,7 @@ export const usePaymentCalculations = ({
     urlParams,
     enableRecurring,
     calculations.isAnnual,
+    freeAssistant,
   ]);
 
   const generateOrderDescription = useMemo(() => {
@@ -201,7 +233,19 @@ export const usePaymentCalculations = ({
         : "Asistentes adicionales";
 
     if (selectedAssistants.length > 0) {
-      orderDescription += ` con ${selectedAssistants.length} asistente(s)`;
+      if (purchaseType === "plan" && freeAssistant) {
+        const freeAssistantName =
+          getAssistantConfig(freeAssistant)?.label || freeAssistant;
+        const paidCount = selectedAssistants.length - 1;
+
+        if (paidCount > 0) {
+          orderDescription += ` con ${freeAssistantName} (incluido) + ${paidCount} asistente(s) adicional(es)`;
+        } else {
+          orderDescription += ` con ${freeAssistantName} (incluido)`;
+        }
+      } else {
+        orderDescription += ` con ${selectedAssistants.length} asistente(s)`;
+      }
     }
 
     if (selectedComplements.length > 0) {
@@ -221,6 +265,7 @@ export const usePaymentCalculations = ({
     selectedAssistants,
     selectedComplements,
     calculations.isAnnual,
+    freeAssistant,
   ]);
 
   return {
