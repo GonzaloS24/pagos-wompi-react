@@ -23,24 +23,45 @@ const AIAssistants = ({
         Asistentes de IA Disponibles
       </h5>
 
-      <p className="text-muted mb-3">
-        {!isStandalone
-          ? `Tu plan incluye un asistente gratuito. Asistentes adicionales tienen un costo de $${PRICING.ASSISTANT_PRICE_USD} USD cada uno.`
-          : "Cada asistente tiene un costo adicional de $20 USD"}
-      </p>
-
-      {!isStandalone && selectedAssistants.length === 0 && (
-        <div
-          className="alert alert-warning mb-3 free-assistant-alert"
-          role="alert"
-        >
-          Selecciona al menos un asistente para continuar.
+      {/* Mensaje sobre asistente gratuito para planes */}
+      {!isStandalone && (
+        <div className="free-assistant-info mb-3">
+          <div
+            className="alert alert-info d-flex align-items-center"
+            style={{
+              background: "#edf4ff",
+              border: "1px solid rgba(0, 158, 227, 0.2)",
+              borderRadius: "8px",
+              padding: "1rem",
+              margin: "0 0 1rem 0",
+            }}
+          >
+            <div className="me-3" style={{ fontSize: "2rem" }}>
+              🎁
+            </div>
+            <div>
+              <strong style={{ color: "#009ee3" }}>
+                ¡Tu plan incluye 1 asistente GRATIS!
+              </strong>
+              <br />
+              <small className="text-muted">
+                Asistentes adicionales cuestan ${PRICING.ASSISTANT_PRICE_USD}{" "}
+                USD cada uno.
+              </small>
+            </div>
+          </div>
         </div>
       )}
+
+      <p className="text-muted mb-3">
+        Selecciona tus asistentes. Puedes elegir uno de forma gratuita.
+      </p>
 
       <div className="assistants-grid">
         {ASSISTANTS_CONFIG.map((assistant) => {
           const isComingSoon = assistant.comingSoon === true;
+          const isSelected = selectedAssistants.includes(assistant.id);
+          const isFreeAssistant = assistant.id === freeAssistant;
 
           return (
             <div
@@ -51,7 +72,7 @@ const AIAssistants = ({
                 className="form-check-input"
                 type="checkbox"
                 id={assistant.id}
-                checked={selectedAssistants.includes(assistant.id)}
+                checked={isSelected}
                 onChange={() => handleAssistantChange(assistant.id)}
                 disabled={isComingSoon}
               />
@@ -65,16 +86,26 @@ const AIAssistants = ({
                 <span className="assistant-description">
                   {assistant.description}
                 </span>
-                {assistant.id === freeAssistant && !isStandalone && (
+                {/* Badge para asistente gratuito */}
+                {isFreeAssistant && !isStandalone && (
                   <span className="ms-2 badge bg-success">Gratis</span>
                 )}
-              </label>  
+              </label>
+
               {isComingSoon && (
                 <span className="badge badge-coming-soon">Próximamente</span>
               )}
             </div>
           );
         })}
+        {!isStandalone && selectedAssistants.length === 0 && (
+          <span className="text-warning d-block mt-1">
+            <small>
+              Sin asistentes seleccionados perderás el asistente gratuito
+              incluido en tu plan.
+            </small>
+          </span>
+        )}
       </div>
     </div>
   );

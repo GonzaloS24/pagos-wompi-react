@@ -28,6 +28,7 @@ import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentMo
 // Services
 import { validateForm } from "../../services/validation/formValidation";
 import {
+  ASSISTANT_TYPES,
   PAYMENT_PERIODS,
   mapAssistantsToFullData,
   mapComplementsToFullData,
@@ -95,7 +96,7 @@ const PaymentContainer = () => {
     urlParams,
     enableRecurring,
     paymentPeriod,
-    freeAssistant
+    freeAssistant,
   });
 
   // FUNCIÓN HELPER para obtener datos completos de asistentes
@@ -106,7 +107,6 @@ const PaymentContainer = () => {
   // FUNCIÓN HELPER para obtener datos completos de complementos
   const getSelectedComplementsWithNames = useCallback(() => {
     return selectedComplements.map((complement) => {
-
       if (typeof complement === "object" && complement.name) {
         return {
           id: complement.id,
@@ -148,38 +148,41 @@ const PaymentContainer = () => {
     setFormErrors({ ...formErrors, [field]: null });
   };
 
-  const handleAssistantChange = useCallback((assistantId) => {
-    setSelectedAssistants((prevSelected) => {
-      const isCurrentlySelected = prevSelected.includes(assistantId);
-      
-      if (isCurrentlySelected) {
-        const newSelection = prevSelected.filter((id) => id !== assistantId);
-        
-        // Si era el asistente gratuito, actualizar el gratuito
-        if (freeAssistant === assistantId) {
-          if (newSelection.length > 0 && purchaseType === "plan") {
-            // El primer asistente restante se vuelve gratuito
-            setFreeAssistant(newSelection[0]);
-          } else {
-            setFreeAssistant(null);
-          }
-        }
-        
-        return newSelection;
-      } else {
-        const newSelection = [...prevSelected, assistantId];
-        
-        // Si es el primer asistente en un plan, se vuelve gratuito
-        if (prevSelected.length === 0 && purchaseType === "plan") {
-          setFreeAssistant(assistantId);
-        }
-        
-        return newSelection;
-      }
-    });
-  }, [freeAssistant, purchaseType]);
+  const handleAssistantChange = useCallback(
+    (assistantId) => {
+      setSelectedAssistants((prevSelected) => {
+        const isCurrentlySelected = prevSelected.includes(assistantId);
 
-    const resetFreeAssistant = useCallback(() => {
+        if (isCurrentlySelected) {
+          const newSelection = prevSelected.filter((id) => id !== assistantId);
+
+          // Si era el asistente gratuito, actualizar el gratuito
+          if (freeAssistant === assistantId) {
+            if (newSelection.length > 0 && purchaseType === "plan") {
+              // El primer asistente restante se vuelve gratuito
+              setFreeAssistant(newSelection[0]);
+            } else {
+              setFreeAssistant(null);
+            }
+          }
+
+          return newSelection;
+        } else {
+          const newSelection = [...prevSelected, assistantId];
+
+          // Si es el primer asistente en un plan, se vuelve gratuito
+          if (prevSelected.length === 0 && purchaseType === "plan") {
+            setFreeAssistant(assistantId);
+          }
+
+          return newSelection;
+        }
+      });
+    },
+    [freeAssistant, purchaseType]
+  );
+
+  const resetFreeAssistant = useCallback(() => {
     if (purchaseType === "plan" && selectedAssistants.length > 0) {
       setFreeAssistant(selectedAssistants[0]);
     } else {
@@ -193,9 +196,7 @@ const PaymentContainer = () => {
 
   const handlePurchaseTypeChange = (type) => {
     setPurchaseType(type);
-    setSelectedAssistants([]);
     setShowWompiWidget(false);
-    setFreeAssistant(null);
     handleRecurringChange(false);
     handleGatewayChange("wompi");
 
@@ -208,15 +209,25 @@ const PaymentContainer = () => {
       complementsRef.current.reset();
     }
 
-    if (type === "plan" && urlParams?.plan_id) {
-      const plan = plans.find((p) => p.id === urlParams.plan_id);
-      setSelectedPlan(plan);
+    if (type === "plan") {
+      // Preseleccionar el asistente de ventas por WhatsApp por defecto
+      const defaultAssistant = ASSISTANT_TYPES.VENTAS;
+      setSelectedAssistants([defaultAssistant]);
+      setFreeAssistant(defaultAssistant);
+
+      if (urlParams?.plan_id) {
+        const plan = plans.find((p) => p.id === urlParams.plan_id);
+        setSelectedPlan(plan);
+      }
     } else {
+      // Para compra solo de asistentes, limpiar selección
+      setSelectedAssistants([]);
+      setFreeAssistant(null);
       setSelectedPlan(null);
     }
   };
 
-   useEffect(() => {
+  useEffect(() => {
     resetFreeAssistant();
   }, [resetFreeAssistant]);
 
@@ -292,7 +303,9 @@ const PaymentContainer = () => {
     if (!purchaseType) return false;
 
     if (purchaseType === "plan") {
-      return selectedPlan !== null && selectedAssistants.length > 0;
+      // plan y asistente obligatorios
+      // return selectedPlan !== null && selectedAssistants.length > 0;
+      return selectedPlan !== null;
     }
 
     if (purchaseType === "assistants") {
