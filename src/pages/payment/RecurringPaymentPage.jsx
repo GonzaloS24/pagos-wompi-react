@@ -33,59 +33,75 @@ const RecurringPaymentPage = () => {
     navigate,
   ]);
 
-  const handleCardSubmit = async (cardData) => {
-    setLoading(true);
+const handleCardSubmit = async (cardData) => {
+  setLoading(true);
 
-    try {
-      // Crear JSON con información de la tarjeta
-      const cardInfo = {
-        numero: `**** **** **** ${cardData.number.slice(-4)}`,
-        numeroCompleto: cardData.number,
-        nombreTitular: cardData.name,
-        mesVencimiento: cardData.expiryMonth,
-        añoVencimiento: cardData.expiryYear,
-        codigoSeguridad: cardData.cvc,
-        email: cardData.email || formData?.email,
-        telefono: cardData.phone || formData?.phone,
-        tipoDocumento: cardData.documentType || formData?.documentType,
-        numeroDocumento: cardData.documentNumber || formData?.documentNumber,
-        montoMensual: paymentCalculations.totalUSD,
-        montoEnCOP: paymentCalculations.priceInCOP,
-        fechaCreacion: new Date().toISOString(),
-        planSeleccionado: selectedPlan?.name,
-        asistentesSeleccionados: selectedAssistants?.map(
-          (a) => a.name || `Asistente ${a.id}`
-        ),
-        complementosSeleccionados: selectedComplements?.map((c) => ({
-          nombre: c.name || `Complemento ${c.id}`,
-          cantidad: c.quantity || 1,
-        })),
-      };
+  try {
+    // Mapear asistentes separando gratis vs pagados
+    const assistantIds = selectedAssistants?.map(assistant => assistant.id) || [];
+    const isAssistantsOnly = !selectedPlan;
+    
+    const freeAssistantId = assistantIds.length > 0 && !isAssistantsOnly ? assistantIds[0] : null;
+    const paidAssistantIds = assistantIds.length > 1 && !isAssistantsOnly 
+      ? assistantIds.slice(1) 
+      : (isAssistantsOnly ? assistantIds : []);
 
-      // Mostrar alert con el JSON
-      await Swal.fire({
-        icon: "info",
-        title: "Información de la Tarjeta",
-        html: `
-          <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 12px; text-align: left;">
-${JSON.stringify(cardInfo, null, 2)}
-            </pre>
-          </div>
-        `,
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#009ee3",
-        width: "600px",
-        customClass: {
-          htmlContainer: "text-left",
+    const addons = selectedComplements?.map(complement => ({
+      id: complement.id,
+      quantity: complement.quantity || 1,
+      // Incluir bot_flow_ns si es webhook y tiene selectedBot
+      ...(complement.id === "webhooks" && complement.selectedBot ? {
+        bot_flow_ns: complement.selectedBot.flow_ns
+      } : {})
+    })) || [];
+
+    // Crear el JSON con la estructura requerida
+    const paymentData = {
+      workspace_id: parseInt(formData.workspace_id) || 0,
+      phone: formData.phone_number || "",
+      plan_id: selectedPlan?.id || null,
+      workspace_name: formData.workspace_name || "",
+      owner_email: formData.owner_email || "",
+      free_assistant_id: freeAssistantId,
+      paid_assistant_ids: paidAssistantIds,
+      assistants_only: !selectedPlan,
+      addons: addons,
+      card_details: {
+        exp_date: {
+          year: parseInt(cardData.exp_year),
+          month: parseInt(cardData.exp_month)
         },
-      });
-    } catch (error) {
-      console.error("Error processing payment:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        card_holder: cardData.card_holder,
+        card_number: cardData.number,
+        cvv: cardData.cvc
+      }
+    };
+
+    // Mostrar el JSON estructurado
+    await Swal.fire({
+      icon: "info",
+      title: "Datos del Pago Recurrente",
+      html: `
+        <div style="text-align: left; max-height: 400px; overflow-y: auto;">
+          <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 12px; text-align: left;">
+${JSON.stringify(paymentData, null, 2)}
+          </pre>
+        </div>
+      `,
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#009ee3",
+      width: "600px",
+      customClass: {
+        htmlContainer: "text-left",
+      },
+    });
+
+  } catch (error) {
+    console.error("Error processing payment:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => {
     navigate(-1);
