@@ -24,6 +24,7 @@ import PaymentsWayForm from "../../components/payments/paymentsWay/PaymentsWayFo
 import RecurringPaymentButton from "../../components/payments/paymentsWay/RecurringPaymentButton";
 import WalletPaymentButton from "../../components/payments/wallet/WalletPaymentButton";
 import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
+import SubscriptionManager from "../../components/subscription/SubscriptionManager";
 
 // Services
 import { validateForm } from "../../services/validation/formValidation";
@@ -49,6 +50,10 @@ const PaymentContainer = () => {
   const [showWompiWidget, setShowWompiWidget] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [freeAssistant, setFreeAssistant] = useState(null);
+
+  // Estado para manejo de suscripciones
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(null);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
 
   // Referencias
   const complementsRef = useRef(null);
@@ -98,6 +103,31 @@ const PaymentContainer = () => {
     paymentPeriod,
     freeAssistant,
   });
+
+  // Verificar suscripción activa cuando se confirman los datos
+  useEffect(() => {
+    if (isDataConfirmed && formData.workspace_id) {
+      checkActiveSubscription(formData.workspace_id);
+    }
+  }, [isDataConfirmed, formData.workspace_id]);
+
+  const checkActiveSubscription = async (workspaceId) => {
+    setCheckingSubscription(true);
+    try {
+      // Simular llamado a API para verificar suscripción
+      const hasSubscription = await simulateHasActiveSubscription(workspaceId);
+      setHasActiveSubscription(hasSubscription);
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      setHasActiveSubscription(false);
+    } finally {
+      setCheckingSubscription(false);
+    }
+  };
+
+  const handleSubscriptionCanceled = () => {
+    setHasActiveSubscription(false);
+  };
 
   // FUNCIÓN HELPER para obtener datos completos de asistentes
   const getSelectedAssistantsWithNames = useCallback(() => {
@@ -303,8 +333,6 @@ const PaymentContainer = () => {
     if (!purchaseType) return false;
 
     if (purchaseType === "plan") {
-      // plan y asistente obligatorios
-      // return selectedPlan !== null && selectedAssistants.length > 0;
       return selectedPlan !== null;
     }
 
@@ -367,143 +395,170 @@ const PaymentContainer = () => {
 
   return (
     <div className="container py-4">
+      <figure className="mb-4 text-center">
+        <img
+          src={chatea}
+          alt="Chatea Logo"
+          className="img-fluid chatea-logo"
+          style={{ maxWidth: "220px" }}
+        />
+      </figure>
+
       {isDataConfirmed ? (
         <div>
-          <figure className="mb-4 text-center">
-            <img
-              src={chatea}
-              alt="Chatea Logo"
-              className="img-fluid chatea-logo"
-              style={{ maxWidth: "220px" }}
+          {checkingSubscription ? (
+            <div className="loader-container">
+              <PuffLoader
+                color="#009ee3"
+                loading={true}
+                size={60}
+                margin={2}
+                speedMultiplier={4}
+              />
+            </div>
+          ) : hasActiveSubscription ? (
+            // Mostrar panel de gestión de suscripción
+            <SubscriptionManager
+              workspaceId={formData.workspace_id}
+              onSubscriptionCanceled={handleSubscriptionCanceled}
             />
-          </figure>
+          ) : (
+            // Mostrar flujo normal de compra
+            <div>
+              <PurchaseTypeSelector onSelect={handlePurchaseTypeChange} />
 
-          <PurchaseTypeSelector onSelect={handlePurchaseTypeChange} />
-
-          {purchaseType && (
-            <div className="main-container" key="main-content">
-              <div className="plan-section">
-                {purchaseType === "plan" && (
-                  <div className="m-2">
-                    <PlanSelector
-                      plans={plans}
-                      selectedPlan={selectedPlan}
-                      onPlanChange={handlePlanChange}
-                      paymentPeriod={paymentPeriod}
-                      onPeriodChange={handlePeriodChange}
-                      planSelectorDisabled={Boolean(urlParams?.plan_id)}
-                      periodToggleDisabled={false}
-                    />
-                  </div>
-                )}
-
-                {shouldShowAssistants() && (
-                  <div className="selected-plan-content">
-                    <AIAssistants
-                      selectedAssistants={selectedAssistants}
-                      onAssistantChange={handleAssistantChange}
-                      isStandalone={purchaseType === "assistants"}
-                      workspaceId={formData.workspace_id}
-                    />
-
-                    <Complements
-                      ref={complementsRef}
-                      onComplementsChange={handleComplementsChange}
-                      workspaceId={formData.workspace_id}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="info-section">
-                <ConfirmedInfo formData={formData} />
-
-                {shouldShowAssistants() && (
-                  <PaymentSummary
-                    selectedPlan={purchaseType === "plan" ? selectedPlan : null}
-                    usdToCopRate={usdToCopRate}
-                    selectedAssistants={selectedAssistants}
-                    isAssistantsOnly={purchaseType === "assistants"}
-                    selectedComplements={selectedComplements}
-                    paymentCalculations={paymentCalculations}
-                  />
-                )}
-
-                {shouldShowPayButton() && (
-                  <div className="mt-4">
-                    <PaymentGatewaySelector
-                      selectedGateway={selectedGateway}
-                      onChange={handleGatewayChange}
-                      enableRecurring={
-                        enableRecurring && isRecurringCompatibleWithPeriod()
-                      }
-                      setEnableRecurring={handleRecurringChange}
-                      showRecurringOption={
-                        shouldShowPayButton() &&
-                        isRecurringCompatibleWithPeriod()
-                      }
-                      isRecurringPayment={
-                        enableRecurring &&
-                        selectedGateway === "wompi" &&
-                        isRecurringCompatibleWithPeriod()
-                      }
-                    />
-
-                    {/* Lógica de botones de pago */}
-                    {isWompiRecurringPayment() ? (
-                      // Botón de Wompi Recurring
-                      <WompiRecurringButton
-                        onPaymentClick={handleWompiRecurringClick}
-                        disabled={!shouldShowPayButton()}
-                      />
-                    ) : isPaymentsWayRecurringPayment() ? (
-                      // Botón de PaymentsWay Recurring
-                      <RecurringPaymentButton
-                        planId={selectedPlan.id}
-                        enableRecurring={enableRecurring}
-                        selectedAssistants={selectedAssistants}
-                      />
-                    ) : selectedGateway === "wompi" ? (
-                      // Wompi normal (widget)
-                      <>
-                        {!showWompiWidget && (
-                          <WompiPaymentButton
-                            onPaymentClick={handleWompiPaymentClick}
-                            disabled={!shouldShowPayButton()}
-                          />
-                        )}
-
-                        <WompiWidget
-                          paymentData={{
-                            priceCOPCents: paymentCalculations.priceCOPCents,
-                            reference: paymentCalculations.reference,
-                          }}
-                          isVisible={showWompiWidget}
-                          onWidgetReady={handleWompiWidgetReady}
-                          shouldUpdate={true}
+              {purchaseType && (
+                <div className="main-container" key="main-content">
+                  <div className="plan-section">
+                    {purchaseType === "plan" && (
+                      <div className="m-2">
+                        <PlanSelector
+                          plans={plans}
+                          selectedPlan={selectedPlan}
+                          onPlanChange={handlePlanChange}
+                          paymentPeriod={paymentPeriod}
+                          onPeriodChange={handlePeriodChange}
+                          planSelectorDisabled={Boolean(urlParams?.plan_id)}
+                          periodToggleDisabled={false}
                         />
-                      </>
-                    ) : selectedGateway === "wallet" ? (
-                      // Wallet
-                      <WalletPaymentButton
-                        onPaymentClick={handleWalletPaymentClick}
-                        disabled={!shouldShowPayButton()}
-                      />
-                    ) : (
-                      // PaymentsWay normal
-                      <PaymentsWayForm
-                        amount={paymentCalculations.priceInCOP}
-                        orderDescription={paymentCalculations.orderDescription}
-                        formData={formData}
-                        reference={paymentCalculations.reference}
-                        enableRecurring={
-                          enableRecurring && isRecurringCompatibleWithPeriod()
-                        }
-                      />
+                      </div>
+                    )}
+
+                    {shouldShowAssistants() && (
+                      <div className="selected-plan-content">
+                        <AIAssistants
+                          selectedAssistants={selectedAssistants}
+                          onAssistantChange={handleAssistantChange}
+                          isStandalone={purchaseType === "assistants"}
+                          workspaceId={formData.workspace_id}
+                        />
+
+                        <Complements
+                          ref={complementsRef}
+                          onComplementsChange={handleComplementsChange}
+                          workspaceId={formData.workspace_id}
+                        />
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
+
+                  <div className="info-section">
+                    <ConfirmedInfo formData={formData} />
+
+                    {shouldShowAssistants() && (
+                      <PaymentSummary
+                        selectedPlan={
+                          purchaseType === "plan" ? selectedPlan : null
+                        }
+                        usdToCopRate={usdToCopRate}
+                        selectedAssistants={selectedAssistants}
+                        isAssistantsOnly={purchaseType === "assistants"}
+                        selectedComplements={selectedComplements}
+                        paymentCalculations={paymentCalculations}
+                      />
+                    )}
+
+                    {shouldShowPayButton() && (
+                      <div className="mt-4">
+                        <PaymentGatewaySelector
+                          selectedGateway={selectedGateway}
+                          onChange={handleGatewayChange}
+                          enableRecurring={
+                            enableRecurring && isRecurringCompatibleWithPeriod()
+                          }
+                          setEnableRecurring={handleRecurringChange}
+                          showRecurringOption={
+                            shouldShowPayButton() &&
+                            isRecurringCompatibleWithPeriod()
+                          }
+                          isRecurringPayment={
+                            enableRecurring &&
+                            selectedGateway === "wompi" &&
+                            isRecurringCompatibleWithPeriod()
+                          }
+                        />
+
+                        {/* Lógica de botones de pago */}
+                        {isWompiRecurringPayment() ? (
+                          // Botón de Wompi Recurring
+                          <WompiRecurringButton
+                            onPaymentClick={handleWompiRecurringClick}
+                            disabled={!shouldShowPayButton()}
+                          />
+                        ) : isPaymentsWayRecurringPayment() ? (
+                          // Botón de PaymentsWay Recurring
+                          <RecurringPaymentButton
+                            planId={selectedPlan.id}
+                            enableRecurring={enableRecurring}
+                            selectedAssistants={selectedAssistants}
+                          />
+                        ) : selectedGateway === "wompi" ? (
+                          // Wompi normal (widget)
+                          <>
+                            {!showWompiWidget && (
+                              <WompiPaymentButton
+                                onPaymentClick={handleWompiPaymentClick}
+                                disabled={!shouldShowPayButton()}
+                              />
+                            )}
+
+                            <WompiWidget
+                              paymentData={{
+                                priceCOPCents:
+                                  paymentCalculations.priceCOPCents,
+                                reference: paymentCalculations.reference,
+                              }}
+                              isVisible={showWompiWidget}
+                              onWidgetReady={handleWompiWidgetReady}
+                              shouldUpdate={true}
+                            />
+                          </>
+                        ) : selectedGateway === "wallet" ? (
+                          // Wallet
+                          <WalletPaymentButton
+                            onPaymentClick={handleWalletPaymentClick}
+                            disabled={!shouldShowPayButton()}
+                          />
+                        ) : (
+                          // PaymentsWay normal
+                          <PaymentsWayForm
+                            amount={paymentCalculations.priceInCOP}
+                            orderDescription={
+                              paymentCalculations.orderDescription
+                            }
+                            formData={formData}
+                            reference={paymentCalculations.reference}
+                            enableRecurring={
+                              enableRecurring &&
+                              isRecurringCompatibleWithPeriod()
+                            }
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -539,6 +594,15 @@ const PaymentContainer = () => {
       />
     </div>
   );
+};
+
+// === FUNCIÓN SIMULADA DE API ===
+const simulateHasActiveSubscription = async (workspaceId) => {
+  // Simular delay de API
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  // Simular respuesta: workspace "12345" tiene suscripción activa
+  return workspaceId === "123456789";
 };
 
 export default PaymentContainer;

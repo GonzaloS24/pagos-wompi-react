@@ -1053,3 +1053,30 @@ input[type="checkbox"]:checked {
   color: #adb5bd;
   background-color: #f8f9fa;
 }
+
+/* Asegurar que los asistentes se muestren en columna */
+@media (min-width: 481px) {
+  .assistants-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-check {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem !important;
+  }
+}
+
+/* Para móviles mantener el comportamiento actual */
+@media (max-width: 480px) {
+  .assistants-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-check {
+    margin-bottom: 15px !important;
+  }
+}
