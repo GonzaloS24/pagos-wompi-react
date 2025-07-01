@@ -24,7 +24,7 @@ import PaymentsWayForm from "../../components/payments/paymentsWay/PaymentsWayFo
 import RecurringPaymentButton from "../../components/payments/paymentsWay/RecurringPaymentButton";
 import WalletPaymentButton from "../../components/payments/wallet/WalletPaymentButton";
 import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
-import SubscriptionManager from "../../components/subscription/SubscriptionManager";
+import SubscriptionManager from "../subscription/SubscriptionManager";
 
 // Services
 import { validateForm } from "../../services/validation/formValidation";
@@ -395,15 +395,6 @@ const PaymentContainer = () => {
 
   return (
     <div className="container py-4">
-      <figure className="mb-4 text-center">
-        <img
-          src={chatea}
-          alt="Chatea Logo"
-          className="img-fluid chatea-logo"
-          style={{ maxWidth: "220px" }}
-        />
-      </figure>
-
       {isDataConfirmed ? (
         <div>
           {checkingSubscription ? (
@@ -418,13 +409,32 @@ const PaymentContainer = () => {
             </div>
           ) : hasActiveSubscription ? (
             // Mostrar panel de gestión de suscripción
-            <SubscriptionManager
-              workspaceId={formData.workspace_id}
-              onSubscriptionCanceled={handleSubscriptionCanceled}
-            />
+            <>
+              <figure className="mb-4 text-center">
+                <img
+                  src={chatea}
+                  alt="Chatea Logo"
+                  className="img-fluid chatea-logo"
+                  style={{ maxWidth: "220px" }}
+                />
+              </figure>
+
+              <SubscriptionManager
+                workspaceId={formData.workspace_id}
+                onSubscriptionCanceled={handleSubscriptionCanceled}
+              />
+            </>
           ) : (
             // Mostrar flujo normal de compra
             <div>
+              <figure className="mb-4 text-center">
+                <img
+                  src={chatea}
+                  alt="Chatea Logo"
+                  className="img-fluid chatea-logo"
+                  style={{ maxWidth: "220px" }}
+                />
+              </figure>
               <PurchaseTypeSelector onSelect={handlePurchaseTypeChange} />
 
               {purchaseType && (
