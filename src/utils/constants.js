@@ -36,7 +36,7 @@ export const TRANSACTION_STATUS = {
   ERROR: "ERROR",
 };
 
-// Tipos de asistentes
+// Tipos de asistentes (mantener para compatibilidad)
 export const ASSISTANT_TYPES = {
   VENTAS: "ventas",
   COMENTARIOS: "comentarios",
@@ -53,7 +53,7 @@ export const COMPLEMENT_TYPES = {
   WEBHOOKS: "webhooks",
 };
 
-// Configuración de complementos
+// Configuración de complementos (mantener igual)
 export const COMPLEMENTS_CONFIG = [
   {
     id: COMPLEMENT_TYPES.BOT,
@@ -75,48 +75,9 @@ export const COMPLEMENTS_CONFIG = [
   },
 ];
 
-// Configuración de asistentes
-export const ASSISTANTS_CONFIG = [
-  {
-    id: ASSISTANT_TYPES.VENTAS,
-    type: "Asistente de ventas por WhatsApp",
-    label: "🔥Asistente de ventas por WhatsApp🔥",
-    description: "Logra CPAs hasta de 5.000",
-    icon: "bx bxl-whatsapp",
-  },
-  {
-    id: ASSISTANT_TYPES.COMENTARIOS,
-    type: "asistente de comentarios",
-    label: "💬Asistente de comentarios💬",
-    description: "Convierte en ventas los comentarios de Facebook.",
-    icon: "bx-message-rounded-dots",
-  },
-  {
-    id: ASSISTANT_TYPES.CARRITOS,
-    type: "asistente de carritos abandonados",
-    label: "🛒Asistente de carritos abandonados🛒",
-    description: "Recupera hasta el 50% de los carritos abandonados.",
-    icon: "bx-cart",
-  },
-  {
-    id: ASSISTANT_TYPES.REMARKETING,
-    type: "asistente de Remarketing",
-    label: "Asistente de Remarketing",
-    description: "Aumenta tus ventas usando tu base de datos.",
-    icon: "bx-line-chart",
-    comingSoon: true,
-  },
-  {
-    id: ASSISTANT_TYPES.VOZ,
-    type: "asistente de Voz con IA",
-    label: "Asistente de Voz con IA",
-    description: "Contacta al cliente con un agente de voz IA",
-    icon: "bx-microphone",
-    comingSoon: true,
-  },
-];
+// REMOVER: ASSISTANTS_CONFIG ya no se usa (ahora viene de la API)
 
-// Mapeo de nombres de asistentes del API
+// Mapeo de nombres de asistentes del API (mantener para compatibilidad)
 export const ASSISTANT_NAME_MAPPING = {
   "Whatsapp IA": ASSISTANT_TYPES.VENTAS,
   Logistica: ASSISTANT_TYPES.LOGISTICA,
@@ -188,72 +149,43 @@ export const CACHE_CONFIG = {
 };
 
 /**
- * Obtiene la configuración de un asistente por su ID exacto
- * @param {string} id - ID exacto del asistente
- * @returns {object|null} - Configuración del asistente o null si no se encuentra
+ * FUNCIONES HELPER ACTUALIZADAS PARA USAR EL HOOK
  */
-export const getAssistantConfig = (id) => {
-  return ASSISTANTS_CONFIG.find((config) => config.id === id) || null;
-};
-
-/**
- * Obtiene la configuración de un complemento por su ID
- * @param {string|number} id - ID del complemento
- * @returns {object|null} - Configuración del complemento o null si no se encuentra
- */
-export const getComplementConfig = (id) => {
-  return COMPLEMENTS_CONFIG.find((config) => config.id === id) || null;
-};
-
-/**
- * Obtiene una lista de todos los asistentes disponibles
- * @returns {array} - Array de configuraciones de asistentes
- */
-export const getAvailableAssistants = () => {
-  return ASSISTANTS_CONFIG.filter((config) => !config.comingSoon);
-};
-
-/**
- * Obtiene una lista de todos los complementos disponibles
- * @returns {array} - Array de configuraciones de complementos
- */
-export const getAvailableComplements = () => {
-  return COMPLEMENTS_CONFIG;
-};
 
 /**
  * Convierte IDs de asistentes a objetos completos con información
+ * NOTA: Esta función ahora debe usarse dentro de componentes que tengan acceso al hook useAssistants
  * @param {array} assistantIds - Array de IDs de asistentes
+ * @param {array} assistantsFromAPI - Array de asistentes de la API
  * @returns {array} - Array de objetos con información completa de asistentes
  */
-export const mapAssistantsToFullData = (assistantIds) => {
+export const mapAssistantsToFullData = (assistantIds, assistantsFromAPI) => {
+  if (!assistantsFromAPI) return [];
+
   return assistantIds.map((id) => {
-    // Buscar por ID exacto
-    const config = ASSISTANTS_CONFIG.find((config) => {
-      return config.id === id;
-    });
+    const assistant = assistantsFromAPI.find((a) => a.id === id);
 
-    if (config) {
-      const result = {
-        id: id,
-        name: config.label,
-        type: config.type,
-        description: config.description,
-        icon: config.icon,
-        comingSoon: config.comingSoon || false,
+    if (assistant) {
+      return {
+        id: assistant.id,
+        apiId: assistant.apiId,
+        name: assistant.label,
+        type: assistant.type,
+        description: assistant.description,
+        icon: assistant.icon,
+        comingSoon: assistant.comingSoon || false,
+        cost: assistant.cost,
       };
-
-      return result;
     } else {
-      const fallback = {
+      return {
         id: id,
+        apiId: null,
         name: `Asistente ${id}`,
         type: "Asistente personalizado",
         description: "",
         icon: "bx-bot",
+        cost: 30,
       };
-
-      return fallback;
     }
   });
 };
@@ -286,4 +218,21 @@ export const mapComplementsToFullData = (complements) => {
           priceUSD: 0,
         };
   });
+};
+
+/**
+ * Obtiene la configuración de un complemento por su ID
+ * @param {string|number} id - ID del complemento
+ * @returns {object|null} - Configuración del complemento o null si no se encuentra
+ */
+export const getComplementConfig = (id) => {
+  return COMPLEMENTS_CONFIG.find((config) => config.id === id) || null;
+};
+
+/**
+ * Obtiene una lista de todos los complementos disponibles
+ * @returns {array} - Array de configuraciones de complementos
+ */
+export const getAvailableComplements = () => {
+  return COMPLEMENTS_CONFIG;
 };

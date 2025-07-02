@@ -1,4 +1,5 @@
-import { ASSISTANTS_CONFIG } from "../../../utils/constants";
+// REMOVER: import { ASSISTANTS_CONFIG } from "../../../utils/constants";
+// Ya no necesitamos importar ASSISTANTS_CONFIG
 
 export const simulateCalculateChanges = ({
   assistantsToAdd,
@@ -8,9 +9,17 @@ export const simulateCalculateChanges = ({
   complementsToModify,
   planChange,
   currentPlan,
+  assistants = [], // NUEVO: Recibir asistentes de la API
 }) => {
   const items = [];
   let totalAmount = 0;
+
+  // Helper function para obtener label del asistente
+  const getAssistantLabel = (assistantId) => {
+    if (!assistants.length) return assistantId;
+    const assistant = assistants.find((a) => a.id === assistantId);
+    return assistant ? assistant.label : assistantId;
+  };
 
   // Cambio de plan
   if (planChange) {
@@ -53,11 +62,11 @@ export const simulateCalculateChanges = ({
 
   // Asistentes a agregar
   assistantsToAdd.forEach((assistantId) => {
-    const assistant = ASSISTANTS_CONFIG.find((a) => a.id === assistantId);
+    const assistantLabel = getAssistantLabel(assistantId); // USAR HELPER
     const assistantPrice = 20 * 0.5; // Prorrateado
     items.push({
       type: "add",
-      description: `Agregar ${assistant?.label || assistantId}`,
+      description: `Agregar ${assistantLabel}`,
       amount: assistantPrice,
       discount: {
         description: `Prorrateado por 15 días restantes`,
@@ -69,10 +78,10 @@ export const simulateCalculateChanges = ({
 
   // Asistentes a remover
   assistantsToRemove.forEach((assistantId) => {
-    const assistant = ASSISTANTS_CONFIG.find((a) => a.id === assistantId);
+    const assistantLabel = getAssistantLabel(assistantId); // USAR HELPER
     items.push({
       type: "remove",
-      description: `Remover ${assistant?.label || assistantId}`,
+      description: `Remover ${assistantLabel}`,
       amount: 0,
       discount: {
         description: `Removido sin reembolso`,
@@ -127,15 +136,17 @@ export const simulateCalculateChanges = ({
   complementsToModify.forEach((modification) => {
     const { complement, originalQuantity, newQuantity } = modification;
     const quantityDiff = newQuantity - originalQuantity;
-    
+
     if (quantityDiff > 0) {
       // Aumento de cantidad
-      const additionalPrice = (complement.priceUSD * quantityDiff) * 0.5; // Prorrateado
+      const additionalPrice = complement.priceUSD * quantityDiff * 0.5; // Prorrateado
       let description = `Aumentar ${complement.name}`;
       if (complement.selectedBot) {
         description += ` para ${complement.selectedBot.name}`;
       }
-      description += ` (${quantityDiff} unidad${quantityDiff > 1 ? 'es' : ''} adicional${quantityDiff > 1 ? 'es' : ''})`;
+      description += ` (${quantityDiff} unidad${
+        quantityDiff > 1 ? "es" : ""
+      } adicional${quantityDiff > 1 ? "es" : ""})`;
 
       items.push({
         type: "add",
@@ -154,7 +165,9 @@ export const simulateCalculateChanges = ({
       if (complement.selectedBot) {
         description += ` de ${complement.selectedBot.name}`;
       }
-      description += ` (${removedQuantity} unidad${removedQuantity > 1 ? 'es' : ''} menos)`;
+      description += ` (${removedQuantity} unidad${
+        removedQuantity > 1 ? "es" : ""
+      } menos)`;
 
       items.push({
         type: "remove",
@@ -177,7 +190,8 @@ export const calculateChanges = (
   selectedAssistants,
   selectedPlan,
   selectedComplements,
-  subscription
+  subscription,
+  assistants = [] // NUEVO: Recibir asistentes de la API
 ) => {
   if (!subscription) return null;
 
@@ -199,14 +213,14 @@ export const calculateChanges = (
 
   // Crear mapas para facilitar la comparación
   const currentComplementsMap = new Map();
-  currentComplements.forEach(comp => {
-    const key = `${comp.id}_${comp.selectedBot?.flow_ns || 'default'}`;
+  currentComplements.forEach((comp) => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
     currentComplementsMap.set(key, comp);
   });
 
   const selectedComplementsMap = new Map();
-  selectedComplements.forEach(comp => {
-    const key = `${comp.id}_${comp.selectedBot?.flow_ns || 'default'}`;
+  selectedComplements.forEach((comp) => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
     selectedComplementsMap.set(key, comp);
   });
 
@@ -231,7 +245,7 @@ export const calculateChanges = (
       complementsToModify.push({
         complement: selectedComp,
         originalQuantity: currentComp.quantity,
-        newQuantity: selectedComp.quantity
+        newQuantity: selectedComp.quantity,
       });
     }
   });
@@ -247,6 +261,7 @@ export const calculateChanges = (
     complementsToModify,
     planChange,
     currentPlan: subscription.planId,
+    assistants, // PASAR ASISTENTES A LA FUNCIÓN
   });
 };
 
@@ -257,7 +272,7 @@ export const hasChanges = (
   subscription
 ) => {
   if (!subscription) return false;
-  
+
   const currentAssistants = subscription.assistants || [];
   const currentComplements = subscription.complements || [];
 
@@ -272,17 +287,21 @@ export const hasChanges = (
     }
 
     // Crear representaciones comparables
-    const currentRep = currentComplements.map(c => ({
-      id: c.id,
-      quantity: c.quantity,
-      bot: c.selectedBot?.flow_ns || null
-    })).sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
+    const currentRep = currentComplements
+      .map((c) => ({
+        id: c.id,
+        quantity: c.quantity,
+        bot: c.selectedBot?.flow_ns || null,
+      }))
+      .sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
 
-    const selectedRep = selectedComplements.map(c => ({
-      id: c.id,
-      quantity: c.quantity,
-      bot: c.selectedBot?.flow_ns || null
-    })).sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
+    const selectedRep = selectedComplements
+      .map((c) => ({
+        id: c.id,
+        quantity: c.quantity,
+        bot: c.selectedBot?.flow_ns || null,
+      }))
+      .sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
 
     return JSON.stringify(currentRep) !== JSON.stringify(selectedRep);
   })();

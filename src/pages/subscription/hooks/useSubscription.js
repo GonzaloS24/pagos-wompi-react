@@ -6,6 +6,7 @@ import {
   simulateCancelSubscription,
 } from "../service/subscriptionAPI";
 import { calculateChanges } from "../utils/subscriptionHelpers";
+import { useAssistants } from "../../../hooks/useAssistants"; // IMPORTAR HOOK
 import Swal from "sweetalert2";
 
 export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
@@ -16,6 +17,9 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
   const [selectedAssistants, setSelectedAssistants] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedComplements, setSelectedComplements] = useState([]);
+
+  // USAR HOOK DE ASISTENTES
+  const { assistants } = useAssistants();
 
   const fetchSubscriptionData = useCallback(async () => {
     setLoading(true);
@@ -29,6 +33,8 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
       setPlans(plansData);
 
       if (subscriptionData) {
+        // IMPORTANTE: Los asistentes en la suscripción siguen siendo nombres (string)
+        // para mantener compatibilidad con el resto del sistema
         setSelectedAssistants(subscriptionData.assistants || []);
         setSelectedPlan(
           plansData.find((p) => p.id === subscriptionData.planId) || null
@@ -52,25 +58,52 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
       selectedAssistants,
       selectedPlan,
       selectedComplements,
-      subscription
+      subscription,
+      assistants // PASAR ASISTENTES AL HELPER
     );
-  }, [selectedAssistants, selectedPlan, selectedComplements, subscription]);
+  }, [
+    selectedAssistants,
+    selectedPlan,
+    selectedComplements,
+    subscription,
+    assistants,
+  ]);
 
   const handleSaveChanges = useCallback(
-    async (paymentData = null) => {
+    async (paymentData = null, modifiedData = null) => {
       setModifying(true);
 
       try {
-        // Mapear asistentes separando gratis vs pagados
-        const assistantIds = selectedAssistants || [];
-        const freeAssistantId =
-          assistantIds.length > 0 ? assistantIds[0] : null;
-        const paidAssistantIds =
-          assistantIds.length > 1 ? assistantIds.slice(1) : [];
+        // Si se proporcionan datos modificados (con API IDs), usarlos
+        // De lo contrario, usar los datos actuales del estado
+        const assistantsToUse =
+          modifiedData?.selectedAssistants || selectedAssistants;
+        const planToUse = modifiedData?.selectedPlan || selectedPlan;
+        const complementsToUse =
+          modifiedData?.selectedComplements || selectedComplements;
+
+        // Determinar si estamos usando API IDs o nombres
+        const usingApiIds = modifiedData && modifiedData.selectedAssistants;
+
+        let freeAssistantValue, paidAssistantValues;
+
+        if (usingApiIds) {
+          // Trabajar con API IDs (números)
+          freeAssistantValue =
+            assistantsToUse.length > 0 ? assistantsToUse[0] : null;
+          paidAssistantValues =
+            assistantsToUse.length > 1 ? assistantsToUse.slice(1) : [];
+        } else {
+          // Trabajar con nombres (strings) - flujo original
+          freeAssistantValue =
+            assistantsToUse.length > 0 ? assistantsToUse[0] : null;
+          paidAssistantValues =
+            assistantsToUse.length > 1 ? assistantsToUse.slice(1) : [];
+        }
 
         // Mapear complementos (addons)
         const addons =
-          selectedComplements?.map((complement) => ({
+          complementsToUse?.map((complement) => ({
             id: complement.id,
             quantity: complement.quantity || 1,
             // Incluir bot_flow_ns si es webhook y tiene selectedBot
@@ -113,11 +146,11 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
         const updatedSubscriptionData = {
           workspace_id: parseInt(subscription.workspaceId) || 0,
           phone: subscription.phone || "",
-          plan_id: selectedPlan?.id || subscription.planId,
+          plan_id: planToUse?.id || subscription.planId,
           workspace_name: subscription.workspace_name || "",
           owner_email: subscription.owner_email || "",
-          free_assistant_id: freeAssistantId,
-          paid_assistant_ids: paidAssistantIds,
+          free_assistant_id: freeAssistantValue,
+          paid_assistant_ids: paidAssistantValues,
           assistants_only: false,
           addons: addons,
         };
@@ -148,10 +181,23 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
 ${JSON.stringify(originalSubscriptionData, null, 2)}
               </pre>
               
-              <h6 style="color: #28a745; margin-bottom: 10px;">📝 Datos Actualizados:</h6>
+              <h6 style="color: #28a745; margin-bottom: 10px;">📝 Datos Actualizados ${
+                usingApiIds ? "(con API IDs)" : "(con nombres)"
+              }:</h6>
               <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; text-align: left; border-left: 4px solid #28a745;">
 ${JSON.stringify(updatedSubscriptionData, null, 2)}
               </pre>
+              
+              ${
+                usingApiIds
+                  ? `
+              <h6 style="color: #17a2b8; margin-top: 15px; margin-bottom: 10px;">🔄 Nota:</h6>
+              <div style="background: #e7f3ff; padding: 10px; border-radius: 5px; font-size: 11px; color: #0066cc;">
+                Los asistentes se enviaron usando API IDs (números) para el backend
+              </div>
+              `
+                  : ""
+              }
             </div>
           `,
           confirmButtonText: "Aceptar",

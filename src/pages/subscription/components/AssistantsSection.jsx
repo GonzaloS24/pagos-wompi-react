@@ -1,32 +1,29 @@
 /* eslint-disable react/prop-types */
-import { useEffect } from "react";
-import { ASSISTANTS_CONFIG } from "../../../utils/constants";
-import { getAllAssistants } from "../service/assistants";
-
 const AssistantsSection = ({
   subscription,
   selectedAssistants,
   onAssistantChange,
+  assistants = [], // NUEVO: Recibir asistentes de la API
 }) => {
-  const getAssistants = async () => {
-    try {
-      const asistants = await getAllAssistants();
-      console.log("14  >>>>>>>>> ", asistants);
-    } catch (error) {
-      console.error("Error al cargar las estadísticas:", error);
-    }
-  };
-
-  useEffect(() => {
-    getAssistants();
-  }, []);
+  // Si no hay asistentes de la API, mostrar loading
+  if (!assistants || assistants.length === 0) {
+    return (
+      <div className="current-assistants-section">
+        <h5 style={{ color: "#009ee3" }}>Asistentes</h5>
+        <div className="text-center text-muted py-4">
+          <p>Cargando asistentes disponibles...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="current-assistants-section">
       <h5 style={{ color: "#009ee3" }}>Asistentes</h5>
       <div className="assistants-list">
-        {ASSISTANTS_CONFIG.filter((assistant) => !assistant.comingSoon).map(
-          (assistant) => {
+        {assistants
+          .filter((assistant) => !assistant.comingSoon)
+          .map((assistant) => {
             const isSelected = selectedAssistants.includes(assistant.id);
             const isCurrentlyActive = subscription.assistants.includes(
               assistant.id
@@ -47,12 +44,17 @@ const AssistantsSection = ({
                     {isCurrentlyActive && (
                       <span className="current-badge">Actual</span>
                     )}
+                    {/* Mostrar precio de la API si está disponible */}
+                    {assistant.cost && (
+                      <small className="text-muted ms-2">
+                        (${assistant.cost} USD - API ID: {assistant.apiId})
+                      </small>
+                    )}
                   </div>
                 </label>
               </div>
             );
-          }
-        )}
+          })}
       </div>
     </div>
   );

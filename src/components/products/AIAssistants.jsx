@@ -1,10 +1,11 @@
 /* eslint-disable react/prop-types */
-import { ASSISTANTS_CONFIG, PRICING } from "../../utils/constants";
+import { PRICING } from "../../utils/constants";
 
 const AIAssistants = ({
   selectedAssistants,
   onAssistantChange,
   isStandalone,
+  assistants = [],
 }) => {
   // Determinar cuál es el primer asistente seleccionado (gratis)
   const freeAssistant =
@@ -16,6 +17,20 @@ const AIAssistants = ({
   const handleAssistantChange = (assistantId) => {
     onAssistantChange(assistantId);
   };
+
+  // Si no hay asistentes de la API, mostrar loading o mensaje
+  if (!assistants || assistants.length === 0) {
+    return (
+      <div className="assistants-section p-2 bg-white rounded">
+        <h5 style={{ color: "#009ee3" }} className="mb-3">
+          Asistentes de IA Disponibles
+        </h5>
+        <div className="text-center text-muted py-4">
+          <p>Cargando asistentes disponibles...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="assistants-section p-2 bg-white rounded">
@@ -58,7 +73,7 @@ const AIAssistants = ({
       </p>
 
       <div className="assistants-grid">
-        {ASSISTANTS_CONFIG.map((assistant) => {
+        {assistants.map((assistant) => {
           const isComingSoon = assistant.comingSoon === true;
           const isSelected = selectedAssistants.includes(assistant.id);
           const isFreeAssistant = assistant.id === freeAssistant;
@@ -90,6 +105,13 @@ const AIAssistants = ({
                 {isFreeAssistant && !isStandalone && (
                   <span className="ms-2 badge bg-success">Gratis</span>
                 )}
+                {/* Mostrar precio de la API si está disponible */}
+                {assistant.cost &&
+                  assistant.cost !== PRICING.ASSISTANT_PRICE_USD && (
+                    <span className="ms-2 text-muted small">
+                      (${assistant.cost} USD)
+                    </span>
+                  )}
               </label>
 
               {isComingSoon && (

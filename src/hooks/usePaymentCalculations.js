@@ -1,11 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from "react";
 import { WOMPI_CONFIG } from "../services/payments/wompi/wompiConfig";
-import {
-  PRICING,
-  PAYMENT_PERIODS,
-  getAssistantConfig,
-} from "../utils/constants";
+import { PRICING, PAYMENT_PERIODS } from "../utils/constants";
 import { calculateDiscountedPrice, getPriceInfo } from "../utils/discounts";
 
 export const usePaymentCalculations = ({
@@ -18,6 +14,7 @@ export const usePaymentCalculations = ({
   enableRecurring,
   paymentPeriod = PAYMENT_PERIODS.MONTHLY,
   freeAssistant,
+  assistants = [], // NUEVO: Recibir asistentes de la API
 }) => {
   const calculations = useMemo(() => {
     const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
@@ -97,6 +94,13 @@ export const usePaymentCalculations = ({
     const priceInCOP = Math.round(totalUSD * validRate);
     const priceCOPCents = priceInCOP * 100;
 
+    // NUEVO: Función helper para obtener nombre del asistente
+    const getFreeAssistantName = () => {
+      if (!freeAssistant || !assistants.length) return null;
+      const assistant = assistants.find((a) => a.id === freeAssistant);
+      return assistant ? assistant.label : freeAssistant;
+    };
+
     return {
       totalUSD,
       priceInCOP,
@@ -121,9 +125,7 @@ export const usePaymentCalculations = ({
 
       freeAssistant,
       paidAssistants,
-      freeAssistantName: freeAssistant
-        ? getAssistantConfig(freeAssistant)?.label || freeAssistant
-        : null,
+      freeAssistantName: getFreeAssistantName(), // USAR FUNCIÓN HELPER
       paidAssistantsCount: paidAssistants.length,
       freeAssistantsCount: freeAssistant ? 1 : 0,
 
@@ -152,6 +154,7 @@ export const usePaymentCalculations = ({
     usdToCopRate,
     paymentPeriod,
     freeAssistant,
+    assistants, // AGREGAR DEPENDENCIA
   ]);
 
   const generateReference = useMemo(() => {
@@ -176,29 +179,6 @@ export const usePaymentCalculations = ({
         : "";
 
     const recurringString = enableRecurring ? "-recurring=true" : "";
-
-    // const freeAssistant =
-    //   purchaseType === "plan" && freeAssistant ? `-free=${freeAssistant}` : "";
-
-    // const periodString = calculations.isAnnual
-    //   ? "-period=annual"
-    //   : "-period=monthly";
-
-    // if (purchaseType === "plan") {
-    //   return `plan_id=${
-    //     selectedPlan?.id
-    //   }-workspace_id=${workspaceId}-workspace_name=${
-    //     urlParams?.workspace_name
-    //   }-owner_email=${urlParams?.owner_email}-phone_number=${
-    //     urlParams?.phone_number
-    //   }${assistantsString}${freeAssistant}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
-    // } else {
-    //   return `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
-    //     urlParams?.workspace_name
-    //   }-owner_email=${urlParams?.owner_email}-phone_number=${
-    //     urlParams?.phone_number
-    //   }${assistantsString}${complementsString}${recurringString}-${periodString}-reference${Date.now()}`;
-    // }
 
     if (purchaseType === "plan") {
       return `plan_id=${
@@ -234,8 +214,14 @@ export const usePaymentCalculations = ({
 
     if (selectedAssistants.length > 0) {
       if (purchaseType === "plan" && freeAssistant) {
-        const freeAssistantName =
-          getAssistantConfig(freeAssistant)?.label || freeAssistant;
+        // USAR LA FUNCIÓN HELPER EN LUGAR DE getAssistantConfig
+        const getFreeAssistantName = () => {
+          if (!assistants.length) return freeAssistant;
+          const assistant = assistants.find((a) => a.id === freeAssistant);
+          return assistant ? assistant.label : freeAssistant;
+        };
+
+        const freeAssistantName = getFreeAssistantName();
         const paidCount = selectedAssistants.length - 1;
 
         if (paidCount > 0) {
@@ -266,6 +252,7 @@ export const usePaymentCalculations = ({
     selectedComplements,
     calculations.isAnnual,
     freeAssistant,
+    assistants, // AGREGAR DEPENDENCIA
   ]);
 
   return {

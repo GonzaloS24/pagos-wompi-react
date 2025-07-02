@@ -33,75 +33,104 @@ const RecurringPaymentPage = () => {
     navigate,
   ]);
 
-const handleCardSubmit = async (cardData) => {
-  setLoading(true);
+  const handleCardSubmit = async (cardData) => {
+    setLoading(true);
 
-  try {
-    // Mapear asistentes separando gratis vs pagados
-    const assistantIds = selectedAssistants?.map(assistant => assistant.id) || [];
-    const isAssistantsOnly = !selectedPlan;
-    
-    const freeAssistantId = assistantIds.length > 0 && !isAssistantsOnly ? assistantIds[0] : null;
-    const paidAssistantIds = assistantIds.length > 1 && !isAssistantsOnly 
-      ? assistantIds.slice(1) 
-      : (isAssistantsOnly ? assistantIds : []);
+    try {
+      // Mapear asistentes separando gratis vs pagados
+      // const assistantIds =
+      //   selectedAssistants?.map((assistant) => assistant.id) || [];
+      const assistantApiIds =
+        selectedAssistants?.map(
+          (assistant) => assistant.apiId || assistant.id
+        ) || [];
+      const isAssistantsOnly = !selectedPlan;
 
-    const addons = selectedComplements?.map(complement => ({
-      id: complement.id,
-      quantity: complement.quantity || 1,
-      // Incluir bot_flow_ns si es webhook y tiene selectedBot
-      ...(complement.id === "webhooks" && complement.selectedBot ? {
-        bot_flow_ns: complement.selectedBot.flow_ns
-      } : {})
-    })) || [];
+      // IMPORTANTE: Para suscripciones usar API IDs (números)
+      const freeAssistantApiId =
+        assistantApiIds.length > 0 && !isAssistantsOnly
+          ? assistantApiIds[0]
+          : null;
+      const paidAssistantApiIds =
+        assistantApiIds.length > 1 && !isAssistantsOnly
+          ? assistantApiIds.slice(1)
+          : isAssistantsOnly
+          ? assistantApiIds
+          : [];
 
-    // Crear el JSON con la estructura requerida
-    const paymentData = {
-      workspace_id: parseInt(formData.workspace_id) || 0,
-      phone: formData.phone_number || "",
-      plan_id: selectedPlan?.id || null,
-      workspace_name: formData.workspace_name || "",
-      owner_email: formData.owner_email || "",
-      free_assistant_id: freeAssistantId,
-      paid_assistant_ids: paidAssistantIds,
-      assistants_only: !selectedPlan,
-      addons: addons,
-      card_details: {
-        exp_date: {
-          year: parseInt(cardData.exp_year),
-          month: parseInt(cardData.exp_month)
+      const addons =
+        selectedComplements?.map((complement) => ({
+          id: complement.id,
+          quantity: complement.quantity || 1,
+          // Incluir bot_flow_ns si es webhook y tiene selectedBot
+          ...(complement.id === "webhooks" && complement.selectedBot
+            ? {
+                bot_flow_ns: complement.selectedBot.flow_ns,
+              }
+            : {}),
+        })) || [];
+
+      // Crear el JSON con la estructura requerida
+      const paymentData = {
+        workspace_id: parseInt(formData.workspace_id) || 0,
+        phone: formData.phone_number || "",
+        plan_id: selectedPlan?.id || null,
+        workspace_name: formData.workspace_name || "",
+        owner_email: formData.owner_email || "",
+        free_assistant_id: freeAssistantApiId, // API ID (número)
+        paid_assistant_ids: paidAssistantApiIds, // API IDs (números)
+        assistants_only: !selectedPlan,
+        addons: addons,
+        card_details: {
+          exp_date: {
+            year: parseInt(cardData.exp_year),
+            month: parseInt(cardData.exp_month),
+          },
+          card_holder: cardData.card_holder,
+          card_number: cardData.number,
+          cvv: cardData.cvc,
         },
-        card_holder: cardData.card_holder,
-        card_number: cardData.number,
-        cvv: cardData.cvc
-      }
-    };
+      };
 
-    // Mostrar el JSON estructurado
-    await Swal.fire({
-      icon: "info",
-      title: "Datos del Pago Recurrente",
-      html: `
+      // Mostrar el JSON estructurado
+      await Swal.fire({
+        icon: "info",
+        title: "Datos del Pago Recurrente",
+        html: `
         <div style="text-align: left; max-height: 400px; overflow-y: auto;">
+          <h6 style="color: #28a745; margin-bottom: 10px;">📋 Datos para el Backend (con API IDs):</h6>
           <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 12px; text-align: left;">
 ${JSON.stringify(paymentData, null, 2)}
           </pre>
+          
+          <h6 style="color: #17a2b8; margin-top: 15px; margin-bottom: 10px;">🔄 Mapeo de Asistentes:</h6>
+          <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px;">
+            ${
+              selectedAssistants
+                ?.map(
+                  (assistant) =>
+                    `<div>Nombre: "${assistant.id}" → API ID: ${
+                      assistant.apiId || "No disponible"
+                    }</div>`
+                )
+                .join("") || "Sin asistentes"
+            }
+          </div>
         </div>
       `,
-      confirmButtonText: "Aceptar",
-      confirmButtonColor: "#009ee3",
-      width: "600px",
-      customClass: {
-        htmlContainer: "text-left",
-      },
-    });
-
-  } catch (error) {
-    console.error("Error processing payment:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#009ee3",
+        width: "600px",
+        customClass: {
+          htmlContainer: "text-left",
+        },
+      });
+    } catch (error) {
+      console.error("Error processing payment:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = () => {
     navigate(-1);
@@ -149,9 +178,13 @@ ${JSON.stringify(paymentData, null, 2)}
                                   className="detail-sub-item"
                                 >
                                   <span className="detail-value">
-                                    {" "}
                                     {assistant.name ||
                                       `Asistente ${assistant.id || index + 1}`}
+                                    {assistant.apiId && (
+                                      <small className="text-muted ms-2">
+                                        (ID: {assistant.apiId})
+                                      </small>
+                                    )}
                                   </span>
                                 </div>
                               ))}

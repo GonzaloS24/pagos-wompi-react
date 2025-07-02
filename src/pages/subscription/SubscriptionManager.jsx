@@ -9,10 +9,18 @@ import ComplementsSection from "./components/ComplementsSection";
 import ChangesSummary from "./components/ChangesSummary";
 import PaymentView from "./components/PaymentView";
 import { useSubscription } from "./hooks/useSubscription";
+import { useAssistants } from "../../hooks/useAssistants";
 import "./styles/SubscriptionManager.css";
 
 const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+
+  // Hook de asistentes para mapear entre nombres y API IDs
+  const {
+    assistants,
+    loading: assistantsLoading,
+    mapNamesToApiIds,
+  } = useAssistants();
 
   const {
     subscription,
@@ -61,19 +69,35 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
 
   const handleCardSubmit = useCallback(
     async (cardData) => {
-      const success = await handleSaveChanges(cardData);
+      // IMPORTANTE: Convertir nombres de asistentes a API IDs antes de enviar
+      const assistantApiIds = mapNamesToApiIds(selectedAssistants);
+
+      // Crear datos modificados con API IDs
+      const modifiedData = {
+        selectedAssistants: assistantApiIds, // Usar API IDs para el backend
+        selectedPlan,
+        selectedComplements,
+      };
+
+      const success = await handleSaveChanges(cardData, modifiedData);
       if (success) {
         setShowPaymentForm(false);
       }
     },
-    [handleSaveChanges]
+    [
+      handleSaveChanges,
+      selectedAssistants,
+      selectedPlan,
+      selectedComplements,
+      mapNamesToApiIds,
+    ]
   );
 
   const handleBackFromPayment = useCallback(() => {
     setShowPaymentForm(false);
   }, []);
 
-  if (loading) {
+  if (loading || assistantsLoading) {
     return <LoadingSpinner message="Cargando tu suscripción..." />;
   }
 
@@ -122,6 +146,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             subscription={subscription}
             selectedAssistants={selectedAssistants}
             onAssistantChange={handleAssistantChange}
+            assistants={assistants} // PASAR ASISTENTES DE LA API
           />
 
           <br />

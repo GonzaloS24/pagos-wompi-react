@@ -7,6 +7,7 @@ import chatea from "../../assets/chatea.png";
 import { useWompiPayment } from "../../hooks/useWompiPayment";
 import { usePaymentCalculations } from "../../hooks/usePaymentCalculations";
 import { usePaymentMethods } from "../../hooks/usePaymentMethods";
+import { useAssistants } from "../../hooks/useAssistants"; // NUEVO HOOK
 
 // Components
 import ConfirmationModal from "../../components/common/ConfirmationModal";
@@ -79,6 +80,15 @@ const PaymentContainer = () => {
     setPaymentPeriod,
   } = useWompiPayment();
 
+  // NUEVO: Hook de asistentes
+  const {
+    assistants,
+    loading: assistantsLoading,
+    getAssistantByName,
+    // mapNamesToApiIds,
+    getAvailableAssistants,
+  } = useAssistants();
+
   const {
     selectedGateway,
     enableRecurring,
@@ -102,6 +112,7 @@ const PaymentContainer = () => {
     enableRecurring,
     paymentPeriod,
     freeAssistant,
+    assistants, // PASAR ASISTENTES DE LA API
   });
 
   // Verificar suscripción activa cuando se confirman los datos
@@ -114,7 +125,6 @@ const PaymentContainer = () => {
   const checkActiveSubscription = async (workspaceId) => {
     setCheckingSubscription(true);
     try {
-      // Simular llamado a API para verificar suscripción
       const hasSubscription = await simulateHasActiveSubscription(workspaceId);
       setHasActiveSubscription(hasSubscription);
     } catch (error) {
@@ -131,8 +141,8 @@ const PaymentContainer = () => {
 
   // FUNCIÓN HELPER para obtener datos completos de asistentes
   const getSelectedAssistantsWithNames = useCallback(() => {
-    return mapAssistantsToFullData(selectedAssistants);
-  }, [selectedAssistants]);
+    return mapAssistantsToFullData(selectedAssistants, assistants);
+  }, [selectedAssistants, assistants]);
 
   // FUNCIÓN HELPER para obtener datos completos de complementos
   const getSelectedComplementsWithNames = useCallback(() => {
@@ -300,13 +310,19 @@ const PaymentContainer = () => {
     const assistantsWithNames = getSelectedAssistantsWithNames();
     const complementsWithNames = getSelectedComplementsWithNames();
 
+    // IMPORTANTE: Para RecurringPaymentPage necesitamos mapear a API IDs
+    const assistantsWithApiIds = assistantsWithNames.map((assistant) => ({
+      ...assistant,
+      apiId: getAssistantByName(assistant.id)?.apiId || assistant.id,
+    }));
+
     // Navegar a la nueva página con datos completos
     navigate("/recurring-payment", {
       state: {
         paymentCalculations,
         formData,
         selectedPlan: purchaseType === "plan" ? selectedPlan : null,
-        selectedAssistants: assistantsWithNames,
+        selectedAssistants: assistantsWithApiIds, // Con API IDs incluidos
         selectedComplements: complementsWithNames,
         purchaseType,
       },
@@ -379,7 +395,8 @@ const PaymentContainer = () => {
     }
   }, [paymentPeriod, enableRecurring, handleRecurringChange]);
 
-  if (loading) {
+  // Mostrar loading si se están cargando datos básicos
+  if (loading || assistantsLoading) {
     return (
       <div className="loader-container">
         <PuffLoader
@@ -461,6 +478,7 @@ const PaymentContainer = () => {
                           onAssistantChange={handleAssistantChange}
                           isStandalone={purchaseType === "assistants"}
                           workspaceId={formData.workspace_id}
+                          assistants={getAvailableAssistants()} // PASAR ASISTENTES DE LA API
                         />
 
                         <Complements
