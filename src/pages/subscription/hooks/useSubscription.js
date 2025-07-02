@@ -30,7 +30,6 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
 
       if (subscriptionData) {
         setSelectedAssistants(subscriptionData.assistants || []);
-        setSelectedComplements(subscriptionData.complements || []);
         setSelectedPlan(
           plansData.find((p) => p.id === subscriptionData.planId) || null
         );
@@ -60,12 +59,133 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
   const handleSaveChanges = useCallback(
     async (paymentData = null) => {
       setModifying(true);
+
       try {
+        // Mapear asistentes separando gratis vs pagados
+        const assistantIds = selectedAssistants || [];
+        const freeAssistantId =
+          assistantIds.length > 0 ? assistantIds[0] : null;
+        const paidAssistantIds =
+          assistantIds.length > 1 ? assistantIds.slice(1) : [];
+
+        // Mapear complementos (addons)
+        const addons =
+          selectedComplements?.map((complement) => ({
+            id: complement.id,
+            quantity: complement.quantity || 1,
+            // Incluir bot_flow_ns si es webhook y tiene selectedBot
+            ...(complement.id === "webhooks" && complement.selectedBot
+              ? {
+                  bot_flow_ns: complement.selectedBot.flow_ns,
+                }
+              : {}),
+          })) || [];
+
+        // JSON del estado ORIGINAL de la suscripción
+        const originalSubscriptionData = {
+          workspace_id: parseInt(subscription.workspaceId) || 0,
+          phone: subscription.phone || "",
+          plan_id: subscription.planId || null,
+          workspace_name: subscription.workspace_name || "",
+          owner_email: subscription.owner_email || "",
+          free_assistant_id:
+            subscription.assistants?.length > 0
+              ? subscription.assistants[0]
+              : null,
+          paid_assistant_ids:
+            subscription.assistants?.length > 1
+              ? subscription.assistants.slice(1)
+              : [],
+          assistants_only: false,
+          addons:
+            subscription.complements?.map((complement) => ({
+              id: complement.id,
+              quantity: complement.quantity || 1,
+              ...(complement.id === "webhooks" && complement.selectedBot
+                ? {
+                    bot_flow_ns: complement.selectedBot.flow_ns,
+                  }
+                : {}),
+            })) || [],
+        };
+
+        // JSON del estado NUEVO con los cambios aplicados
+        const updatedSubscriptionData = {
+          workspace_id: parseInt(subscription.workspaceId) || 0,
+          phone: subscription.phone || "",
+          plan_id: selectedPlan?.id || subscription.planId,
+          workspace_name: subscription.workspace_name || "",
+          owner_email: subscription.owner_email || "",
+          free_assistant_id: freeAssistantId,
+          paid_assistant_ids: paidAssistantIds,
+          assistants_only: false,
+          addons: addons,
+        };
+
+        // Si hay datos de pago (cuando se requiere pago), agregar card_details
+        if (paymentData) {
+          updatedSubscriptionData.card_details = {
+            exp_date: {
+              year: parseInt(paymentData.exp_year),
+              month: parseInt(paymentData.exp_month),
+            },
+            card_holder: paymentData.card_holder,
+            card_number: paymentData.number,
+            cvv: paymentData.cvc,
+          };
+        }
+
+        // Mostrar JSON estructurado antes de enviar
+        await Swal.fire({
+          icon: "info",
+          title: paymentData
+            ? "Datos de Actualización con Pago"
+            : "Datos de Actualización de Suscripción",
+          html: `
+            <div style="text-align: left; max-height: 500px; overflow-y: auto;">
+              <h6 style="color: #dc3545; margin-bottom: 10px;">📋 Datos Originales:</h6>
+              <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; text-align: left; margin-bottom: 15px; border-left: 4px solid #dc3545;">
+${JSON.stringify(originalSubscriptionData, null, 2)}
+              </pre>
+              
+              <h6 style="color: #28a745; margin-bottom: 10px;">📝 Datos Actualizados:</h6>
+              <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; text-align: left; border-left: 4px solid #28a745;">
+${JSON.stringify(updatedSubscriptionData, null, 2)}
+              </pre>
+            </div>
+          `,
+          confirmButtonText: "Aceptar",
+          confirmButtonColor: "#009ee3",
+          width: "700px",
+          customClass: {
+            htmlContainer: "text-left",
+          },
+        });
+
+        // Llamada comentada a la API
+        /*
+        const response = await fetch('/api/subscriptions/update', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            original: originalSubscriptionData,
+            updated: updatedSubscriptionData
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error updating subscription');
+        }
+
+        const result = await response.json();
+        */
+
+        // Simulación del llamado a la API
         await simulateUpdateSubscription(workspaceId, {
-          assistants: selectedAssistants,
-          complements: selectedComplements,
-          planId: selectedPlan?.id,
-          paymentData,
+          original: originalSubscriptionData,
+          updated: updatedSubscriptionData,
         });
 
         Swal.fire({
@@ -92,6 +212,7 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
     },
     [
       workspaceId,
+      subscription,
       selectedAssistants,
       selectedComplements,
       selectedPlan,

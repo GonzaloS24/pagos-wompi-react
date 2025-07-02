@@ -43,55 +43,10 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     [setSelectedAssistants]
   );
 
+  // Manejar cambios en complementos
   const handleComplementsChange = useCallback(
-    (newComplementsFromComponent) => {
-      // Esta función maneja SOLO los complementos nuevos del componente Complements
-      // Los complementos actuales se manejan por separado
-      if (!subscription) return;
-
-      const currentComplements = subscription.complements || [];
-
-      // Filtrar cuáles de los complementos actuales se mantienen
-      const keptCurrentComplements = currentComplements.filter((currentComp) =>
-        selectedComplements.some(
-          (selComp) =>
-            selComp.id === currentComp.id &&
-            (currentComp.selectedBot
-              ? selComp.selectedBot?.flow_ns ===
-                currentComp.selectedBot?.flow_ns
-              : true)
-        )
-      );
-
-      // Los nuevos complementos son todos los que vienen del componente
-      const newComplements = newComplementsFromComponent || [];
-
-      // Combinar: complementos actuales mantenidos + todos los nuevos
-      setSelectedComplements([...keptCurrentComplements, ...newComplements]);
-    },
-    [subscription, selectedComplements, setSelectedComplements]
-  );
-
-  const handleToggleCurrentComplement = useCallback(
-    (complement, isCurrentlySelected) => {
-      if (isCurrentlySelected) {
-        // Eliminar el complemento
-        setSelectedComplements((prev) =>
-          prev.filter(
-            (selComp) =>
-              !(
-                selComp.id === complement.id &&
-                (complement.selectedBot
-                  ? selComp.selectedBot?.flow_ns ===
-                    complement.selectedBot?.flow_ns
-                  : true)
-              )
-          )
-        );
-      } else {
-        // Agregar el complemento de vuelta
-        setSelectedComplements((prev) => [...prev, complement]);
-      }
+    (newComplements) => {
+      setSelectedComplements(newComplements || []);
     },
     [setSelectedComplements]
   );
@@ -175,7 +130,6 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             subscription={subscription}
             selectedComplements={selectedComplements}
             onComplementsChange={handleComplementsChange}
-            onToggleCurrentComplement={handleToggleCurrentComplement}
             workspaceId={workspaceId}
           />
         </div>

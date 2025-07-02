@@ -34,6 +34,10 @@ export const simulateGetSubscription = async (workspaceId) => {
       nextPaymentDate: "15 de Agosto, 2025",
       createdAt: "2025-07-15",
       workspaceId: workspaceId,
+      // Datos adicionales para el JSON
+      workspace_name: "Mi Empresa Demo",
+      owner_email: "admin@miempresa.com",
+      phone: "+57 300 123 4567",
     };
   }
 
@@ -56,6 +60,15 @@ export const simulateUpdateSubscription = async (workspaceId, data) => {
 
   if (Math.random() > 0.1) {
     console.log("Subscription updated:", { workspaceId, data });
+    
+    // Log de los datos estructurados que se enviarían al backend
+    if (data.original && data.updated) {
+      console.log("=== DATOS PARA EL BACKEND ===");
+      console.log("Original subscription data:", JSON.stringify(data.original, null, 2));
+      console.log("Updated subscription data:", JSON.stringify(data.updated, null, 2));
+      console.log("===============================");
+    }
+    
     return { success: true };
   } else {
     throw new Error("API Error");

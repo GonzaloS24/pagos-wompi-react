@@ -5,6 +5,7 @@ export const simulateCalculateChanges = ({
   assistantsToRemove,
   complementsToAdd,
   complementsToRemove,
+  complementsToModify,
   planChange,
   currentPlan,
 }) => {
@@ -79,7 +80,7 @@ export const simulateCalculateChanges = ({
     });
   });
 
-  // Complementos a agregar
+  // Complementos a agregar (completamente nuevos)
   complementsToAdd.forEach((complement) => {
     const complementPrice = complement.totalPrice * 0.5; // Prorrateado
     let description = `Agregar ${complement.name}`;
@@ -102,7 +103,7 @@ export const simulateCalculateChanges = ({
     totalAmount += complementPrice;
   });
 
-  // Complementos a remover
+  // Complementos a remover (completamente eliminados)
   complementsToRemove.forEach((complement) => {
     let description = `Remover ${complement.name}`;
     if (complement.selectedBot) {
@@ -120,6 +121,50 @@ export const simulateCalculateChanges = ({
         description: `Removido sin reembolso`,
       },
     });
+  });
+
+  // Complementos modificados (cambio de cantidad)
+  complementsToModify.forEach((modification) => {
+    const { complement, originalQuantity, newQuantity } = modification;
+    const quantityDiff = newQuantity - originalQuantity;
+    
+    if (quantityDiff > 0) {
+      // Aumento de cantidad
+      const additionalPrice = (complement.priceUSD * quantityDiff) * 0.5; // Prorrateado
+      let description = `Aumentar ${complement.name}`;
+      if (complement.selectedBot) {
+        description += ` para ${complement.selectedBot.name}`;
+      }
+      description += ` (${quantityDiff} unidad${quantityDiff > 1 ? 'es' : ''} adicional${quantityDiff > 1 ? 'es' : ''})`;
+
+      items.push({
+        type: "add",
+        description,
+        amount: additionalPrice,
+        discount: {
+          description: `Prorrateado por 15 días restantes`,
+          originalAmount: complement.priceUSD * quantityDiff,
+        },
+      });
+      totalAmount += additionalPrice;
+    } else if (quantityDiff < 0) {
+      // Disminución de cantidad
+      const removedQuantity = Math.abs(quantityDiff);
+      let description = `Disminuir ${complement.name}`;
+      if (complement.selectedBot) {
+        description += ` de ${complement.selectedBot.name}`;
+      }
+      description += ` (${removedQuantity} unidad${removedQuantity > 1 ? 'es' : ''} menos)`;
+
+      items.push({
+        type: "remove",
+        description,
+        amount: 0,
+        discount: {
+          description: `Removido sin reembolso`,
+        },
+      });
+    }
   });
 
   return {
@@ -147,28 +192,49 @@ export const calculateChanges = (
     (id) => !selectedAssistants.includes(id)
   );
 
-  // Calcular cambios en complementos
-  const complementsToAdd = selectedComplements.filter(
-    (newComp) =>
-      !currentComplements.some(
-        (currentComp) =>
-          currentComp.id === newComp.id &&
-          (newComp.selectedBot
-            ? currentComp.selectedBot?.flow_ns === newComp.selectedBot?.flow_ns
-            : true)
-      )
-  );
+  // Análisis más detallado de complementos
+  const complementsToAdd = [];
+  const complementsToRemove = [];
+  const complementsToModify = [];
 
-  const complementsToRemove = currentComplements.filter(
-    (currentComp) =>
-      !selectedComplements.some(
-        (newComp) =>
-          newComp.id === currentComp.id &&
-          (currentComp.selectedBot
-            ? newComp.selectedBot?.flow_ns === currentComp.selectedBot?.flow_ns
-            : true)
-      )
-  );
+  // Crear mapas para facilitar la comparación
+  const currentComplementsMap = new Map();
+  currentComplements.forEach(comp => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || 'default'}`;
+    currentComplementsMap.set(key, comp);
+  });
+
+  const selectedComplementsMap = new Map();
+  selectedComplements.forEach(comp => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || 'default'}`;
+    selectedComplementsMap.set(key, comp);
+  });
+
+  // Encontrar complementos completamente nuevos
+  selectedComplementsMap.forEach((selectedComp, key) => {
+    if (!currentComplementsMap.has(key)) {
+      complementsToAdd.push(selectedComp);
+    }
+  });
+
+  // Encontrar complementos completamente removidos
+  currentComplementsMap.forEach((currentComp, key) => {
+    if (!selectedComplementsMap.has(key)) {
+      complementsToRemove.push(currentComp);
+    }
+  });
+
+  // Encontrar complementos modificados (cambio de cantidad)
+  selectedComplementsMap.forEach((selectedComp, key) => {
+    const currentComp = currentComplementsMap.get(key);
+    if (currentComp && selectedComp.quantity !== currentComp.quantity) {
+      complementsToModify.push({
+        complement: selectedComp,
+        originalQuantity: currentComp.quantity,
+        newQuantity: selectedComp.quantity
+      });
+    }
+  });
 
   const planChange = selectedPlan?.id !== currentPlan ? selectedPlan : null;
 
@@ -178,6 +244,7 @@ export const calculateChanges = (
     assistantsToRemove,
     complementsToAdd,
     complementsToRemove,
+    complementsToModify,
     planChange,
     currentPlan: subscription.planId,
   });
@@ -190,6 +257,7 @@ export const hasChanges = (
   subscription
 ) => {
   if (!subscription) return false;
+  
   const currentAssistants = subscription.assistants || [];
   const currentComplements = subscription.complements || [];
 
@@ -197,25 +265,27 @@ export const hasChanges = (
     JSON.stringify(selectedAssistants.sort()) !==
     JSON.stringify(currentAssistants.sort());
 
-  const complementsChanged =
-    JSON.stringify(
-      selectedComplements
-        .map((c) => ({
-          id: c.id,
-          quantity: c.quantity,
-          bot: c.selectedBot?.flow_ns,
-        }))
-        .sort()
-    ) !==
-    JSON.stringify(
-      currentComplements
-        .map((c) => ({
-          id: c.id,
-          quantity: c.quantity,
-          bot: c.selectedBot?.flow_ns,
-        }))
-        .sort()
-    );
+  // Verificación más detallada de cambios en complementos
+  const complementsChanged = (() => {
+    if (selectedComplements.length !== currentComplements.length) {
+      return true;
+    }
+
+    // Crear representaciones comparables
+    const currentRep = currentComplements.map(c => ({
+      id: c.id,
+      quantity: c.quantity,
+      bot: c.selectedBot?.flow_ns || null
+    })).sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
+
+    const selectedRep = selectedComplements.map(c => ({
+      id: c.id,
+      quantity: c.quantity,
+      bot: c.selectedBot?.flow_ns || null
+    })).sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
+
+    return JSON.stringify(currentRep) !== JSON.stringify(selectedRep);
+  })();
 
   const planChanged = selectedPlan?.id !== subscription.planId;
 
