@@ -1,11 +1,26 @@
 /* eslint-disable react/prop-types */
+import { useEffect } from "react";
 import { ASSISTANTS_CONFIG } from "../../../utils/constants";
+import { getAllAssistants } from "../service/assistants";
 
 const AssistantsSection = ({
   subscription,
   selectedAssistants,
   onAssistantChange,
 }) => {
+  const getAssistants = async () => {
+    try {
+      const asistants = await getAllAssistants();
+      console.log("14  >>>>>>>>> ", asistants);
+    } catch (error) {
+      console.error("Error al cargar las estadísticas:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAssistants();
+  }, []);
+
   return (
     <div className="current-assistants-section">
       <h5 style={{ color: "#009ee3" }}>Asistentes</h5>
