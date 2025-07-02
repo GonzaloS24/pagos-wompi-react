@@ -7,7 +7,7 @@ import chatea from "../../assets/chatea.png";
 import { useWompiPayment } from "../../hooks/useWompiPayment";
 import { usePaymentCalculations } from "../../hooks/usePaymentCalculations";
 import { usePaymentMethods } from "../../hooks/usePaymentMethods";
-import { useAssistants } from "../../hooks/useAssistants"; // NUEVO HOOK
+import { useProducts } from "../../hooks/useProducts"; // NUEVO HOOK
 
 // Components
 import ConfirmationModal from "../../components/common/ConfirmationModal";
@@ -61,7 +61,7 @@ const PaymentContainer = () => {
 
   // Custom hooks
   const {
-    plans,
+    // plans: wompiPlans,
     selectedPlan,
     setSelectedPlan,
     usdToCopRate,
@@ -80,14 +80,20 @@ const PaymentContainer = () => {
     setPaymentPeriod,
   } = useWompiPayment();
 
-  // NUEVO: Hook de asistentes
+  // NUEVO: Hook unificado de productos (reemplaza useAssistants)
   const {
-    assistants,
-    loading: assistantsLoading,
+    loading: productsLoading,
+    getPlansForNormalFlow,
+    getAssistantsForNormalFlow,
+    getAddonsForNormalFlow,
+    // mapAssistantNamesToApiIds,
     getAssistantByName,
-    // mapNamesToApiIds,
-    getAvailableAssistants,
-  } = useAssistants();
+  } = useProducts();
+
+  // Obtener datos para el flujo normal (sin discounts)
+  const plans = getPlansForNormalFlow();
+  const assistants = getAssistantsForNormalFlow();
+  const addons = getAddonsForNormalFlow();
 
   const {
     selectedGateway,
@@ -305,7 +311,7 @@ const PaymentContainer = () => {
     }
   };
 
-  // Handler para Wompi Recurring
+  // Handler para Wompi Recurring (ACTUALIZADO)
   const handleWompiRecurringClick = () => {
     const assistantsWithNames = getSelectedAssistantsWithNames();
     const complementsWithNames = getSelectedComplementsWithNames();
@@ -396,7 +402,7 @@ const PaymentContainer = () => {
   }, [paymentPeriod, enableRecurring, handleRecurringChange]);
 
   // Mostrar loading si se están cargando datos básicos
-  if (loading || assistantsLoading) {
+  if (loading || productsLoading) {
     return (
       <div className="loader-container">
         <PuffLoader
@@ -478,13 +484,14 @@ const PaymentContainer = () => {
                           onAssistantChange={handleAssistantChange}
                           isStandalone={purchaseType === "assistants"}
                           workspaceId={formData.workspace_id}
-                          assistants={getAvailableAssistants()} // PASAR ASISTENTES DE LA API
+                          assistants={assistants} // USAR DATOS DEL HOOK UNIFICADO
                         />
 
                         <Complements
                           ref={complementsRef}
                           onComplementsChange={handleComplementsChange}
                           workspaceId={formData.workspace_id}
+                          availableAddons={addons} // PASAR ADDONS DISPONIBLES
                         />
                       </div>
                     )}

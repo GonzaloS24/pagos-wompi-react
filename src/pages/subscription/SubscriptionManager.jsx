@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import SubscriptionHeader from "./components/SubscriptionHeader";
 import CurrentPlanSection from "./components/CurrentPlanSection";
@@ -9,22 +9,36 @@ import ComplementsSection from "./components/ComplementsSection";
 import ChangesSummary from "./components/ChangesSummary";
 import PaymentView from "./components/PaymentView";
 import { useSubscription } from "./hooks/useSubscription";
-import { useAssistants } from "../../hooks/useAssistants";
+import { useProducts } from "../../hooks/useProducts";
 import "./styles/SubscriptionManager.css";
 
 const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-  // Hook de asistentes para mapear entre nombres y API IDs
-  const {
-    assistants,
-    loading: assistantsLoading,
-    mapNamesToApiIds,
-  } = useAssistants();
+  console.log("🔄 SubscriptionManager rendering for workspace:", workspaceId);
 
+  // Hook unificado de productos
+  const {
+    loading: productsLoading,
+    getPlansForSubscriptions,
+    getAssistantsForSubscriptions, 
+    getAddonsForSubscriptions,
+    mapAssistantNamesToApiIds,
+  } = useProducts();
+
+  // MEMOIZAR los datos de productos para evitar re-renders
+  const productsData = useMemo(() => {
+    console.log("🔄 Memoizing products data...");
+    return {
+      plansWithDiscounts: getPlansForSubscriptions(),
+      assistantsWithDiscounts: getAssistantsForSubscriptions(),
+      addonsWithDiscounts: getAddonsForSubscriptions()
+    };
+  }, [getPlansForSubscriptions, getAssistantsForSubscriptions, getAddonsForSubscriptions]);
+
+  // Hook de suscripción con datos memoizados
   const {
     subscription,
-    plans,
     loading,
     modifying,
     selectedAssistants,
@@ -36,7 +50,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     setSelectedComplements,
     handleSaveChanges,
     handleCancelSubscription,
-  } = useSubscription(workspaceId, onSubscriptionCanceled);
+  } = useSubscription(workspaceId, onSubscriptionCanceled, productsData);
 
   const handleAssistantChange = useCallback(
     (assistantId) => {
@@ -51,7 +65,6 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     [setSelectedAssistants]
   );
 
-  // Manejar cambios en complementos
   const handleComplementsChange = useCallback(
     (newComplements) => {
       setSelectedComplements(newComplements || []);
@@ -69,12 +82,12 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
 
   const handleCardSubmit = useCallback(
     async (cardData) => {
-      // IMPORTANTE: Convertir nombres de asistentes a API IDs antes de enviar
-      const assistantApiIds = mapNamesToApiIds(selectedAssistants);
+      // Convertir nombres de asistentes a API IDs antes de enviar
+      const assistantApiIds = mapAssistantNamesToApiIds(selectedAssistants);
 
       // Crear datos modificados con API IDs
       const modifiedData = {
-        selectedAssistants: assistantApiIds, // Usar API IDs para el backend
+        selectedAssistants: assistantApiIds,
         selectedPlan,
         selectedComplements,
       };
@@ -89,7 +102,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
       selectedAssistants,
       selectedPlan,
       selectedComplements,
-      mapNamesToApiIds,
+      mapAssistantNamesToApiIds,
     ]
   );
 
@@ -97,11 +110,23 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     setShowPaymentForm(false);
   }, []);
 
-  if (loading || assistantsLoading) {
+  // Logging para debug
+  console.log("📊 SubscriptionManager state:", {
+    productsLoading,
+    loading,
+    subscription: !!subscription,
+    selectedAssistants,
+    selectedPlan: !!selectedPlan,
+    changesSummary: !!changesSummary
+  });
+
+  if (loading || productsLoading) {
+    console.log("⏳ Still loading... productsLoading:", productsLoading, "loading:", loading);
     return <LoadingSpinner message="Cargando tu suscripción..." />;
   }
 
   if (!subscription) {
+    console.log("❌ No subscription found");
     return (
       <div className="no-subscription">
         <div className="text-center">
@@ -129,6 +154,8 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     );
   }
 
+  console.log("✅ Rendering subscription interface");
+
   return (
     <div className="subscription-manager">
       <SubscriptionHeader />
@@ -137,7 +164,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
         {/* Columna Izquierda - Configuración Actual y Modificaciones */}
         <div className="subscription-left">
           <PlanSelector
-            plans={plans}
+            plans={productsData.plansWithDiscounts}
             selectedPlan={selectedPlan}
             onPlanChange={setSelectedPlan}
           />
@@ -146,7 +173,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             subscription={subscription}
             selectedAssistants={selectedAssistants}
             onAssistantChange={handleAssistantChange}
-            assistants={assistants} // PASAR ASISTENTES DE LA API
+            assistantsWithDiscounts={productsData.assistantsWithDiscounts}
           />
 
           <br />
@@ -156,6 +183,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             selectedComplements={selectedComplements}
             onComplementsChange={handleComplementsChange}
             workspaceId={workspaceId}
+            addonsWithDiscounts={productsData.addonsWithDiscounts}
           />
         </div>
 

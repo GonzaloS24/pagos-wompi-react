@@ -1,11 +1,17 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect, memo } from "react";
 import { fetchWorkspaceBots } from "../../../services/api/assistantsApi";
-import { COMPLEMENTS_CONFIG, PRICING } from "../../../utils/constants";
+import { PRICING } from "../../../utils/constants";
 import Swal from "sweetalert2";
 
 const ComplementsSection = memo(
-  ({ subscription, selectedComplements, onComplementsChange, workspaceId }) => {
+  ({ 
+    subscription, 
+    selectedComplements, 
+    onComplementsChange, 
+    workspaceId,
+    addonsWithDiscounts = [] // NUEVO: Recibir addons con discounts
+  }) => {
     const [selectedComplement, setSelectedComplement] = useState("");
     const [quantity, setQuantity] = useState(1);
     const [selectedBot, setSelectedBot] = useState("");
@@ -59,14 +65,38 @@ const ComplementsSection = memo(
       return true;
     };
 
+    // NUEVO: Obtener addon por ID desde los datos con discounts
+    const getAddonById = (id) => {
+      return addonsWithDiscounts.find(addon => addon.id === id);
+    };
+
+    // NUEVO: Mapear ID numérico a ID string para compatibilidad
+    const mapAddonIdToString = (numericId) => {
+      const mapping = {
+        "1": "bot",
+        "2": "member", 
+        "3": "webhooks"
+      };
+      return mapping[numericId] || numericId;
+    };
+
     const handleAddComplement = () => {
       if (selectedComplement) {
-        const complement = COMPLEMENTS_CONFIG.find(
-          (c) => c.id === selectedComplement
-        );
+        const addon = getAddonById(selectedComplement);
+        
+        if (!addon) {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Complemento no encontrado",
+          });
+          return;
+        }
+
+        const stringId = mapAddonIdToString(addon.id);
 
         // Validación específica para webhooks
-        if (complement.id === "webhooks") {
+        if (stringId === "webhooks") {
           if (!selectedBot) {
             Swal.fire({
               icon: "warning",
@@ -91,7 +121,7 @@ const ComplementsSection = memo(
         const newComplements = [...selectedComplements];
 
         // Para webhooks, verificamos si ya existe ese bot específico
-        if (complement.id === "webhooks") {
+        if (stringId === "webhooks") {
           const existingWebhookIndex = newComplements.findIndex(
             (c) => c.id === "webhooks" && c.selectedBot?.flow_ns === selectedBot
           );
@@ -111,16 +141,21 @@ const ComplementsSection = memo(
             newComplements[existingWebhookIndex] = {
               ...newComplements[existingWebhookIndex],
               quantity: newQuantity,
-              totalPrice:
-                newComplements[existingWebhookIndex].priceUSD * newQuantity,
+              totalPrice: addon.cost * newQuantity,
             };
           } else {
             // Agregar nuevo webhook para este bot
             newComplements.push({
-              ...complement,
+              id: stringId,
+              apiId: addon.id, // NUEVO: API ID numérico
+              name: addon.name,
+              description: "",
+              priceUSD: addon.cost,
+              cost: addon.cost, // NUEVO: para suscripciones
+              discounts: addon.discounts, // NUEVO: incluir discounts
               quantity,
               uniqueId: Date.now(),
-              totalPrice: complement.priceUSD * quantity,
+              totalPrice: addon.cost * quantity,
               selectedBot: {
                 flow_ns: selectedBot,
                 name: botsList.find((b) => b.flow_ns === selectedBot)?.name,
@@ -130,7 +165,7 @@ const ComplementsSection = memo(
         } else {
           // Para otros complementos
           const existingComplementIndex = newComplements.findIndex(
-            (c) => c.id === complement.id
+            (c) => c.id === stringId
           );
 
           if (existingComplementIndex !== -1) {
@@ -147,15 +182,20 @@ const ComplementsSection = memo(
             newComplements[existingComplementIndex] = {
               ...newComplements[existingComplementIndex],
               quantity: newQuantity,
-              totalPrice:
-                newComplements[existingComplementIndex].priceUSD * newQuantity,
+              totalPrice: addon.cost * newQuantity,
             };
           } else {
             newComplements.push({
-              ...complement,
+              id: stringId,
+              apiId: addon.id, // NUEVO: API ID numérico
+              name: addon.name,
+              description: "",
+              priceUSD: addon.cost,
+              cost: addon.cost, // NUEVO: para suscripciones
+              discounts: addon.discounts, // NUEVO: incluir discounts
               quantity,
               uniqueId: Date.now(),
-              totalPrice: complement.priceUSD * quantity,
+              totalPrice: addon.cost * quantity,
             });
           }
         }
@@ -210,7 +250,7 @@ const ComplementsSection = memo(
             return {
               ...comp,
               quantity: newQuantity,
-              totalPrice: comp.priceUSD * newQuantity,
+              totalPrice: (comp.cost || comp.priceUSD) * newQuantity,
             };
           }
           return comp;
@@ -252,17 +292,20 @@ const ComplementsSection = memo(
             aria-label="Seleccionar complemento"
           >
             <option value="">Seleccionar complemento</option>
-            {COMPLEMENTS_CONFIG.map((complement) => (
-              <option key={complement.id} value={complement.id}>
-                {complement.name} {complement.description} ($
-                {complement.priceUSD} USD)
+            {/* USAR ADDONS CON DISCOUNTS */}
+            {addonsWithDiscounts.map((addon) => (
+              <option key={addon.id} value={addon.id}>
+                {addon.name} (${addon.cost} USD)
+                {addon.discounts && addon.discounts.length > 0 && (
+                  <span> - Con descuentos disponibles</span>
+                )}
               </option>
             ))}
           </select>
 
           {selectedComplement && (
             <>
-              {selectedComplement === "webhooks" && (
+              {mapAddonIdToString(selectedComplement) === "webhooks" && (
                 <div className="mb-3">
                   <label className="form-label text-muted mb-2">
                     Selecciona el Bot
@@ -344,7 +387,7 @@ const ComplementsSection = memo(
               <button
                 className="complemnts-btn"
                 onClick={() => {
-                  if (selectedComplement === "webhooks") {
+                  if (mapAddonIdToString(selectedComplement) === "webhooks") {
                     if (botsList.length === 0) {
                       Swal.fire({
                         icon: "error",
@@ -382,8 +425,7 @@ const ComplementsSection = memo(
                 <div key={complementId} className="complement-group mb-3">
                   <div className="complement-header">
                     <h6 style={{ color: "#009ee3" }}>
-                      {COMPLEMENTS_CONFIG.find((c) => c.id === complementId)
-                        ?.name || complementId}
+                      {complements[0]?.name || complementId}
                     </h6>
                   </div>
 
@@ -451,8 +493,23 @@ const ComplementsSection = memo(
                               </small>
                             )}
                             <small className="d-block text-muted">
-                              ${complement.priceUSD} USD c/u
+                              ${complement.cost || complement.priceUSD} USD c/u
+                              {complement.apiId && (
+                                <span className="ms-2">(API ID: {complement.apiId})</span>
+                              )}
                             </small>
+                            {/* NUEVO: Mostrar descuentos disponibles */}
+                            {complement.discounts && complement.discounts.length > 0 && (
+                              <div className="discounts-info mt-1">
+                                {complement.discounts.map((discount, idx) => (
+                                  <span key={idx} className="discount-badge me-1">
+                                    {discount.type === 'percentage' 
+                                      ? `-${discount.value}%` 
+                                      : `-$${discount.value}`}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {isFromCurrentSubscription && (
                               <small className="d-block text-muted">
                                 Original: {originalQuantity} → Actual:{" "}

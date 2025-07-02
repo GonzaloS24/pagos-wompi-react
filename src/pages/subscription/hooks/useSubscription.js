@@ -1,72 +1,127 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   simulateGetSubscription,
-  simulateGetPlans,
   simulateUpdateSubscription,
   simulateCancelSubscription,
 } from "../service/subscriptionAPI";
-import { calculateChanges } from "../utils/subscriptionHelpers";
-import { useAssistants } from "../../../hooks/useAssistants"; // IMPORTAR HOOK
+import { calculateChangesWithDiscounts } from "../utils/subscriptionHelpers";
 import Swal from "sweetalert2";
 
-export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
+export const useSubscription = (workspaceId, onSubscriptionCanceled, productsData) => {
   const [subscription, setSubscription] = useState(null);
-  const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modifying, setModifying] = useState(false);
   const [selectedAssistants, setSelectedAssistants] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedComplements, setSelectedComplements] = useState([]);
 
-  // USAR HOOK DE ASISTENTES
-  const { assistants } = useAssistants();
+  // MEMOIZAR los productos para evitar re-renders
+  const { 
+    plansWithDiscounts, 
+    assistantsWithDiscounts, 
+    addonsWithDiscounts 
+  } = useMemo(() => {
+    if (!productsData) {
+      return {
+        plansWithDiscounts: [],
+        assistantsWithDiscounts: [],
+        addonsWithDiscounts: []
+      };
+    }
+    
+    return {
+      plansWithDiscounts: productsData.plansWithDiscounts || [],
+      assistantsWithDiscounts: productsData.assistantsWithDiscounts || [],
+      addonsWithDiscounts: productsData.addonsWithDiscounts || []
+    };
+  }, [productsData]);
 
   const fetchSubscriptionData = useCallback(async () => {
+    if (!workspaceId) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const [subscriptionData, plansData] = await Promise.all([
-        simulateGetSubscription(workspaceId),
-        simulateGetPlans(),
-      ]);
-
-      setSubscription(subscriptionData);
-      setPlans(plansData);
+      console.log("🔄 Fetching subscription data for workspace:", workspaceId);
+      const subscriptionData = await simulateGetSubscription(workspaceId);
 
       if (subscriptionData) {
+        console.log("✅ Subscription data loaded:", subscriptionData);
+        setSubscription(subscriptionData);
+
         // IMPORTANTE: Los asistentes en la suscripción siguen siendo nombres (string)
-        // para mantener compatibilidad con el resto del sistema
         setSelectedAssistants(subscriptionData.assistants || []);
-        setSelectedPlan(
-          plansData.find((p) => p.id === subscriptionData.planId) || null
-        );
+        
+        // Buscar el plan en los datos con discounts SOLO si hay datos disponibles
+        if (plansWithDiscounts.length > 0) {
+          const planWithDiscounts = plansWithDiscounts.find(
+            p => p.id === subscriptionData.planId
+          );
+          setSelectedPlan(planWithDiscounts || null);
+          console.log("✅ Plan loaded:", planWithDiscounts);
+        } else {
+          // Si no hay planes con discounts, usar estructura básica
+          setSelectedPlan({
+            id: subscriptionData.planId,
+            name: subscriptionData.planName || subscriptionData.planId,
+            cost: 0,
+            discounts: []
+          });
+        }
+
+        // Inicializar complementos seleccionados
+        if (subscriptionData.complements) {
+          setSelectedComplements(subscriptionData.complements);
+        }
+      } else {
+        console.log("❌ No subscription found");
+        setSubscription(null);
       }
     } catch (error) {
-      console.error("Error fetching subscription:", error);
+      console.error("❌ Error fetching subscription:", error);
+      setSubscription(null);
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, plansWithDiscounts]);
 
+  // EFECTO INICIAL - solo se ejecuta cuando cambia workspaceId o plansWithDiscounts
   useEffect(() => {
     fetchSubscriptionData();
   }, [fetchSubscriptionData]);
 
-  // Memoizar el cálculo de cambios para evitar recalcular innecesariamente
+  // Cálculo de cambios CON DISCOUNTS - MEMOIZADO para evitar recálculos
   const changesSummary = useMemo(() => {
-    if (!subscription) return null;
-    return calculateChanges(
-      selectedAssistants,
-      selectedPlan,
-      selectedComplements,
-      subscription,
-      assistants // PASAR ASISTENTES AL HELPER
-    );
+    if (!subscription) {
+      return null;
+    }
+    
+    try {
+      return calculateChangesWithDiscounts(
+        selectedAssistants,
+        selectedPlan,
+        selectedComplements,
+        subscription,
+        {
+          assistantsWithDiscounts,
+          addonsWithDiscounts,
+          plansWithDiscounts
+        }
+      );
+    } catch (error) {
+      console.error("❌ Error calculating changes:", error);
+      return null;
+    }
   }, [
     selectedAssistants,
     selectedPlan,
     selectedComplements,
     subscription,
-    assistants,
+    assistantsWithDiscounts,
+    addonsWithDiscounts,
+    plansWithDiscounts
   ]);
 
   const handleSaveChanges = useCallback(
@@ -75,12 +130,9 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
 
       try {
         // Si se proporcionan datos modificados (con API IDs), usarlos
-        // De lo contrario, usar los datos actuales del estado
-        const assistantsToUse =
-          modifiedData?.selectedAssistants || selectedAssistants;
+        const assistantsToUse = modifiedData?.selectedAssistants || selectedAssistants;
         const planToUse = modifiedData?.selectedPlan || selectedPlan;
-        const complementsToUse =
-          modifiedData?.selectedComplements || selectedComplements;
+        const complementsToUse = modifiedData?.selectedComplements || selectedComplements;
 
         // Determinar si estamos usando API IDs o nombres
         const usingApiIds = modifiedData && modifiedData.selectedAssistants;
@@ -89,60 +141,43 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
 
         if (usingApiIds) {
           // Trabajar con API IDs (números)
-          freeAssistantValue =
-            assistantsToUse.length > 0 ? assistantsToUse[0] : null;
-          paidAssistantValues =
-            assistantsToUse.length > 1 ? assistantsToUse.slice(1) : [];
+          freeAssistantValue = assistantsToUse.length > 0 ? assistantsToUse[0] : null;
+          paidAssistantValues = assistantsToUse.length > 1 ? assistantsToUse.slice(1) : [];
         } else {
           // Trabajar con nombres (strings) - flujo original
-          freeAssistantValue =
-            assistantsToUse.length > 0 ? assistantsToUse[0] : null;
-          paidAssistantValues =
-            assistantsToUse.length > 1 ? assistantsToUse.slice(1) : [];
+          freeAssistantValue = assistantsToUse.length > 0 ? assistantsToUse[0] : null;
+          paidAssistantValues = assistantsToUse.length > 1 ? assistantsToUse.slice(1) : [];
         }
 
         // Mapear complementos (addons)
-        const addons =
-          complementsToUse?.map((complement) => ({
-            id: complement.id,
-            quantity: complement.quantity || 1,
-            // Incluir bot_flow_ns si es webhook y tiene selectedBot
-            ...(complement.id === "webhooks" && complement.selectedBot
-              ? {
-                  bot_flow_ns: complement.selectedBot.flow_ns,
-                }
-              : {}),
-          })) || [];
+        const addons = complementsToUse?.map((complement) => ({
+          id: complement.apiId || complement.id,
+          quantity: complement.quantity || 1,
+          ...(complement.id === "webhooks" && complement.selectedBot
+            ? { bot_flow_ns: complement.selectedBot.flow_ns }
+            : {}),
+        })) || [];
 
-        // JSON del estado ORIGINAL de la suscripción
+        // JSON del estado ORIGINAL
         const originalSubscriptionData = {
           workspace_id: parseInt(subscription.workspaceId) || 0,
           phone: subscription.phone || "",
           plan_id: subscription.planId || null,
           workspace_name: subscription.workspace_name || "",
           owner_email: subscription.owner_email || "",
-          free_assistant_id:
-            subscription.assistants?.length > 0
-              ? subscription.assistants[0]
-              : null,
-          paid_assistant_ids:
-            subscription.assistants?.length > 1
-              ? subscription.assistants.slice(1)
-              : [],
+          free_assistant_id: subscription.assistants?.length > 0 ? subscription.assistants[0] : null,
+          paid_assistant_ids: subscription.assistants?.length > 1 ? subscription.assistants.slice(1) : [],
           assistants_only: false,
-          addons:
-            subscription.complements?.map((complement) => ({
-              id: complement.id,
-              quantity: complement.quantity || 1,
-              ...(complement.id === "webhooks" && complement.selectedBot
-                ? {
-                    bot_flow_ns: complement.selectedBot.flow_ns,
-                  }
-                : {}),
-            })) || [],
+          addons: subscription.complements?.map((complement) => ({
+            id: complement.apiId || complement.id,
+            quantity: complement.quantity || 1,
+            ...(complement.id === "webhooks" && complement.selectedBot
+              ? { bot_flow_ns: complement.selectedBot.flow_ns }
+              : {}),
+          })) || [],
         };
 
-        // JSON del estado NUEVO con los cambios aplicados
+        // JSON del estado NUEVO con cambios y DISCOUNTS aplicados
         const updatedSubscriptionData = {
           workspace_id: parseInt(subscription.workspaceId) || 0,
           phone: subscription.phone || "",
@@ -153,9 +188,17 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
           paid_assistant_ids: paidAssistantValues,
           assistants_only: false,
           addons: addons,
+          
+          // NUEVO: Incluir información de discounts para cálculos
+          pricing_context: {
+            plan_discounts: planToUse?.discounts || [],
+            assistants_discounts: assistantsWithDiscounts,
+            addons_discounts: addonsWithDiscounts,
+            changes_summary: changesSummary
+          }
         };
 
-        // Si hay datos de pago (cuando se requiere pago), agregar card_details
+        // Si hay datos de pago, agregar card_details
         if (paymentData) {
           updatedSubscriptionData.card_details = {
             exp_date: {
@@ -171,9 +214,7 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
         // Mostrar JSON estructurado antes de enviar
         await Swal.fire({
           icon: "info",
-          title: paymentData
-            ? "Datos de Actualización con Pago"
-            : "Datos de Actualización de Suscripción",
+          title: paymentData ? "Datos de Actualización con Pago" : "Datos de Actualización de Suscripción",
           html: `
             <div style="text-align: left; max-height: 500px; overflow-y: auto;">
               <h6 style="color: #dc3545; margin-bottom: 10px;">📋 Datos Originales:</h6>
@@ -181,23 +222,18 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
 ${JSON.stringify(originalSubscriptionData, null, 2)}
               </pre>
               
-              <h6 style="color: #28a745; margin-bottom: 10px;">📝 Datos Actualizados ${
-                usingApiIds ? "(con API IDs)" : "(con nombres)"
-              }:</h6>
+              <h6 style="color: #28a745; margin-bottom: 10px;">📝 Datos Actualizados con Discounts ${usingApiIds ? "(con API IDs)" : "(con nombres)"}:</h6>
               <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; text-align: left; border-left: 4px solid #28a745;">
 ${JSON.stringify(updatedSubscriptionData, null, 2)}
               </pre>
               
-              ${
-                usingApiIds
-                  ? `
-              <h6 style="color: #17a2b8; margin-top: 15px; margin-bottom: 10px;">🔄 Nota:</h6>
+              ${changesSummary ? `
+              <h6 style="color: #17a2b8; margin-top: 15px; margin-bottom: 10px;">💰 Cálculo con Discounts:</h6>
               <div style="background: #e7f3ff; padding: 10px; border-radius: 5px; font-size: 11px; color: #0066cc;">
-                Los asistentes se enviaron usando API IDs (números) para el backend
+                Total a pagar: $${changesSummary.totalAmount?.toFixed(2) || '0.00'} USD<br>
+                Descuentos aplicados: ${changesSummary.discountsApplied?.length || 0}
               </div>
-              `
-                  : ""
-              }
+              ` : ""}
             </div>
           `,
           confirmButtonText: "Aceptar",
@@ -208,27 +244,7 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
           },
         });
 
-        // Llamada comentada a la API
-        /*
-        const response = await fetch('/api/subscriptions/update', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            original: originalSubscriptionData,
-            updated: updatedSubscriptionData
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Error updating subscription');
-        }
-
-        const result = await response.json();
-        */
-
-        // Simulación del llamado a la API
+        // Llamada a la API
         await simulateUpdateSubscription(workspaceId, {
           original: originalSubscriptionData,
           updated: updatedSubscriptionData,
@@ -262,6 +278,9 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
       selectedAssistants,
       selectedComplements,
       selectedPlan,
+      changesSummary,
+      assistantsWithDiscounts,
+      addonsWithDiscounts,
       fetchSubscriptionData,
     ]
   );
@@ -310,7 +329,6 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
 
   return {
     subscription,
-    plans,
     loading,
     modifying,
     selectedAssistants,

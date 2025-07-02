@@ -1,7 +1,95 @@
-// REMOVER: import { ASSISTANTS_CONFIG } from "../../../utils/constants";
-// Ya no necesitamos importar ASSISTANTS_CONFIG
+// src/pages/subscription/utils/subscriptionHelpers.js - Actualizado para discounts
 
-export const simulateCalculateChanges = ({
+/**
+ * Calcula cambios con discounts aplicados
+ */
+export const calculateChangesWithDiscounts = (
+  selectedAssistants,
+  selectedPlan,
+  selectedComplements,
+  subscription,
+  productsWithDiscounts = {}
+) => {
+  if (!subscription) return null;
+
+  const {
+    assistantsWithDiscounts = [],
+    addonsWithDiscounts = [],
+    plansWithDiscounts = [],
+  } = productsWithDiscounts;
+
+  const currentAssistants = subscription.assistants || [];
+  const currentComplements = subscription.complements || [];
+  const currentPlan = subscription.planId;
+
+  const assistantsToAdd = selectedAssistants.filter(
+    (id) => !currentAssistants.includes(id)
+  );
+  const assistantsToRemove = currentAssistants.filter(
+    (id) => !selectedAssistants.includes(id)
+  );
+
+  // Análisis de complementos (igual que antes)
+  const complementsToAdd = [];
+  const complementsToRemove = [];
+  const complementsToModify = [];
+
+  const currentComplementsMap = new Map();
+  currentComplements.forEach((comp) => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
+    currentComplementsMap.set(key, comp);
+  });
+
+  const selectedComplementsMap = new Map();
+  selectedComplements.forEach((comp) => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
+    selectedComplementsMap.set(key, comp);
+  });
+
+  selectedComplementsMap.forEach((selectedComp, key) => {
+    if (!currentComplementsMap.has(key)) {
+      complementsToAdd.push(selectedComp);
+    }
+  });
+
+  currentComplementsMap.forEach((currentComp, key) => {
+    if (!selectedComplementsMap.has(key)) {
+      complementsToRemove.push(currentComp);
+    }
+  });
+
+  selectedComplementsMap.forEach((selectedComp, key) => {
+    const currentComp = currentComplementsMap.get(key);
+    if (currentComp && selectedComp.quantity !== currentComp.quantity) {
+      complementsToModify.push({
+        complement: selectedComp,
+        originalQuantity: currentComp.quantity,
+        newQuantity: selectedComp.quantity,
+      });
+    }
+  });
+
+  const planChange = selectedPlan?.id !== currentPlan ? selectedPlan : null;
+
+  // NUEVO: Calcular con discounts
+  return simulateCalculateChangesWithDiscounts({
+    assistantsToAdd,
+    assistantsToRemove,
+    complementsToAdd,
+    complementsToRemove,
+    complementsToModify,
+    planChange,
+    currentPlan: subscription.planId,
+    assistantsWithDiscounts,
+    addonsWithDiscounts,
+    plansWithDiscounts,
+  });
+};
+
+/**
+ * Simula el cálculo de cambios CON DISCOUNTS aplicados
+ */
+export const simulateCalculateChangesWithDiscounts = ({
   assistantsToAdd,
   assistantsToRemove,
   complementsToAdd,
@@ -9,50 +97,124 @@ export const simulateCalculateChanges = ({
   complementsToModify,
   planChange,
   currentPlan,
-  assistants = [], // NUEVO: Recibir asistentes de la API
+  assistantsWithDiscounts = [],
+  addonsWithDiscounts = [],
+  plansWithDiscounts = [],
 }) => {
   const items = [];
   let totalAmount = 0;
+  const discountsApplied = [];
 
-  // Helper function para obtener label del asistente
-  const getAssistantLabel = (assistantId) => {
-    if (!assistants.length) return assistantId;
-    const assistant = assistants.find((a) => a.id === assistantId);
-    return assistant ? assistant.label : assistantId;
+  // Helper para obtener datos con discounts
+  const getAssistantWithDiscounts = (assistantName) => {
+    return (
+      assistantsWithDiscounts.find((a) => a.name === assistantName) || {
+        cost: 20,
+        discounts: [],
+      }
+    );
   };
 
-  // Cambio de plan
-  if (planChange) {
-    const plans = {
-      business: { name: "Chatea Pro Start", price: 49 },
-      business_lite: { name: "Chatea Pro Advanced", price: 109 },
-      custom_plan3: { name: "Chatea Pro Plus", price: 189 },
-      business_large: { name: "Chatea Pro Master", price: 399 },
-    };
+  const getAddonWithDiscounts = (addonId) => {
+    return (
+      addonsWithDiscounts.find((a) => a.id === addonId) || {
+        cost: 10,
+        discounts: [],
+      }
+    );
+  };
 
-    const currentPlanData = plans[currentPlan];
-    const newPlanData = plans[planChange.id];
-    const priceDiff = newPlanData.price - currentPlanData.price;
+  const getPlanWithDiscounts = (planId) => {
+    return (
+      plansWithDiscounts.find((p) => p.id === planId) || {
+        cost: 0,
+        discounts: [],
+      }
+    );
+  };
+
+  // Función para aplicar descuentos
+  const applyDiscounts = (basePrice, discounts, type, itemName) => {
+    let finalPrice = basePrice;
+    const appliedDiscounts = [];
+
+    discounts.forEach((discount) => {
+      if (discount.type === "percentage") {
+        const discountAmount = finalPrice * (discount.value / 100);
+        finalPrice -= discountAmount;
+        appliedDiscounts.push({
+          type: "percentage",
+          value: discount.value,
+          amount: discountAmount,
+          description: `${discount.value}% de descuento en ${itemName}`,
+        });
+      } else if (discount.type === "fixed") {
+        const discountAmount = Math.min(discount.value, finalPrice);
+        finalPrice -= discountAmount;
+        appliedDiscounts.push({
+          type: "fixed",
+          value: discount.value,
+          amount: discountAmount,
+          description: `$${discount.value} de descuento en ${itemName}`,
+        });
+      }
+    });
+
+    return {
+      originalPrice: basePrice,
+      finalPrice: Math.max(0, finalPrice),
+      discountsApplied: appliedDiscounts,
+    };
+  };
+
+  // Cambio de plan CON DISCOUNTS
+  if (planChange) {
+    const currentPlanData = getPlanWithDiscounts(currentPlan);
+    const newPlanData = getPlanWithDiscounts(planChange.id);
+
+    const currentPlanResult = applyDiscounts(
+      currentPlanData.cost,
+      currentPlanData.discounts,
+      "plan",
+      `Plan actual`
+    );
+
+    const newPlanResult = applyDiscounts(
+      newPlanData.cost,
+      newPlanData.discounts,
+      "plan",
+      `Plan ${planChange.name}`
+    );
+
+    const priceDiff = newPlanResult.finalPrice - currentPlanResult.finalPrice;
 
     if (priceDiff > 0) {
-      // Upgrade - se cobra la diferencia prorrateada
-      const proratedAmount = priceDiff * 0.5;
+      const proratedAmount = priceDiff * 0.5; // Prorrateado
       items.push({
         type: "upgrade",
-        description: `Upgrade a ${newPlanData.name}`,
+        description: `Upgrade a ${planChange.name || planChange.id}`,
         amount: proratedAmount,
+        originalAmount: priceDiff,
+        discountsInfo: {
+          current: currentPlanResult,
+          new: newPlanResult,
+        },
         discount: {
           description: `Prorrateado por 15 días restantes`,
           originalAmount: priceDiff,
         },
       });
       totalAmount += proratedAmount;
+      discountsApplied.push(...newPlanResult.discountsApplied);
     } else if (priceDiff < 0) {
-      // Downgrade - no se cobra ni se devuelve dinero
       items.push({
         type: "downgrade",
-        description: `Downgrade a ${newPlanData.name}`,
+        description: `Downgrade a ${planChange.name || planChange.id}`,
         amount: 0,
+        discountsInfo: {
+          current: currentPlanResult,
+          new: newPlanResult,
+        },
         discount: {
           description: `Cambio aplicado sin costo adicional`,
         },
@@ -60,28 +222,38 @@ export const simulateCalculateChanges = ({
     }
   }
 
-  // Asistentes a agregar
-  assistantsToAdd.forEach((assistantId) => {
-    const assistantLabel = getAssistantLabel(assistantId); // USAR HELPER
-    const assistantPrice = 20 * 0.5; // Prorrateado
+  // Asistentes a agregar CON DISCOUNTS
+  assistantsToAdd.forEach((assistantName) => {
+    const assistantData = getAssistantWithDiscounts(assistantName);
+    const priceResult = applyDiscounts(
+      assistantData.cost,
+      assistantData.discounts,
+      "assistant",
+      assistantName
+    );
+
+    const assistantPrice = priceResult.finalPrice * 0.5; // Prorrateado
+
     items.push({
       type: "add",
-      description: `Agregar ${assistantLabel}`,
+      description: `Agregar asistente ${assistantName}`,
       amount: assistantPrice,
+      originalAmount: priceResult.originalPrice,
+      discountsInfo: priceResult,
       discount: {
         description: `Prorrateado por 15 días restantes`,
-        originalAmount: 20,
+        originalAmount: priceResult.finalPrice,
       },
     });
     totalAmount += assistantPrice;
+    discountsApplied.push(...priceResult.discountsApplied);
   });
 
   // Asistentes a remover
-  assistantsToRemove.forEach((assistantId) => {
-    const assistantLabel = getAssistantLabel(assistantId); // USAR HELPER
+  assistantsToRemove.forEach((assistantName) => {
     items.push({
       type: "remove",
-      description: `Remover ${assistantLabel}`,
+      description: `Remover asistente ${assistantName}`,
       amount: 0,
       discount: {
         description: `Removido sin reembolso`,
@@ -89,9 +261,18 @@ export const simulateCalculateChanges = ({
     });
   });
 
-  // Complementos a agregar (completamente nuevos)
+  // Complementos a agregar CON DISCOUNTS
   complementsToAdd.forEach((complement) => {
-    const complementPrice = complement.totalPrice * 0.5; // Prorrateado
+    const addonData = getAddonWithDiscounts(complement.apiId || complement.id);
+    const priceResult = applyDiscounts(
+      addonData.cost * complement.quantity,
+      addonData.discounts,
+      "addon",
+      complement.name
+    );
+
+    const complementPrice = priceResult.finalPrice * 0.5; // Prorrateado
+
     let description = `Agregar ${complement.name}`;
     if (complement.selectedBot) {
       description += ` para ${complement.selectedBot.name}`;
@@ -104,15 +285,18 @@ export const simulateCalculateChanges = ({
       type: "add",
       description,
       amount: complementPrice,
+      originalAmount: priceResult.originalPrice,
+      discountsInfo: priceResult,
       discount: {
         description: `Prorrateado por 15 días restantes`,
-        originalAmount: complement.totalPrice,
+        originalAmount: priceResult.finalPrice,
       },
     });
     totalAmount += complementPrice;
+    discountsApplied.push(...priceResult.discountsApplied);
   });
 
-  // Complementos a remover (completamente eliminados)
+  // Complementos a remover
   complementsToRemove.forEach((complement) => {
     let description = `Remover ${complement.name}`;
     if (complement.selectedBot) {
@@ -132,14 +316,24 @@ export const simulateCalculateChanges = ({
     });
   });
 
-  // Complementos modificados (cambio de cantidad)
+  // Complementos modificados CON DISCOUNTS
   complementsToModify.forEach((modification) => {
     const { complement, originalQuantity, newQuantity } = modification;
     const quantityDiff = newQuantity - originalQuantity;
 
     if (quantityDiff > 0) {
-      // Aumento de cantidad
-      const additionalPrice = complement.priceUSD * quantityDiff * 0.5; // Prorrateado
+      const addonData = getAddonWithDiscounts(
+        complement.apiId || complement.id
+      );
+      const priceResult = applyDiscounts(
+        addonData.cost * quantityDiff,
+        addonData.discounts,
+        "addon",
+        complement.name
+      );
+
+      const additionalPrice = priceResult.finalPrice * 0.5; // Prorrateado
+
       let description = `Aumentar ${complement.name}`;
       if (complement.selectedBot) {
         description += ` para ${complement.selectedBot.name}`;
@@ -152,14 +346,16 @@ export const simulateCalculateChanges = ({
         type: "add",
         description,
         amount: additionalPrice,
+        originalAmount: priceResult.originalPrice,
+        discountsInfo: priceResult,
         discount: {
           description: `Prorrateado por 15 días restantes`,
-          originalAmount: complement.priceUSD * quantityDiff,
+          originalAmount: priceResult.finalPrice,
         },
       });
       totalAmount += additionalPrice;
+      discountsApplied.push(...priceResult.discountsApplied);
     } else if (quantityDiff < 0) {
-      // Disminución de cantidad
       const removedQuantity = Math.abs(quantityDiff);
       let description = `Disminuir ${complement.name}`;
       if (complement.selectedBot) {
@@ -182,86 +378,42 @@ export const simulateCalculateChanges = ({
 
   return {
     items,
-    totalAmount: Math.max(0, totalAmount), // No permitir montos negativos
+    totalAmount: Math.max(0, totalAmount),
+    discountsApplied,
+    totalDiscountAmount: discountsApplied.reduce(
+      (sum, discount) => sum + discount.amount,
+      0
+    ),
+    originalTotalAmount: items.reduce(
+      (sum, item) => sum + (item.originalAmount || item.amount),
+      0
+    ),
   };
 };
 
+// Mantener función original para compatibilidad con flujo normal
 export const calculateChanges = (
   selectedAssistants,
   selectedPlan,
   selectedComplements,
   subscription,
-  assistants = [] // NUEVO: Recibir asistentes de la API
+  assistants = []
 ) => {
-  if (!subscription) return null;
-
-  const currentAssistants = subscription.assistants || [];
-  const currentComplements = subscription.complements || [];
-  const currentPlan = subscription.planId;
-
-  const assistantsToAdd = selectedAssistants.filter(
-    (id) => !currentAssistants.includes(id)
-  );
-  const assistantsToRemove = currentAssistants.filter(
-    (id) => !selectedAssistants.includes(id)
-  );
-
-  // Análisis más detallado de complementos
-  const complementsToAdd = [];
-  const complementsToRemove = [];
-  const complementsToModify = [];
-
-  // Crear mapas para facilitar la comparación
-  const currentComplementsMap = new Map();
-  currentComplements.forEach((comp) => {
-    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
-    currentComplementsMap.set(key, comp);
-  });
-
-  const selectedComplementsMap = new Map();
-  selectedComplements.forEach((comp) => {
-    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
-    selectedComplementsMap.set(key, comp);
-  });
-
-  // Encontrar complementos completamente nuevos
-  selectedComplementsMap.forEach((selectedComp, key) => {
-    if (!currentComplementsMap.has(key)) {
-      complementsToAdd.push(selectedComp);
-    }
-  });
-
-  // Encontrar complementos completamente removidos
-  currentComplementsMap.forEach((currentComp, key) => {
-    if (!selectedComplementsMap.has(key)) {
-      complementsToRemove.push(currentComp);
-    }
-  });
-
-  // Encontrar complementos modificados (cambio de cantidad)
-  selectedComplementsMap.forEach((selectedComp, key) => {
-    const currentComp = currentComplementsMap.get(key);
-    if (currentComp && selectedComp.quantity !== currentComp.quantity) {
-      complementsToModify.push({
-        complement: selectedComp,
-        originalQuantity: currentComp.quantity,
-        newQuantity: selectedComp.quantity,
-      });
-    }
-  });
-
-  const planChange = selectedPlan?.id !== currentPlan ? selectedPlan : null;
-
-  // Simular respuesta del backend con precios y descuentos
+  // Usar función original sin discounts para flujo normal
   return simulateCalculateChanges({
-    assistantsToAdd,
-    assistantsToRemove,
-    complementsToAdd,
-    complementsToRemove,
-    complementsToModify,
-    planChange,
+    assistantsToAdd: selectedAssistants.filter(
+      (id) => !subscription.assistants?.includes(id)
+    ),
+    assistantsToRemove:
+      subscription.assistants?.filter(
+        (id) => !selectedAssistants.includes(id)
+      ) || [],
+    complementsToAdd: [],
+    complementsToRemove: [],
+    complementsToModify: [],
+    planChange: selectedPlan?.id !== subscription.planId ? selectedPlan : null,
     currentPlan: subscription.planId,
-    assistants, // PASAR ASISTENTES A LA FUNCIÓN
+    assistants,
   });
 };
 
@@ -280,13 +432,11 @@ export const hasChanges = (
     JSON.stringify(selectedAssistants.sort()) !==
     JSON.stringify(currentAssistants.sort());
 
-  // Verificación más detallada de cambios en complementos
   const complementsChanged = (() => {
     if (selectedComplements.length !== currentComplements.length) {
       return true;
     }
 
-    // Crear representaciones comparables
     const currentRep = currentComplements
       .map((c) => ({
         id: c.id,
