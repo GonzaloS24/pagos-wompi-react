@@ -29,11 +29,10 @@ import SubscriptionManager from "../subscription/SubscriptionManager";
 // Services
 import { validateForm } from "../../services/validation/formValidation";
 import {
-  ASSISTANT_TYPES,
-  PAYMENT_PERIODS,
-  mapAssistantsToFullData,
-  mapComplementsToFullData,
-} from "../../utils/constants";
+  formatAssistantsForCreditCard,
+  formatComplementsForCreditCard,
+} from "../../services/dataService";
+import { PAYMENT_PERIODS } from "../../utils/constants";
 import { canApplyAnnualDiscount } from "../../utils/discounts";
 
 // Styles
@@ -129,33 +128,6 @@ const PaymentContainer = () => {
     setHasActiveSubscription(false);
   };
 
-  // FUNCIÓN HELPER para obtener datos completos de asistentes
-  const getSelectedAssistantsWithNames = useCallback(() => {
-    return mapAssistantsToFullData(selectedAssistants);
-  }, [selectedAssistants]);
-
-  // FUNCIÓN HELPER para obtener datos completos de complementos
-  const getSelectedComplementsWithNames = useCallback(() => {
-    return selectedComplements.map((complement) => {
-      if (typeof complement === "object" && complement.name) {
-        return {
-          id: complement.id,
-          name: complement.name,
-          description: complement.description || "",
-          priceUSD: complement.priceUSD || 0,
-          quantity: complement.quantity || 1,
-          ...complement,
-        };
-      } else {
-        const mapped = mapComplementsToFullData([complement]);
-        return {
-          ...mapped[0],
-          quantity: complement.quantity || 1,
-        };
-      }
-    });
-  }, [selectedComplements]);
-
   // Event handlers
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -241,7 +213,7 @@ const PaymentContainer = () => {
 
     if (type === "plan") {
       // Preseleccionar el asistente de ventas por WhatsApp por defecto
-      const defaultAssistant = ASSISTANT_TYPES.VENTAS;
+      const defaultAssistant = "ventas";
       setSelectedAssistants([defaultAssistant]);
       setFreeAssistant(defaultAssistant);
 
@@ -296,21 +268,29 @@ const PaymentContainer = () => {
   };
 
   // Handler para Wompi Recurring
-  const handleWompiRecurringClick = () => {
-    const assistantsWithNames = getSelectedAssistantsWithNames();
-    const complementsWithNames = getSelectedComplementsWithNames();
+  const handleWompiRecurringClick = async () => {
+    try {
+      const assistantsForCreditCard = await formatAssistantsForCreditCard(
+        selectedAssistants
+      );
+      const complementsForCreditCard = await formatComplementsForCreditCard(
+        selectedComplements
+      );
 
-    // Navegar a la nueva página con datos completos
-    navigate("/recurring-payment", {
-      state: {
-        paymentCalculations,
-        formData,
-        selectedPlan: purchaseType === "plan" ? selectedPlan : null,
-        selectedAssistants: assistantsWithNames,
-        selectedComplements: complementsWithNames,
-        purchaseType,
-      },
-    });
+      // Navegar a la nueva página con datos completos usando IDs numéricos
+      navigate("/recurring-payment", {
+        state: {
+          paymentCalculations,
+          formData,
+          selectedPlan: purchaseType === "plan" ? selectedPlan : null,
+          selectedAssistants: assistantsForCreditCard,
+          selectedComplements: complementsForCreditCard,
+          purchaseType,
+        },
+      });
+    } catch (error) {
+      console.error("Error formatting data for credit card:", error);
+    }
   };
 
   // Handlers para Wallet

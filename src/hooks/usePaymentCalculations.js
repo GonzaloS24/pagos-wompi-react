@@ -1,12 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from "react";
 import { WOMPI_CONFIG } from "../services/payments/wompi/wompiConfig";
-import {
-  PRICING,
-  PAYMENT_PERIODS,
-  getAssistantConfig,
-} from "../utils/constants";
+import { PRICING, PAYMENT_PERIODS } from "../utils/constants";
 import { calculateDiscountedPrice, getPriceInfo } from "../utils/discounts";
+import {
+  formatAssistantsForReference,
+  formatComplementsForReference,
+} from "../services/dataService";
 
 export const usePaymentCalculations = ({
   purchaseType,
@@ -20,7 +20,7 @@ export const usePaymentCalculations = ({
   freeAssistant,
 }) => {
   const calculations = useMemo(() => {
-    const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
+    const assistantPrice = 20; // Precio desde API
     let totalAssistantsPrice;
     let paidAssistants = [];
 
@@ -52,7 +52,8 @@ export const usePaymentCalculations = ({
 
     // Cálculo del precio total de los complementos (también afectados por periodo)
     const baseComplementsPrice = selectedComplements.reduce(
-      (total, complement) => total + complement.totalPrice,
+      (total, complement) =>
+        total + (complement.totalPrice || complement.priceUSD || 0),
       0
     );
 
@@ -121,9 +122,7 @@ export const usePaymentCalculations = ({
 
       freeAssistant,
       paidAssistants,
-      freeAssistantName: freeAssistant
-        ? getAssistantConfig(freeAssistant)?.label || freeAssistant
-        : null,
+      freeAssistantName: freeAssistant || null,
       paidAssistantsCount: paidAssistants.length,
       freeAssistantsCount: freeAssistant ? 1 : 0,
 
@@ -158,47 +157,21 @@ export const usePaymentCalculations = ({
     const workspaceId =
       urlParams?.workspace_id || WOMPI_CONFIG.DEFAULT_WORKSPACE_ID;
 
+    const assistantsForRef = formatAssistantsForReference(selectedAssistants);
+    const complementsForRef =
+      formatComplementsForReference(selectedComplements);
+
     const assistantsString =
-      selectedAssistants.length > 0
-        ? `-assistants=${selectedAssistants.join("+")}`
+      assistantsForRef.length > 0
+        ? `-assistants=${assistantsForRef.join("+")}`
         : "";
 
     const complementsString =
-      selectedComplements.length > 0
-        ? `-complements=${selectedComplements
-            .map((c) => {
-              if (c.id === "webhooks") {
-                return `${c.id}_${c.quantity}_${c.selectedBot.flow_ns}`;
-              }
-              return `${c.id}_${c.quantity}`;
-            })
-            .join("+")}`
+      complementsForRef.length > 0
+        ? `-complements=${complementsForRef.join("+")}`
         : "";
 
     const recurringString = enableRecurring ? "-recurring=true" : "";
-
-    // const freeAssistant =
-    //   purchaseType === "plan" && freeAssistant ? `-free=${freeAssistant}` : "";
-
-    // const periodString = calculations.isAnnual
-    //   ? "-period=annual"
-    //   : "-period=monthly";
-
-    // if (purchaseType === "plan") {
-    //   return `plan_id=${
-    //     selectedPlan?.id
-    //   }-workspace_id=${workspaceId}-workspace_name=${
-    //     urlParams?.workspace_name
-    //   }-owner_email=${urlParams?.owner_email}-phone_number=${
-    //     urlParams?.phone_number
-    //   }${assistantsString}${freeAssistant}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
-    // } else {
-    //   return `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
-    //     urlParams?.workspace_name
-    //   }-owner_email=${urlParams?.owner_email}-phone_number=${
-    //     urlParams?.phone_number
-    //   }${assistantsString}${complementsString}${recurringString}-${periodString}-reference${Date.now()}`;
-    // }
 
     if (purchaseType === "plan") {
       return `plan_id=${
@@ -234,14 +207,12 @@ export const usePaymentCalculations = ({
 
     if (selectedAssistants.length > 0) {
       if (purchaseType === "plan" && freeAssistant) {
-        const freeAssistantName =
-          getAssistantConfig(freeAssistant)?.label || freeAssistant;
         const paidCount = selectedAssistants.length - 1;
 
         if (paidCount > 0) {
-          orderDescription += ` con ${freeAssistantName} (incluido) + ${paidCount} asistente(s) adicional(es)`;
+          orderDescription += ` con ${freeAssistant} (incluido) + ${paidCount} asistente(s) adicional(es)`;
         } else {
-          orderDescription += ` con ${freeAssistantName} (incluido)`;
+          orderDescription += ` con ${freeAssistant} (incluido)`;
         }
       } else {
         orderDescription += ` con ${selectedAssistants.length} asistente(s)`;

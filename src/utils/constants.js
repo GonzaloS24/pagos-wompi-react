@@ -1,11 +1,11 @@
-// Precios y configuraciones de productos
+// Precios y configuraciones básicas
 export const PRICING = {
-  ASSISTANT_PRICE_USD: 20,
   FREE_ASSISTANTS_IN_PLAN: 1,
   MIN_QUANTITY: 1,
   MAX_QUANTITY: 100,
   ANNUAL_DISCOUNT_PERCENTAGE: 15,
   MONTHS_IN_YEAR: 12,
+  ASSISTANT_PRICE_USD: 20,
 };
 
 // Tipos de compra
@@ -34,95 +34,6 @@ export const TRANSACTION_STATUS = {
   DECLINED: "DECLINED",
   VOIDED: "VOIDED",
   ERROR: "ERROR",
-};
-
-// Tipos de asistentes
-export const ASSISTANT_TYPES = {
-  VENTAS: "ventas",
-  COMENTARIOS: "comentarios",
-  CARRITOS: "carritos",
-  REMARKETING: "remarketing",
-  VOZ: "voz",
-  LOGISTICA: "logistica",
-};
-
-// Tipos de complementos
-export const COMPLEMENT_TYPES = {
-  BOT: "bot",
-  MEMBER: "member",
-  WEBHOOKS: "webhooks",
-};
-
-// Configuración de complementos
-export const COMPLEMENTS_CONFIG = [
-  {
-    id: COMPLEMENT_TYPES.BOT,
-    name: "🤖 1 Bot Adicional 🤖",
-    description: "(Permite agregar un nuevo canal como FB, IG o WP)",
-    priceUSD: 10,
-  },
-  {
-    id: COMPLEMENT_TYPES.MEMBER,
-    name: "🙋‍♀️1 Miembro Adicional 🙋‍♀️",
-    description: "(Permite agregar un nuevo asesor)",
-    priceUSD: 10,
-  },
-  {
-    id: COMPLEMENT_TYPES.WEBHOOKS,
-    name: "1.000 Webhooks Diarios 🔗",
-    description: "",
-    priceUSD: 20,
-  },
-];
-
-// Configuración de asistentes
-export const ASSISTANTS_CONFIG = [
-  {
-    id: ASSISTANT_TYPES.VENTAS,
-    type: "Asistente de ventas por WhatsApp",
-    label: "🔥Asistente de ventas por WhatsApp🔥",
-    description: "Logra CPAs hasta de 5.000",
-    icon: "bx bxl-whatsapp",
-  },
-  {
-    id: ASSISTANT_TYPES.COMENTARIOS,
-    type: "asistente de comentarios",
-    label: "💬Asistente de comentarios💬",
-    description: "Convierte en ventas los comentarios de Facebook.",
-    icon: "bx-message-rounded-dots",
-  },
-  {
-    id: ASSISTANT_TYPES.CARRITOS,
-    type: "asistente de carritos abandonados",
-    label: "🛒Asistente de carritos abandonados🛒",
-    description: "Recupera hasta el 50% de los carritos abandonados.",
-    icon: "bx-cart",
-  },
-  {
-    id: ASSISTANT_TYPES.REMARKETING,
-    type: "asistente de Remarketing",
-    label: "Asistente de Remarketing",
-    description: "Aumenta tus ventas usando tu base de datos.",
-    icon: "bx-line-chart",
-    comingSoon: true,
-  },
-  {
-    id: ASSISTANT_TYPES.VOZ,
-    type: "asistente de Voz con IA",
-    label: "Asistente de Voz con IA",
-    description: "Contacta al cliente con un agente de voz IA",
-    icon: "bx-microphone",
-    comingSoon: true,
-  },
-];
-
-// Mapeo de nombres de asistentes del API
-export const ASSISTANT_NAME_MAPPING = {
-  "Whatsapp IA": ASSISTANT_TYPES.VENTAS,
-  Logistica: ASSISTANT_TYPES.LOGISTICA,
-  "Comentarios IA": ASSISTANT_TYPES.COMENTARIOS,
-  "Carritos IA": ASSISTANT_TYPES.CARRITOS,
-  Marketing: "marketing",
 };
 
 // Configuración de URLs y endpoints
@@ -187,103 +98,97 @@ export const CACHE_CONFIG = {
   ASSISTANTS_DURATION: 5 * 60 * 1000, // 5 minutos
 };
 
-/**
- * Obtiene la configuración de un asistente por su ID exacto
- * @param {string} id - ID exacto del asistente
- * @returns {object|null} - Configuración del asistente o null si no se encuentra
- */
-export const getAssistantConfig = (id) => {
-  return ASSISTANTS_CONFIG.find((config) => config.id === id) || null;
+// Asistentes quemados que no vienen del API (proximamente)
+export const COMING_SOON_ASSISTANTS = [
+  {
+    id: "remarketing",
+    name: "Asistente de Remarketing",
+    label: "Asistente de Remarketing",
+    description: "Aumenta tus ventas usando tu base de datos.",
+    icon: "bx-line-chart",
+    comingSoon: true,
+  },
+  {
+    id: "voz",
+    name: "Asistente de Voz con IA",
+    label: "Asistente de Voz con IA",
+    description: "Contacta al cliente con un agente de voz IA",
+    icon: "bx-microphone",
+    comingSoon: true,
+  },
+];
+
+// Mapeo de IDs de API a nombres de referencia para pagos normales
+export const ASSISTANT_REFERENCE_MAPPING = {
+  1: "ventas",
+  2: "carritos",
+  3: "comentarios",
+};
+
+// Mapeo de nombres de referencia a IDs de API para credit card
+export const ASSISTANT_ID_MAPPING = {
+  ventas: 1,
+  carritos: 2,
+  comentarios: 3,
+};
+
+// Mapeo de IDs de complementos API a nombres de referencia
+export const COMPLEMENT_REFERENCE_MAPPING = {
+  1: "bot",
+  2: "member",
+  3: "webhooks",
+};
+
+// Mapeo de nombres de referencia a IDs de API para credit card
+export const COMPLEMENT_ID_MAPPING = {
+  bot: 1,
+  member: 2,
+  webhooks: 3,
+};
+
+// Información de display para asistentes (con emojis y descripciones)
+export const ASSISTANT_DISPLAY_INFO = {
+  ventas: {
+    label: "🔥Asistente de ventas por WhatsApp🔥",
+    description: "Logra CPAs hasta de 5.000",
+    icon: "bx bxl-whatsapp",
+  },
+  carritos: {
+    label: "🛒Asistente de carritos abandonados🛒",
+    description: "Recupera hasta el 50% de los carritos abandonados.",
+    icon: "bx-cart",
+  },
+  comentarios: {
+    label: "💬Asistente de comentarios💬",
+    description: "Convierte en ventas los comentarios de Facebook.",
+    icon: "bx-message-rounded-dots",
+  },
 };
 
 /**
- * Obtiene la configuración de un complemento por su ID
- * @param {string|number} id - ID del complemento
- * @returns {object|null} - Configuración del complemento o null si no se encuentra
+ * Convierte ID numérico de asistente a nombre de referencia
  */
-export const getComplementConfig = (id) => {
-  return COMPLEMENTS_CONFIG.find((config) => config.id === id) || null;
+export const getAssistantReference = (id) => {
+  return ASSISTANT_REFERENCE_MAPPING[id] || id.toString();
 };
 
 /**
- * Obtiene una lista de todos los asistentes disponibles
- * @returns {array} - Array de configuraciones de asistentes
+ * Convierte nombre de referencia a ID numérico
  */
-export const getAvailableAssistants = () => {
-  return ASSISTANTS_CONFIG.filter((config) => !config.comingSoon);
+export const getAssistantId = (reference) => {
+  return ASSISTANT_ID_MAPPING[reference] || reference;
 };
 
 /**
- * Obtiene una lista de todos los complementos disponibles
- * @returns {array} - Array de configuraciones de complementos
+ * Convierte ID numérico de complemento a nombre de referencia
  */
-export const getAvailableComplements = () => {
-  return COMPLEMENTS_CONFIG;
+export const getComplementReference = (id) => {
+  return COMPLEMENT_REFERENCE_MAPPING[id] || id.toString();
 };
 
 /**
- * Convierte IDs de asistentes a objetos completos con información
- * @param {array} assistantIds - Array de IDs de asistentes
- * @returns {array} - Array de objetos con información completa de asistentes
+ * Convierte nombre de referencia a ID numérico
  */
-export const mapAssistantsToFullData = (assistantIds) => {
-  return assistantIds.map((id) => {
-    // Buscar por ID exacto
-    const config = ASSISTANTS_CONFIG.find((config) => {
-      return config.id === id;
-    });
-
-    if (config) {
-      const result = {
-        id: id,
-        name: config.label,
-        type: config.type,
-        description: config.description,
-        icon: config.icon,
-        comingSoon: config.comingSoon || false,
-      };
-
-      return result;
-    } else {
-      const fallback = {
-        id: id,
-        name: `Asistente ${id}`,
-        type: "Asistente personalizado",
-        description: "",
-        icon: "bx-bot",
-      };
-
-      return fallback;
-    }
-  });
-};
-
-/**
- * Convierte IDs de complementos a objetos completos con información
- * @param {array} complements - Array de IDs o objetos de complementos
- * @returns {array} - Array de objetos con información completa de complementos
- */
-export const mapComplementsToFullData = (complements) => {
-  return complements.map((complement) => {
-    if (typeof complement === "object" && complement.name) {
-      return complement;
-    }
-
-    const id = typeof complement === "object" ? complement.id : complement;
-    const config = getComplementConfig(id);
-
-    return config
-      ? {
-          id: id,
-          name: config.name,
-          description: config.description,
-          priceUSD: config.priceUSD,
-        }
-      : {
-          id: id,
-          name: `Complemento ${id}`,
-          description: "",
-          priceUSD: 0,
-        };
-  });
+export const getComplementId = (reference) => {
+  return COMPLEMENT_ID_MAPPING[reference] || reference;
 };

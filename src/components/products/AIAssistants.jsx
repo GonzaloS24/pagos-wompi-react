@@ -1,11 +1,31 @@
 /* eslint-disable react/prop-types */
-import { ASSISTANTS_CONFIG, PRICING } from "../../utils/constants";
+import { useState, useEffect } from "react";
+import { fetchAssistants } from "../../services/dataService";
+import { PRICING } from "../../utils/constants";
 
 const AIAssistants = ({
   selectedAssistants,
   onAssistantChange,
   isStandalone,
 }) => {
+  const [assistants, setAssistants] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAssistants = async () => {
+      try {
+        const assistantsData = await fetchAssistants();
+        setAssistants(assistantsData);
+      } catch (error) {
+        console.error("Error loading assistants:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAssistants();
+  }, []);
+
   // Determinar cuál es el primer asistente seleccionado (gratis)
   const freeAssistant =
     !isStandalone && selectedAssistants.length > 0
@@ -16,6 +36,16 @@ const AIAssistants = ({
   const handleAssistantChange = (assistantId) => {
     onAssistantChange(assistantId);
   };
+
+  if (loading) {
+    return (
+      <div className="assistants-section p-2 bg-white rounded">
+        <h5 style={{ color: "#009ee3" }} className="mb-3">
+          Cargando asistentes...
+        </h5>
+      </div>
+    );
+  }
 
   return (
     <div className="assistants-section p-2 bg-white rounded">
@@ -45,8 +75,8 @@ const AIAssistants = ({
               </strong>
               <br />
               <small className="text-muted">
-                Asistentes adicionales cuestan ${PRICING.ASSISTANT_PRICE_USD}{" "}
-                USD cada uno.
+                Asistentes adicionales cuestan $
+                {PRICING.ASSISTANT_PRICE_USD || 20} USD cada uno.
               </small>
             </div>
           </div>
@@ -58,7 +88,7 @@ const AIAssistants = ({
       </p>
 
       <div className="assistants-grid">
-        {ASSISTANTS_CONFIG.map((assistant) => {
+        {assistants.map((assistant) => {
           const isComingSoon = assistant.comingSoon === true;
           const isSelected = selectedAssistants.includes(assistant.id);
           const isFreeAssistant = assistant.id === freeAssistant;

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Container, Row, Col } from "react-bootstrap";
 import chateaLogo from "../../assets/chatea.png";
 import CreditCardForm from "../../components/payments/wompi/CreditCardForm";
+import { fetchAssistants, fetchComplements } from "../../services/dataService";
 import Swal from "sweetalert2";
 import "../../styles/components/RecurringPaymentPage.css";
 
@@ -10,98 +11,118 @@ const RecurringPaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [assistantsData, setAssistantsData] = useState([]);
+  const [complementsData, setComplementsData] = useState([]);
 
-  // Datos pasados desde la página anterior
+  // Datos pasados desde la página anterior (ya en IDs numéricos)
   const {
     paymentCalculations,
     formData,
     selectedPlan,
-    selectedAssistants,
-    selectedComplements,
+    selectedAssistants, // IDs numéricos
+    selectedComplements, // IDs numéricos con estructura de API
   } = location.state || {};
 
   useEffect(() => {
     // Si no hay datos, redirigir al inicio
     if (!paymentCalculations || !formData) {
       navigate("/", { replace: true });
+      return;
     }
-  }, [
-    paymentCalculations,
-    formData,
-    selectedAssistants,
-    selectedComplements,
-    navigate,
-  ]);
 
-const handleCardSubmit = async (cardData) => {
-  setLoading(true);
-
-  try {
-    // Mapear asistentes separando gratis vs pagados
-    const assistantIds = selectedAssistants?.map(assistant => assistant.id) || [];
-    const isAssistantsOnly = !selectedPlan;
-    
-    const freeAssistantId = assistantIds.length > 0 && !isAssistantsOnly ? assistantIds[0] : null;
-    const paidAssistantIds = assistantIds.length > 1 && !isAssistantsOnly 
-      ? assistantIds.slice(1) 
-      : (isAssistantsOnly ? assistantIds : []);
-
-    const addons = selectedComplements?.map(complement => ({
-      id: complement.id,
-      quantity: complement.quantity || 1,
-      // Incluir bot_flow_ns si es webhook y tiene selectedBot
-      ...(complement.id === "webhooks" && complement.selectedBot ? {
-        bot_flow_ns: complement.selectedBot.flow_ns
-      } : {})
-    })) || [];
-
-    // Crear el JSON con la estructura requerida
-    const paymentData = {
-      workspace_id: parseInt(formData.workspace_id) || 0,
-      phone: formData.phone_number || "",
-      plan_id: selectedPlan?.id || null,
-      workspace_name: formData.workspace_name || "",
-      owner_email: formData.owner_email || "",
-      free_assistant_id: freeAssistantId,
-      paid_assistant_ids: paidAssistantIds,
-      assistants_only: !selectedPlan,
-      addons: addons,
-      card_details: {
-        exp_date: {
-          year: parseInt(cardData.exp_year),
-          month: parseInt(cardData.exp_month)
-        },
-        card_holder: cardData.card_holder,
-        card_number: cardData.number,
-        cvv: cardData.cvc
+    // Cargar datos de asistentes y complementos para mostrar nombres
+    const loadData = async () => {
+      try {
+        const [assistants, complements] = await Promise.all([
+          fetchAssistants(),
+          fetchComplements(),
+        ]);
+        setAssistantsData(assistants);
+        setComplementsData(complements);
+      } catch (error) {
+        console.error("Error loading data:", error);
       }
     };
 
-    // Mostrar el JSON estructurado
-    await Swal.fire({
-      icon: "info",
-      title: "Datos del Pago Recurrente",
-      html: `
-        <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-          <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 12px; text-align: left;">
-${JSON.stringify(paymentData, null, 2)}
-          </pre>
-        </div>
-      `,
-      confirmButtonText: "Aceptar",
-      confirmButtonColor: "#009ee3",
-      width: "600px",
-      customClass: {
-        htmlContainer: "text-left",
-      },
-    });
+    loadData();
+  }, [paymentCalculations, formData, navigate]);
 
-  } catch (error) {
-    console.error("Error processing payment:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+  // Función para obtener el nombre del asistente por ID numérico
+  const getAssistantNameById = (id) => {
+    const assistant = assistantsData.find((a) => a.apiId === id);
+    return assistant ? assistant.label : `Asistente ${id}`;
+  };
+
+  // Función para obtener el nombre del complemento por ID numérico
+  const getComplementNameById = (id) => {
+    const complement = complementsData.find((c) => c.apiId === id);
+    return complement ? complement.name : `Complemento ${id}`;
+  };
+
+  const handleCardSubmit = async (cardData) => {
+    setLoading(true);
+
+    try {
+      // Mapear asistentes separando gratis vs pagados
+      const isAssistantsOnly = !selectedPlan;
+
+      const freeAssistantId =
+        selectedAssistants.length > 0 && !isAssistantsOnly
+          ? selectedAssistants[0]
+          : null;
+      const paidAssistantIds =
+        selectedAssistants.length > 1 && !isAssistantsOnly
+          ? selectedAssistants.slice(1)
+          : isAssistantsOnly
+          ? selectedAssistants
+          : [];
+
+      // Crear el JSON con la estructura requerida usando IDs numéricos
+      const paymentData = {
+        workspace_id: parseInt(formData.workspace_id) || 0,
+        phone: formData.phone_number || "",
+        plan_id: selectedPlan?.id || null,
+        workspace_name: formData.workspace_name || "",
+        owner_email: formData.owner_email || "",
+        free_assistant_id: freeAssistantId,
+        paid_assistant_ids: paidAssistantIds,
+        assistants_only: !selectedPlan,
+        addons: selectedComplements || [],
+        card_details: {
+          exp_date: {
+            year: parseInt(cardData.exp_year),
+            month: parseInt(cardData.exp_month),
+          },
+          card_holder: cardData.card_holder,
+          card_number: cardData.number,
+          cvv: cardData.cvc,
+        },
+      };
+
+      // Mostrar el JSON estructurado
+      await Swal.fire({
+        icon: "info",
+        title: "Datos del Pago Recurrente",
+        html: `
+          <div style="text-align: left; max-height: 400px; overflow-y: auto;">
+            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 12px; text-align: left;">
+${JSON.stringify(paymentData, null, 2)}
+            </pre>
+          </div>
+        `,
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#009ee3",
+        width: "600px",
+        customClass: {
+          htmlContainer: "text-left",
+        },
+      });
+    } catch (error) {
+      console.error("Error processing payment:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = () => {
     navigate(-1);
@@ -143,15 +164,13 @@ ${JSON.stringify(paymentData, null, 2)}
                                   Asistentes:
                                 </span>
                               </div>
-                              {selectedAssistants.map((assistant, index) => (
+                              {selectedAssistants.map((assistantId, index) => (
                                 <div
-                                  key={`assistant-${assistant.id}-${index}`}
+                                  key={`assistant-${assistantId}-${index}`}
                                   className="detail-sub-item"
                                 >
                                   <span className="detail-value">
-                                    {" "}
-                                    {assistant.name ||
-                                      `Asistente ${assistant.id || index + 1}`}
+                                    {getAssistantNameById(assistantId)}
                                   </span>
                                 </div>
                               ))}
@@ -173,10 +192,7 @@ ${JSON.stringify(paymentData, null, 2)}
                                 >
                                   <span className="detail-value complement-info">
                                     <span className="complement-name">
-                                      {complement.name ||
-                                        `Complemento ${
-                                          complement.id || index + 1
-                                        }`}
+                                      {getComplementNameById(complement.id)}
                                     </span>
                                     <span className="complement-details">
                                       {complement.quantity &&

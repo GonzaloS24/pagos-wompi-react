@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  simulateGetSubscription,
-  simulateGetPlans,
-  simulateUpdateSubscription,
-  simulateCancelSubscription,
-} from "../service/subscriptionAPI";
-import { calculateChanges } from "../utils/subscriptionHelpers";
+  getSubscription,
+  updateSubscriptionData,
+  cancelSubscriptionData,
+  getPlans,
+  calculateChanges,
+  // hasChanges,
+} from "../../../services/subscriptionService";
+import {
+  formatAssistantsForCreditCard,
+  formatComplementsForCreditCard,
+} from "../../../services/dataService";
 import Swal from "sweetalert2";
 
 export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
@@ -21,8 +26,8 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
     setLoading(true);
     try {
       const [subscriptionData, plansData] = await Promise.all([
-        simulateGetSubscription(workspaceId),
-        simulateGetPlans(),
+        getSubscription(workspaceId),
+        getPlans(),
       ]);
 
       setSubscription(subscriptionData);
@@ -33,6 +38,7 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
         setSelectedPlan(
           plansData.find((p) => p.id === subscriptionData.planId) || null
         );
+        setSelectedComplements(subscriptionData.complements || []);
       }
     } catch (error) {
       console.error("Error fetching subscription:", error);
@@ -61,27 +67,28 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
       setModifying(true);
 
       try {
+        // Convertir asistentes y complementos a IDs numéricos para la API
+        const assistantsForAPI = await formatAssistantsForCreditCard(
+          selectedAssistants
+        );
+        const complementsForAPI = await formatComplementsForCreditCard(
+          selectedComplements
+        );
+
         // Mapear asistentes separando gratis vs pagados
-        const assistantIds = selectedAssistants || [];
         const freeAssistantId =
-          assistantIds.length > 0 ? assistantIds[0] : null;
+          assistantsForAPI.length > 0 ? assistantsForAPI[0] : null;
         const paidAssistantIds =
-          assistantIds.length > 1 ? assistantIds.slice(1) : [];
+          assistantsForAPI.length > 1 ? assistantsForAPI.slice(1) : [];
 
-        // Mapear complementos (addons)
-        const addons =
-          selectedComplements?.map((complement) => ({
-            id: complement.id,
-            quantity: complement.quantity || 1,
-            // Incluir bot_flow_ns si es webhook y tiene selectedBot
-            ...(complement.id === "webhooks" && complement.selectedBot
-              ? {
-                  bot_flow_ns: complement.selectedBot.flow_ns,
-                }
-              : {}),
-          })) || [];
+        // JSON del estado ORIGINAL de la suscripción (con IDs numéricos)
+        const originalAssistantsForAPI = await formatAssistantsForCreditCard(
+          subscription.assistants || []
+        );
+        const originalComplementsForAPI = await formatComplementsForCreditCard(
+          subscription.complements || []
+        );
 
-        // JSON del estado ORIGINAL de la suscripción
         const originalSubscriptionData = {
           workspace_id: parseInt(subscription.workspaceId) || 0,
           phone: subscription.phone || "",
@@ -89,27 +96,18 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
           workspace_name: subscription.workspace_name || "",
           owner_email: subscription.owner_email || "",
           free_assistant_id:
-            subscription.assistants?.length > 0
-              ? subscription.assistants[0]
+            originalAssistantsForAPI.length > 0
+              ? originalAssistantsForAPI[0]
               : null,
           paid_assistant_ids:
-            subscription.assistants?.length > 1
-              ? subscription.assistants.slice(1)
+            originalAssistantsForAPI.length > 1
+              ? originalAssistantsForAPI.slice(1)
               : [],
           assistants_only: false,
-          addons:
-            subscription.complements?.map((complement) => ({
-              id: complement.id,
-              quantity: complement.quantity || 1,
-              ...(complement.id === "webhooks" && complement.selectedBot
-                ? {
-                    bot_flow_ns: complement.selectedBot.flow_ns,
-                  }
-                : {}),
-            })) || [],
+          addons: originalComplementsForAPI,
         };
 
-        // JSON del estado NUEVO con los cambios aplicados
+        // JSON del estado NUEVO con los cambios aplicados (con IDs numéricos)
         const updatedSubscriptionData = {
           workspace_id: parseInt(subscription.workspaceId) || 0,
           phone: subscription.phone || "",
@@ -119,7 +117,7 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
           free_assistant_id: freeAssistantId,
           paid_assistant_ids: paidAssistantIds,
           assistants_only: false,
-          addons: addons,
+          addons: complementsForAPI,
         };
 
         // Si hay datos de pago (cuando se requiere pago), agregar card_details
@@ -183,7 +181,7 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
         */
 
         // Simulación del llamado a la API
-        await simulateUpdateSubscription(workspaceId, {
+        await updateSubscriptionData(workspaceId, {
           original: originalSubscriptionData,
           updated: updatedSubscriptionData,
         });
@@ -238,7 +236,7 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
     if (result.isConfirmed) {
       setModifying(true);
       try {
-        await simulateCancelSubscription(workspaceId);
+        await cancelSubscriptionData(workspaceId);
 
         Swal.fire({
           icon: "info",

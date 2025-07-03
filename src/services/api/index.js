@@ -1,5 +1,5 @@
 // Re-exportar todos los servicios de API
-export * from "./plansApi";
+// export * from "./plansApi";
 export * from "./assistantsApi";
 export * from "./exchangeRateApi";
 

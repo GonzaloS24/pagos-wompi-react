@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
-import { fetchPlans } from "../services/api/plansApi";
+import { fetchPlans } from "../services/dataService";
 import { fetchUSDtoCOPRate } from "../services/api/exchangeRateApi";
 import { sanitizeString } from "../services/validation/formValidation";
 import { PAYMENT_PERIODS } from "../utils/constants";

@@ -1,7 +1,8 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect, memo } from "react";
 import { fetchWorkspaceBots } from "../../../services/api/assistantsApi";
-import { COMPLEMENTS_CONFIG, PRICING } from "../../../utils/constants";
+import { fetchComplements } from "../../../services/dataService";
+import { PRICING } from "../../../utils/constants";
 import Swal from "sweetalert2";
 
 const ComplementsSection = memo(
@@ -11,6 +12,8 @@ const ComplementsSection = memo(
     const [selectedBot, setSelectedBot] = useState("");
     const [botsList, setBotsList] = useState([]);
     const [loadingBots, setLoadingBots] = useState(false);
+    const [complements, setComplements] = useState([]);
+    const [loadingComplements, setLoadingComplements] = useState(true);
 
     // Inicializar los complementos seleccionados con los de la suscripción actual
     useEffect(() => {
@@ -22,6 +25,22 @@ const ComplementsSection = memo(
         onComplementsChange(subscription.complements);
       }
     }, [subscription, selectedComplements.length, onComplementsChange]);
+
+    // Cargar complementos disponibles desde la API
+    useEffect(() => {
+      const loadComplements = async () => {
+        try {
+          const complementsData = await fetchComplements();
+          setComplements(complementsData);
+        } catch (error) {
+          console.error("Error loading complements:", error);
+        } finally {
+          setLoadingComplements(false);
+        }
+      };
+
+      loadComplements();
+    }, []);
 
     useEffect(() => {
       const loadBots = async () => {
@@ -61,9 +80,9 @@ const ComplementsSection = memo(
 
     const handleAddComplement = () => {
       if (selectedComplement) {
-        const complement = COMPLEMENTS_CONFIG.find(
-          (c) => c.id === selectedComplement
-        );
+        const complement = complements.find((c) => c.id === selectedComplement);
+
+        if (!complement) return;
 
         // Validación específica para webhooks
         if (complement.id === "webhooks") {
@@ -234,6 +253,16 @@ const ComplementsSection = memo(
 
     if (!subscription) return null;
 
+    if (loadingComplements) {
+      return (
+        <div className="complements-section p-2 bg-white rounded mb-4">
+          <h5 style={{ color: "#009ee3" }} className="mb-3">
+            Cargando complementos...
+          </h5>
+        </div>
+      );
+    }
+
     return (
       <div className="complements-section p-2 bg-white rounded mb-4">
         <h5 style={{ color: "#009ee3" }} className="mb-3">
@@ -252,7 +281,7 @@ const ComplementsSection = memo(
             aria-label="Seleccionar complemento"
           >
             <option value="">Seleccionar complemento</option>
-            {COMPLEMENTS_CONFIG.map((complement) => (
+            {complements.map((complement) => (
               <option key={complement.id} value={complement.id}>
                 {complement.name} {complement.description} ($
                 {complement.priceUSD} USD)
@@ -382,8 +411,7 @@ const ComplementsSection = memo(
                 <div key={complementId} className="complement-group mb-3">
                   <div className="complement-header">
                     <h6 style={{ color: "#009ee3" }}>
-                      {COMPLEMENTS_CONFIG.find((c) => c.id === complementId)
-                        ?.name || complementId}
+                      {complements[0]?.name || complementId}
                     </h6>
                   </div>
 
@@ -520,7 +548,11 @@ const ComplementsSection = memo(
 
                             <div className="ms-2 text-end">
                               <div className="fw-medium">
-                                ${complement.totalPrice} USD
+                                $
+                                {complement.totalPrice ||
+                                  complement.priceUSD *
+                                    complement.quantity}{" "}
+                                USD
                               </div>
                               <small className="text-muted">Total</small>
                             </div>

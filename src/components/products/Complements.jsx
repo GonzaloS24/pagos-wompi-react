@@ -2,7 +2,8 @@
 /* eslint-disable react/display-name */
 import { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { fetchWorkspaceBots } from "../../services/api/assistantsApi";
-import { COMPLEMENTS_CONFIG, PRICING } from "../../utils/constants";
+import { fetchComplements } from "../../services/dataService";
+import { PRICING } from "../../utils/constants";
 import Swal from "sweetalert2";
 
 const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
@@ -12,6 +13,8 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
   const [botsList, setBotsList] = useState([]);
   const [selectedBot, setSelectedBot] = useState("");
   const [loadingBots, setLoadingBots] = useState(false);
+  const [complements, setComplements] = useState([]);
+  const [loadingComplements, setLoadingComplements] = useState(true);
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -23,6 +26,22 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
       onComplementsChange([]);
     },
   }));
+
+  // Cargar complementos disponibles
+  useEffect(() => {
+    const loadComplements = async () => {
+      try {
+        const complementsData = await fetchComplements();
+        setComplements(complementsData);
+      } catch (error) {
+        console.error("Error loading complements:", error);
+      } finally {
+        setLoadingComplements(false);
+      }
+    };
+
+    loadComplements();
+  }, []);
 
   useEffect(() => {
     onComplementsChange(selectedComplements);
@@ -66,9 +85,9 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
 
   const handleAddComplement = () => {
     if (selectedComplement) {
-      const complement = COMPLEMENTS_CONFIG.find(
-        (c) => c.id === selectedComplement
-      );
+      const complement = complements.find((c) => c.id === selectedComplement);
+
+      if (!complement) return;
 
       // Validación específica para webhooks
       if (complement.id === "webhooks") {
@@ -93,20 +112,11 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
         }
       }
 
-      if (complement.id === "webhooks" && !selectedBot) {
-        Swal.fire({
-          icon: "warning",
-          title: "Selección requerida",
-          text: "Por favor selecciona un bot para los webhooks",
-        });
-        return;
-      }
-
       setSelectedComplements((prevComplements) => {
         // Para webhooks, verificamos si ya existe ese bot específico
         if (complement.id === "webhooks") {
           const existingWebhookForBot = prevComplements.find(
-            (c) => c.id === "webhooks" && c.selectedBot.flow_ns === selectedBot
+            (c) => c.id === "webhooks" && c.selectedBot?.flow_ns === selectedBot
           );
 
           if (existingWebhookForBot) {
@@ -221,6 +231,16 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
     });
   };
 
+  if (loadingComplements) {
+    return (
+      <div className="complements-section p-2 bg-white rounded mb-4">
+        <h5 style={{ color: "#009ee3" }} className="mb-3">
+          Cargando complementos...
+        </h5>
+      </div>
+    );
+  }
+
   return (
     <div className="complements-section p-2 bg-white rounded mb-4">
       <h5 style={{ color: "#009ee3" }} className="mb-3">
@@ -238,7 +258,7 @@ const Complements = forwardRef(({ onComplementsChange, workspaceId }, ref) => {
           aria-label="Seleccionar complemento"
         >
           <option value="">Seleccionar complemento</option>
-          {COMPLEMENTS_CONFIG.map((complement) => (
+          {complements.map((complement) => (
             <option key={complement.id} value={complement.id}>
               {complement.name} {complement.description} (${complement.priceUSD}{" "}
               USD)
