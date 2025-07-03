@@ -23,6 +23,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     selectedPlan,
     selectedComplements,
     changesSummary,
+    calculatingChanges,
     setSelectedAssistants,
     setSelectedPlan,
     setSelectedComplements,
@@ -147,6 +148,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             selectedPlan={selectedPlan}
             selectedComplements={selectedComplements}
             changesSummary={changesSummary}
+            calculatingChanges={calculatingChanges}
             onProceedToPayment={handleProceedToPayment}
             modifying={modifying}
           />

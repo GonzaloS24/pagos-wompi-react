@@ -26,6 +26,7 @@ export const getSubscriptionByWorkspace = async (workspaceId) => {
   try {
     const response = await axiosInstance.get(`/subscriptions/${workspaceId}`);
     return response.data;
+    
   } catch (error) {
     throw error.response ? error.response.data : error;
   }

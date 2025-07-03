@@ -1,6 +1,6 @@
-// import { getAllPlans } from "./newApi/plans";
-// import { getAllAssistants } from "./newApi/assistants";
-// import { getAllAddons } from "./newApi/addons";
+import { getAllPlans } from "./newApi/plans";
+import { getAllAssistants } from "./newApi/assistants";
+import { getAllAddons } from "./newApi/addons";
 import {
   ASSISTANT_DISPLAY_INFO,
   COMING_SOON_ASSISTANTS,
@@ -8,144 +8,99 @@ import {
   getComplementReference,
 } from "../utils/constants";
 
-// ===== DATOS SIMULADOS TEMPORALES =====
-const SIMULATED_PLANS = [
-  {
-    product: {
-      id: "business",
-      displayPrice: "49 USD",
-      name: "Chatea Pro Start",
-      price: 49,
-      bots: 1,
-      botUsers: 1000,
-      members: 5,
-      status: "active",
-    },
-    discounts: [],
-  },
-  {
-    product: {
-      id: "business_lite",
-      displayPrice: "109 USD",
-      name: "Chatea Pro Advanced",
-      price: 109,
-      bots: 1,
-      botUsers: 10000,
-      members: 5,
-      status: "active",
-    },
-    discounts: [],
-  },
-  {
-    product: {
-      id: "custom_plan3",
-      displayPrice: "189 USD",
-      name: "Chatea Pro Plus",
-      price: 189,
-      bots: 1,
-      botUsers: 20000,
-      members: 5,
-      status: "active",
-    },
-    discounts: [],
-  },
-  {
-    product: {
-      id: "business_large",
-      displayPrice: "399 USD",
-      name: "Chatea Pro Master",
-      price: 399,
-      bots: 5,
-      botUsers: 50000,
-      members: 10,
-      status: "active",
-    },
-    discounts: [],
-  },
-];
-
-const SIMULATED_ASSISTANTS = [
-  {
-    product: {
-      id: 1,
-      name: "ventas",
-      cost: 20,
-    },
-    discounts: [],
-  },
-  {
-    product: {
-      id: 2,
-      name: "carritos",
-      cost: 20,
-    },
-    discounts: [],
-  },
-  {
-    product: {
-      id: 3,
-      name: "comentarios",
-      cost: 20,
-    },
-    discounts: [],
-  },
-];
-
-const SIMULATED_COMPLEMENTS = [
-  {
-    product: {
-      id: 1,
-      name: "🤖 1 Bot Adicional 🤖",
-      cost: 10,
-    },
-    discounts: [],
-  },
-  {
-    product: {
-      id: 2,
-      name: "🙋‍♀️1 Miembro Adicional 🙋‍♀️",
-      cost: 10,
-    },
-    discounts: [],
-  },
-  {
-    product: {
-      id: 3,
-      name: "1.000 Webhooks Diarios 🔗",
-      cost: 20,
-    },
-    discounts: [],
-  },
-];
-
 /**
  * Obtiene todos los planes activos (excluyendo el free)
  */
 export const fetchPlans = async () => {
   try {
-    // TODO: Descomentar cuando la API esté lista
-    // const response = await getAllPlans();
+    // Ahora usa la API real a través de Axios
+    const response = await getAllPlans();
 
-    // Simulación temporal
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const response = SIMULATED_PLANS;
-
-    return response
-      .filter(
-        (plan) => plan.product.status === "active" && plan.product.id !== "free"
-      )
-      .map((plan) => ({
-        id: plan.product.id,
-        name: plan.product.name,
-        priceUSD: plan.product.price,
-        bot_users: plan.product.botUsers,
-        bots: plan.product.bots,
-        members: plan.product.members,
-        displayPrice: plan.product.displayPrice,
-      }));
+return response
+  .filter(
+    (plan) => plan.product.status === "active" && plan.product.id !== "free"
+  )
+  .map((plan) => {
+    const priceUSD = parseFloat(plan.product.displayPrice);
+    return {
+      id: plan.product.id,
+      name: plan.product.name,
+      priceUSD: priceUSD,
+      bot_users: plan.product.botUsers,
+      bots: plan.product.bots,
+      members: plan.product.members,
+    };
+  });
   } catch (error) {
     console.error("Error fetching plans:", error);
-    return [];
+
+    // Fallback a datos simulados si la API falla
+    const SIMULATED_PLANS = [
+      {
+        product: {
+          id: "business",
+          displayPrice: "49 USD",
+          name: "Chatea Pro Start",
+          price: 49,
+          bots: 1,
+          botUsers: 1000,
+          members: 5,
+          status: "active",
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: "business_lite",
+          displayPrice: "109 USD",
+          name: "Chatea Pro Advanced",
+          price: 109,
+          bots: 1,
+          botUsers: 10000,
+          members: 5,
+          status: "active",
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: "custom_plan3",
+          displayPrice: "189 USD",
+          name: "Chatea Pro Plus",
+          price: 189,
+          bots: 1,
+          botUsers: 20000,
+          members: 5,
+          status: "active",
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: "business_large",
+          displayPrice: "399 USD",
+          name: "Chatea Pro Master",
+          price: 399,
+          bots: 5,
+          botUsers: 50000,
+          members: 10,
+          status: "active",
+        },
+        discounts: [],
+      },
+    ];
+
+    return SIMULATED_PLANS.filter(
+      (plan) => plan.product.status === "active" && plan.product.id !== "free"
+    ).map((plan) => ({
+      id: plan.product.id,
+      name: plan.product.name,
+      priceUSD: plan.product.price,
+      bot_users: plan.product.botUsers,
+      bots: plan.product.bots,
+      members: plan.product.members,
+      displayPrice: plan.product.displayPrice,
+    }));
   }
 };
 
@@ -154,12 +109,8 @@ export const fetchPlans = async () => {
  */
 export const fetchAssistants = async () => {
   try {
-    // TODO: Descomentar cuando la API esté lista
-    // const response = await getAllAssistants();
-
-    // Simulación temporal
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const response = SIMULATED_ASSISTANTS;
+    // Ahora usa la API real a través de Axios
+    const response = await getAllAssistants();
 
     // Convertir asistentes de API
     const apiAssistants = response.map((assistant) => {
@@ -182,7 +133,52 @@ export const fetchAssistants = async () => {
     return [...apiAssistants, ...COMING_SOON_ASSISTANTS];
   } catch (error) {
     console.error("Error fetching assistants:", error);
-    return COMING_SOON_ASSISTANTS; // Retornar al menos los de próximamente
+
+    // Fallback a datos simulados si la API falla
+    const SIMULATED_ASSISTANTS = [
+      {
+        product: {
+          id: 1,
+          name: "ventas",
+          cost: 20,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 2,
+          name: "carritos",
+          cost: 20,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 3,
+          name: "comentarios",
+          cost: 20,
+        },
+        discounts: [],
+      },
+    ];
+
+    const apiAssistants = SIMULATED_ASSISTANTS.map((assistant) => {
+      const reference = getAssistantReference(assistant.product.id);
+      const displayInfo = ASSISTANT_DISPLAY_INFO[reference];
+
+      return {
+        id: reference,
+        apiId: assistant.product.id,
+        name: assistant.product.name,
+        cost: assistant.product.cost,
+        label: displayInfo?.label || assistant.product.name,
+        description: displayInfo?.description || "",
+        icon: displayInfo?.icon || "bx-bot",
+        comingSoon: false,
+      };
+    });
+
+    return [...apiAssistants, ...COMING_SOON_ASSISTANTS];
   }
 };
 
@@ -191,12 +187,8 @@ export const fetchAssistants = async () => {
  */
 export const fetchComplements = async () => {
   try {
-    // TODO: Descomentar cuando la API esté lista
-    // const response = await getAllAddons();
-
-    // Simulación temporal
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const response = SIMULATED_COMPLEMENTS;
+    // Ahora usa la API real a través de Axios
+    const response = await getAllAddons();
 
     return response.map((complement) => {
       const reference = getComplementReference(complement.product.id);
@@ -215,7 +207,50 @@ export const fetchComplements = async () => {
     });
   } catch (error) {
     console.error("Error fetching complements:", error);
-    return [];
+
+    // Fallback a datos simulados si la API falla
+    const SIMULATED_COMPLEMENTS = [
+      {
+        product: {
+          id: 1,
+          name: "🤖 1 Bot Adicional 🤖",
+          cost: 10,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 2,
+          name: "🙋‍♀️1 Miembro Adicional 🙋‍♀️",
+          cost: 10,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 3,
+          name: "1.000 Webhooks Diarios 🔗",
+          cost: 20,
+        },
+        discounts: [],
+      },
+    ];
+
+    return SIMULATED_COMPLEMENTS.map((complement) => {
+      const reference = getComplementReference(complement.product.id);
+
+      return {
+        id: reference,
+        apiId: complement.product.id,
+        name: complement.product.name,
+        priceUSD: complement.product.cost,
+        description: complement.product.name.includes("Bot")
+          ? "(Permite agregar un nuevo canal como FB, IG o WP)"
+          : complement.product.name.includes("Miembro")
+          ? "(Permite agregar un nuevo asesor)"
+          : "",
+      };
+    });
   }
 };
 

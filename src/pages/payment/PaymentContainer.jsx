@@ -28,6 +28,7 @@ import SubscriptionManager from "../subscription/SubscriptionManager";
 
 // Services
 import { validateForm } from "../../services/validation/formValidation";
+import { getSubscription } from "../../services/subscriptionService";
 import {
   formatAssistantsForCreditCard,
   formatComplementsForCreditCard,
@@ -113,9 +114,22 @@ const PaymentContainer = () => {
   const checkActiveSubscription = async (workspaceId) => {
     setCheckingSubscription(true);
     try {
-      // Simular llamado a API para verificar suscripción
-      const hasSubscription = await simulateHasActiveSubscription(workspaceId);
+      console.log("Checking subscription for workspace:", workspaceId);
+
+      // Usar el servicio real que llama a la API
+      const subscription = await getSubscription(workspaceId);
+
+      console.log("Subscription result:", subscription);
+
+      // Si hay subscription y tiene status ACTIVE, mostrar vista de gestión
+      const hasSubscription = subscription && subscription.status === "ACTIVE";
       setHasActiveSubscription(hasSubscription);
+
+      if (hasSubscription) {
+        console.log("Active subscription found, showing management view");
+      } else {
+        console.log("No active subscription found, showing purchase flow");
+      }
     } catch (error) {
       console.error("Error checking subscription:", error);
       setHasActiveSubscription(false);
@@ -386,6 +400,9 @@ const PaymentContainer = () => {
                 margin={2}
                 speedMultiplier={4}
               />
+              <p className="loading-message mt-3 text-center text-muted">
+                Verificando tu suscripción...
+              </p>
             </div>
           ) : hasActiveSubscription ? (
             // Mostrar panel de gestión de suscripción
@@ -584,15 +601,6 @@ const PaymentContainer = () => {
       />
     </div>
   );
-};
-
-// === FUNCIÓN SIMULADA DE API ===
-const simulateHasActiveSubscription = async (workspaceId) => {
-  // Simular delay de API
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  // Simular respuesta: workspace "12345" tiene suscripción activa
-  return workspaceId === "123456789";
 };
 
 export default PaymentContainer;

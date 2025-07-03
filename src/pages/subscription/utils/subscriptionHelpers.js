@@ -1,6 +1,10 @@
-import { ASSISTANTS_CONFIG } from "../../../utils/constants";
+import {
+  fetchPlans,
+  fetchAssistants,
+  fetchComplements,
+} from "../../../services/dataService";
 
-export const simulateCalculateChanges = ({
+export const simulateCalculateChanges = async ({
   assistantsToAdd,
   assistantsToRemove,
   complementsToAdd,
@@ -12,78 +16,69 @@ export const simulateCalculateChanges = ({
   const items = [];
   let totalAmount = 0;
 
+  // Obtener datos dinámicos de la API
+  const [plans, assistants] = await Promise.all([
+    fetchPlans(),
+    fetchAssistants(),
+    fetchComplements(),
+  ]);
+
   // Cambio de plan
   if (planChange) {
-    const plans = {
-      business: { name: "Chatea Pro Start", price: 49 },
-      business_lite: { name: "Chatea Pro Advanced", price: 109 },
-      custom_plan3: { name: "Chatea Pro Plus", price: 189 },
-      business_large: { name: "Chatea Pro Master", price: 399 },
-    };
+    const currentPlanData = plans.find((p) => p.id === currentPlan);
+    const newPlanData = plans.find((p) => p.id === planChange.id);
 
-    const currentPlanData = plans[currentPlan];
-    const newPlanData = plans[planChange.id];
-    const priceDiff = newPlanData.price - currentPlanData.price;
+    if (currentPlanData && newPlanData) {
+      const priceDiff = newPlanData.priceUSD - currentPlanData.priceUSD;
 
-    if (priceDiff > 0) {
-      // Upgrade - se cobra la diferencia prorrateada
-      const proratedAmount = priceDiff * 0.5;
-      items.push({
-        type: "upgrade",
-        description: `Upgrade a ${newPlanData.name}`,
-        amount: proratedAmount,
-        discount: {
-          description: `Prorrateado por 15 días restantes`,
-          originalAmount: priceDiff,
-        },
-      });
-      totalAmount += proratedAmount;
-    } else if (priceDiff < 0) {
-      // Downgrade - no se cobra ni se devuelve dinero
-      items.push({
-        type: "downgrade",
-        description: `Downgrade a ${newPlanData.name}`,
-        amount: 0,
-        discount: {
-          description: `Cambio aplicado sin costo adicional`,
-        },
-      });
+      if (priceDiff > 0) {
+        // Upgrade
+        items.push({
+          type: "upgrade",
+          description: `Upgrade a ${newPlanData.name}`,
+          amount: priceDiff,
+        });
+        totalAmount += priceDiff;
+      } else if (priceDiff < 0) {
+        // Downgrade
+        items.push({
+          type: "downgrade",
+          description: `Downgrade a ${newPlanData.name}`,
+          amount: 0,
+        });
+      }
     }
   }
 
   // Asistentes a agregar
-  assistantsToAdd.forEach((assistantId) => {
-    const assistant = ASSISTANTS_CONFIG.find((a) => a.id === assistantId);
-    const assistantPrice = 20 * 0.5; // Prorrateado
+  for (const assistantId of assistantsToAdd) {
+    const assistant = assistants.find((a) => a.id === assistantId);
+    const assistantPrice = assistant?.cost || 20; // Usar precio de la API o fallback
+
     items.push({
       type: "add",
       description: `Agregar ${assistant?.label || assistantId}`,
       amount: assistantPrice,
-      discount: {
-        description: `Prorrateado por 15 días restantes`,
-        originalAmount: 20,
-      },
     });
     totalAmount += assistantPrice;
-  });
+  }
 
   // Asistentes a remover
-  assistantsToRemove.forEach((assistantId) => {
-    const assistant = ASSISTANTS_CONFIG.find((a) => a.id === assistantId);
+  for (const assistantId of assistantsToRemove) {
+    const assistant = assistants.find((a) => a.id === assistantId);
+
     items.push({
       type: "remove",
       description: `Remover ${assistant?.label || assistantId}`,
       amount: 0,
-      discount: {
-        description: `Removido sin reembolso`,
-      },
     });
-  });
+  }
 
   // Complementos a agregar (completamente nuevos)
   complementsToAdd.forEach((complement) => {
-    const complementPrice = complement.totalPrice * 0.5; // Prorrateado
+    const complementPrice = complement.totalPrice || complement.priceUSD || 0;
     let description = `Agregar ${complement.name}`;
+
     if (complement.selectedBot) {
       description += ` para ${complement.selectedBot.name}`;
     }
@@ -95,10 +90,6 @@ export const simulateCalculateChanges = ({
       type: "add",
       description,
       amount: complementPrice,
-      discount: {
-        description: `Prorrateado por 15 días restantes`,
-        originalAmount: complement.totalPrice,
-      },
     });
     totalAmount += complementPrice;
   });
@@ -106,6 +97,7 @@ export const simulateCalculateChanges = ({
   // Complementos a remover (completamente eliminados)
   complementsToRemove.forEach((complement) => {
     let description = `Remover ${complement.name}`;
+
     if (complement.selectedBot) {
       description += ` de ${complement.selectedBot.name}`;
     }
@@ -117,9 +109,6 @@ export const simulateCalculateChanges = ({
       type: "remove",
       description,
       amount: 0,
-      discount: {
-        description: `Removido sin reembolso`,
-      },
     });
   });
 
@@ -127,53 +116,52 @@ export const simulateCalculateChanges = ({
   complementsToModify.forEach((modification) => {
     const { complement, originalQuantity, newQuantity } = modification;
     const quantityDiff = newQuantity - originalQuantity;
-    
+
     if (quantityDiff > 0) {
       // Aumento de cantidad
-      const additionalPrice = (complement.priceUSD * quantityDiff) * 0.5; // Prorrateado
+      const additionalPrice = (complement.priceUSD || 0) * quantityDiff;
       let description = `Aumentar ${complement.name}`;
+
       if (complement.selectedBot) {
         description += ` para ${complement.selectedBot.name}`;
       }
-      description += ` (${quantityDiff} unidad${quantityDiff > 1 ? 'es' : ''} adicional${quantityDiff > 1 ? 'es' : ''})`;
+      description += ` (${quantityDiff} unidad${
+        quantityDiff > 1 ? "es" : ""
+      } adicional${quantityDiff > 1 ? "es" : ""})`;
 
       items.push({
         type: "add",
         description,
         amount: additionalPrice,
-        discount: {
-          description: `Prorrateado por 15 días restantes`,
-          originalAmount: complement.priceUSD * quantityDiff,
-        },
       });
       totalAmount += additionalPrice;
     } else if (quantityDiff < 0) {
       // Disminución de cantidad
       const removedQuantity = Math.abs(quantityDiff);
       let description = `Disminuir ${complement.name}`;
+
       if (complement.selectedBot) {
         description += ` de ${complement.selectedBot.name}`;
       }
-      description += ` (${removedQuantity} unidad${removedQuantity > 1 ? 'es' : ''} menos)`;
+      description += ` (${removedQuantity} unidad${
+        removedQuantity > 1 ? "es" : ""
+      } menos)`;
 
       items.push({
         type: "remove",
         description,
         amount: 0,
-        discount: {
-          description: `Removido sin reembolso`,
-        },
       });
     }
   });
 
   return {
     items,
-    totalAmount: Math.max(0, totalAmount), // No permitir montos negativos
+    totalAmount: Math.max(0, totalAmount),
   };
 };
 
-export const calculateChanges = (
+export const calculateChanges = async (
   selectedAssistants,
   selectedPlan,
   selectedComplements,
@@ -199,14 +187,14 @@ export const calculateChanges = (
 
   // Crear mapas para facilitar la comparación
   const currentComplementsMap = new Map();
-  currentComplements.forEach(comp => {
-    const key = `${comp.id}_${comp.selectedBot?.flow_ns || 'default'}`;
+  currentComplements.forEach((comp) => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
     currentComplementsMap.set(key, comp);
   });
 
   const selectedComplementsMap = new Map();
-  selectedComplements.forEach(comp => {
-    const key = `${comp.id}_${comp.selectedBot?.flow_ns || 'default'}`;
+  selectedComplements.forEach((comp) => {
+    const key = `${comp.id}_${comp.selectedBot?.flow_ns || "default"}`;
     selectedComplementsMap.set(key, comp);
   });
 
@@ -231,15 +219,15 @@ export const calculateChanges = (
       complementsToModify.push({
         complement: selectedComp,
         originalQuantity: currentComp.quantity,
-        newQuantity: selectedComp.quantity
+        newQuantity: selectedComp.quantity,
       });
     }
   });
 
   const planChange = selectedPlan?.id !== currentPlan ? selectedPlan : null;
 
-  // Simular respuesta del backend con precios y descuentos
-  return simulateCalculateChanges({
+  // Llamar a la función con datos dinámicos
+  return await simulateCalculateChanges({
     assistantsToAdd,
     assistantsToRemove,
     complementsToAdd,
@@ -257,7 +245,7 @@ export const hasChanges = (
   subscription
 ) => {
   if (!subscription) return false;
-  
+
   const currentAssistants = subscription.assistants || [];
   const currentComplements = subscription.complements || [];
 
@@ -272,17 +260,21 @@ export const hasChanges = (
     }
 
     // Crear representaciones comparables
-    const currentRep = currentComplements.map(c => ({
-      id: c.id,
-      quantity: c.quantity,
-      bot: c.selectedBot?.flow_ns || null
-    })).sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
+    const currentRep = currentComplements
+      .map((c) => ({
+        id: c.id,
+        quantity: c.quantity,
+        bot: c.selectedBot?.flow_ns || null,
+      }))
+      .sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
 
-    const selectedRep = selectedComplements.map(c => ({
-      id: c.id,
-      quantity: c.quantity,
-      bot: c.selectedBot?.flow_ns || null
-    })).sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
+    const selectedRep = selectedComplements
+      .map((c) => ({
+        id: c.id,
+        quantity: c.quantity,
+        bot: c.selectedBot?.flow_ns || null,
+      }))
+      .sort((a, b) => `${a.id}_${a.bot}`.localeCompare(`${b.id}_${b.bot}`));
 
     return JSON.stringify(currentRep) !== JSON.stringify(selectedRep);
   })();

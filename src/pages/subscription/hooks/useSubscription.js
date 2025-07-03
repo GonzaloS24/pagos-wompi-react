@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getSubscription,
   updateSubscriptionData,
   cancelSubscriptionData,
   getPlans,
-  calculateChanges,
-  // hasChanges,
 } from "../../../services/subscriptionService";
+import { calculateChanges } from "../utils/subscriptionHelpers";
 import {
   formatAssistantsForCreditCard,
   formatComplementsForCreditCard,
@@ -21,6 +20,8 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
   const [selectedAssistants, setSelectedAssistants] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedComplements, setSelectedComplements] = useState([]);
+  const [changesSummary, setChangesSummary] = useState(null);
+  const [calculatingChanges, setCalculatingChanges] = useState(false);
 
   const fetchSubscriptionData = useCallback(async () => {
     setLoading(true);
@@ -30,14 +31,30 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
         getPlans(),
       ]);
 
+      console.log("Subscription data received:", subscriptionData);
+      console.log("Plans data received:", plansData);
+
       setSubscription(subscriptionData);
       setPlans(plansData);
 
       if (subscriptionData) {
+        // ESTABLECER DATOS PREDETERMINADOS DESDE LA API
+        console.log("Setting default data from API:");
+        console.log("- Assistants:", subscriptionData.assistants);
+        console.log("- Plan ID:", subscriptionData.planId);
+        console.log("- Complements:", subscriptionData.complements);
+
+        // Establecer asistentes predeterminados (exactamente los que vienen de la API)
         setSelectedAssistants(subscriptionData.assistants || []);
-        setSelectedPlan(
-          plansData.find((p) => p.id === subscriptionData.planId) || null
+
+        // Establecer plan predeterminado (el que viene de la API)
+        const currentPlan = plansData.find(
+          (p) => p.id === subscriptionData.planId
         );
+        setSelectedPlan(currentPlan || null);
+        console.log("Selected plan set to:", currentPlan);
+
+        // Establecer complementos predeterminados (exactamente los que vienen de la API)
         setSelectedComplements(subscriptionData.complements || []);
       }
     } catch (error) {
@@ -47,20 +64,61 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
     }
   }, [workspaceId]);
 
+  // Efecto para calcular cambios cuando se actualicen los datos seleccionados
+  useEffect(() => {
+    const calculateChangesSummary = async () => {
+      if (!subscription) {
+        setChangesSummary(null);
+        return;
+      }
+
+      // Solo calcular si hay diferencias con los valores originales
+      const hasAssistantChanges =
+        JSON.stringify(selectedAssistants.sort()) !==
+        JSON.stringify((subscription.assistants || []).sort());
+      const hasPlanChanges = selectedPlan?.id !== subscription.planId;
+      const hasComplementChanges =
+        JSON.stringify(selectedComplements) !==
+        JSON.stringify(subscription.complements || []);
+
+      if (!hasAssistantChanges && !hasPlanChanges && !hasComplementChanges) {
+        setChangesSummary(null);
+        return;
+      }
+
+      setCalculatingChanges(true);
+      try {
+        console.log("Calculating changes with:");
+        console.log("- Selected assistants:", selectedAssistants);
+        console.log("- Original assistants:", subscription.assistants);
+        console.log("- Selected plan:", selectedPlan?.id);
+        console.log("- Original plan:", subscription.planId);
+        console.log("- Selected complements:", selectedComplements);
+        console.log("- Original complements:", subscription.complements);
+
+        const summary = await calculateChanges(
+          selectedAssistants,
+          selectedPlan,
+          selectedComplements,
+          subscription
+        );
+
+        console.log("Changes summary calculated:", summary);
+        setChangesSummary(summary);
+      } catch (error) {
+        console.error("Error calculating changes:", error);
+        setChangesSummary(null);
+      } finally {
+        setCalculatingChanges(false);
+      }
+    };
+
+    calculateChangesSummary();
+  }, [selectedAssistants, selectedPlan, selectedComplements, subscription]);
+
   useEffect(() => {
     fetchSubscriptionData();
   }, [fetchSubscriptionData]);
-
-  // Memoizar el cálculo de cambios para evitar recalcular innecesariamente
-  const changesSummary = useMemo(() => {
-    if (!subscription) return null;
-    return calculateChanges(
-      selectedAssistants,
-      selectedPlan,
-      selectedComplements,
-      subscription
-    );
-  }, [selectedAssistants, selectedPlan, selectedComplements, subscription]);
 
   const handleSaveChanges = useCallback(
     async (paymentData = null) => {
@@ -160,27 +218,7 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
           },
         });
 
-        // Llamada comentada a la API
-        /*
-        const response = await fetch('/api/subscriptions/update', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            original: originalSubscriptionData,
-            updated: updatedSubscriptionData
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Error updating subscription');
-        }
-
-        const result = await response.json();
-        */
-
-        // Simulación del llamado a la API
+        // Llamada a la API
         await updateSubscriptionData(workspaceId, {
           original: originalSubscriptionData,
           updated: updatedSubscriptionData,
@@ -269,6 +307,7 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
     selectedPlan,
     selectedComplements,
     changesSummary,
+    calculatingChanges,
     setSelectedAssistants,
     setSelectedPlan,
     setSelectedComplements,
