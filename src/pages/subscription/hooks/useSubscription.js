@@ -4,6 +4,7 @@ import { fetchUSDtoCOPRate } from "../../../services/api/exchangeRateApi";
 import {
   getSubscription,
   getPlans,
+  cancelSubscriptionData,
 } from "../../../services/subscriptionService";
 import { calculateChanges } from "../utils/subscriptionHelpers";
 import {
@@ -294,7 +295,7 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
       setModifying(true);
       try {
         // COMENTAR ESTA LÍNEA PARA NO HACER LLAMADAS REALES A LA API
-        // await cancelSubscriptionData(workspaceId);
+        await cancelSubscriptionData(workspaceId);
 
         console.log("=== CANCELACIÓN DE SUSCRIPCIÓN ===");
         console.log("Workspace ID:", workspaceId);

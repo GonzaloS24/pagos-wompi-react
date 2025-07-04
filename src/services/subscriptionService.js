@@ -1,3 +1,5 @@
+// src/services/subscriptionService.js - Actualizaciones
+
 import {
   getSubscriptionByWorkspace,
   updateSubscription,
@@ -11,15 +13,16 @@ import {
 } from "../utils/constants";
 
 /**
- * Obtiene la suscripción de un workspace
+ * Obtiene la suscripción de un workspace (ACTIVE o INACTIVE)
  */
 export const getSubscription = async (workspaceId) => {
   try {
-    // Llamada a la API real
     const response = await getSubscriptionByWorkspace(workspaceId);
 
-    if (response && response.status === "ACTIVE") {
-      // Obtener datos adicionales para mapear IDs a nombres
+    if (
+      response &&
+      (response.status === "ACTIVE" || response.status === "INACTIVE")
+    ) {
       // eslint-disable-next-line no-unused-vars
       const [plans, assistants, complements] = await Promise.all([
         fetchPlans(),
@@ -27,7 +30,6 @@ export const getSubscription = async (workspaceId) => {
         fetchComplements(),
       ]);
 
-      // Mapear plan
       const plan = plans.find((p) => p.id === response.planId);
 
       // Mapear asistentes: combinar gratuito + pagados
@@ -49,7 +51,6 @@ export const getSubscription = async (workspaceId) => {
       const mappedComplements = response.addons
         ? response.addons.map((addon) => {
             const complementRef = getComplementReference(addon.id);
-            // Buscar por apiId (ID numérico) en lugar de por id (referencia)
             const complement = complements.find((c) => c.apiId === addon.id);
 
             return {
@@ -68,66 +69,50 @@ export const getSubscription = async (workspaceId) => {
           })
         : [];
 
+      // Calcular fecha de expiración
+      const expirationDate = new Date(response.nextBillingAt);
+      const isExpired = expirationDate < new Date();
+
       return {
-        id: `sub_${response.workspaceId}`,
+        id: `${response.workspaceId}`,
         planId: response.planId,
         planName: plan?.name || response.planId,
         status: response.status,
-        assistants: allAssistantIds, // IDs de referencia (ventas, carritos, etc.)
+        assistants: allAssistantIds,
         complements: mappedComplements,
         monthlyAmount: plan?.priceUSD || 0,
-        nextPaymentDate: new Date(response.nextBillingAt).toLocaleDateString(
-          "es-ES",
-          {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }
-        ),
+        nextPaymentDate: expirationDate.toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        expirationDate: expirationDate,
+        isExpired,
         createdAt: new Date().toISOString().split("T")[0],
         workspaceId: response.workspaceId.toString(),
         workspace_name: `Workspace ${response.workspaceId}`,
         owner_email: response.email,
-        phone: "+57 300 000 0000", // No viene en la API, valor por defecto
+        phone: "+57 300 000 0000",
         flowNs: response.flowNs,
-        // Datos adicionales para el hook
         freeAssistantId: response.freeAssistantId,
         paidAssistantIds: response.paidAssistantIds || [],
         addons: response.addons || [],
       };
     }
 
-    return null; // No hay suscripción activa
+    return null;
   } catch (error) {
     console.error("Error fetching subscription:", error);
-    return null; // En caso de error, asumir que no hay suscripción
+    return null;
   }
 };
 
 /**
- * Actualiza una suscripción
- */
-export const updateSubscriptionData = async (workspaceId, updateData) => {
-  try {
-    // Ahora usa la API real a través de Axios centralizado
-    const response = await updateSubscription(workspaceId, updateData);
-
-    console.log("Subscription updated:", { workspaceId, updateData });
-    return { success: true, data: response };
-  } catch (error) {
-    console.error("Error updating subscription:", error);
-    throw error;
-  }
-};
-
-/**
- * Cancela una suscripción
+ * Cancela una suscripción usando el endpoint real
  */
 export const cancelSubscriptionData = async (workspaceId) => {
   try {
-    // Ahora usa la API real a través de Axios centralizado
     await cancelSubscription(workspaceId);
-
     console.log("Subscription canceled:", workspaceId);
     return { success: true };
   } catch (error) {
@@ -136,16 +121,22 @@ export const cancelSubscriptionData = async (workspaceId) => {
   }
 };
 
-/**
- * Obtiene todos los planes disponibles
- */
+// ... resto de funciones sin cambios
+export const updateSubscriptionData = async (workspaceId, updateData) => {
+  try {
+    const response = await updateSubscription(workspaceId, updateData);
+    console.log("Subscription updated:", { workspaceId, updateData });
+    return { success: true, data: response };
+  } catch (error) {
+    console.error("Error updating subscription:", error);
+    throw error;
+  }
+};
+
 export const getPlans = async () => {
   return await fetchPlans();
 };
 
-/**
- * Calcula los cambios en una suscripción usando el helper actualizado
- */
 export const calculateChanges = async (
   selectedAssistants,
   selectedPlan,
@@ -160,9 +151,6 @@ export const calculateChanges = async (
   );
 };
 
-/**
- * Verifica si hay cambios en la suscripción
- */
 export const hasChanges = (
   selectedAssistants,
   selectedPlan,
@@ -178,7 +166,6 @@ export const hasChanges = (
     JSON.stringify(selectedAssistants.sort()) !==
     JSON.stringify(currentAssistants.sort());
 
-  // Verificación detallada de cambios en complementos
   const complementsChanged = (() => {
     if (selectedComplements.length !== currentComplements.length) {
       return true;

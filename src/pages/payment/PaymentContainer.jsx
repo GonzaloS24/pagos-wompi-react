@@ -25,6 +25,7 @@ import RecurringPaymentButton from "../../components/payments/paymentsWay/Recurr
 import WalletPaymentButton from "../../components/payments/wallet/WalletPaymentButton";
 import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
 import SubscriptionManager from "../subscription/SubscriptionManager";
+import CanceledSubscriptionView from "./CanceledSubscriptionView";
 
 // Services
 import { validateForm } from "../../services/validation/formValidation";
@@ -53,7 +54,7 @@ const PaymentContainer = () => {
   const [freeAssistant, setFreeAssistant] = useState(null);
 
   // Estado para manejo de suscripciones
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(null);
+  const [subscription, setSubscription] = useState(null);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
 
   // Referencias
@@ -105,45 +106,28 @@ const PaymentContainer = () => {
     freeAssistant,
   });
 
-  // Verificar suscripción activa cuando se confirman los datos
+  // Verificar suscripción cuando se confirman los datos
   useEffect(() => {
     if (isDataConfirmed && formData.workspace_id) {
-      checkActiveSubscription(formData.workspace_id);
+      checkSubscription(formData.workspace_id);
     }
   }, [isDataConfirmed, formData.workspace_id]);
 
-  const checkActiveSubscription = async (workspaceId) => {
+  const checkSubscription = async (workspaceId) => {
     setCheckingSubscription(true);
     try {
-      console.log("Checking subscription for workspace:", workspaceId);
-
-      // Usar el servicio real que llama a la API
-      const subscription = await getSubscription(workspaceId);
-
-      console.log("Subscription result:", subscription);
-
-      // Si hay subscription y tiene status ACTIVE, mostrar vista de gestión
-      const hasSubscription = subscription && subscription.status === "ACTIVE";
-      setHasActiveSubscription(hasSubscription);
-
-      if (hasSubscription) {
-        console.log("Active subscription found, showing management view");
-      } else {
-        console.log("No active subscription found, showing purchase flow");
-      }
+      const subscriptionData = await getSubscription(workspaceId);
+      console.log('120  >>>>>>>>> ', subscriptionData);
+      setSubscription(subscriptionData);
     } catch (error) {
       console.error("Error checking subscription:", error);
-      setHasActiveSubscription(false);
+      setSubscription(null);
     } finally {
       setCheckingSubscription(false);
     }
   };
 
-  const handleSubscriptionCanceled = () => {
-    setHasActiveSubscription(false);
-  };
-
-  // Event handlers
+  // Handlers
   const handleSubmit = (e) => {
     e.preventDefault();
     const errors = validateForm(formData);
@@ -172,26 +156,19 @@ const PaymentContainer = () => {
 
         if (isCurrentlySelected) {
           const newSelection = prevSelected.filter((id) => id !== assistantId);
-
-          // Si era el asistente gratuito, actualizar el gratuito
           if (freeAssistant === assistantId) {
             if (newSelection.length > 0 && purchaseType === "plan") {
-              // El primer asistente restante se vuelve gratuito
               setFreeAssistant(newSelection[0]);
             } else {
               setFreeAssistant(null);
             }
           }
-
           return newSelection;
         } else {
           const newSelection = [...prevSelected, assistantId];
-
-          // Si es el primer asistente en un plan, se vuelve gratuito
           if (prevSelected.length === 0 && purchaseType === "plan") {
             setFreeAssistant(assistantId);
           }
-
           return newSelection;
         }
       });
@@ -217,7 +194,6 @@ const PaymentContainer = () => {
     handleRecurringChange(false);
     handleGatewayChange("wompi");
 
-    // Resetear el periodo si no se puede aplicar descuento anual
     if (!canApplyAnnualDiscount(type)) {
       setPaymentPeriod(PAYMENT_PERIODS.MONTHLY);
     }
@@ -227,7 +203,6 @@ const PaymentContainer = () => {
     }
 
     if (type === "plan") {
-      // Preseleccionar el asistente de ventas por WhatsApp por defecto
       const defaultAssistant = "ventas";
       setSelectedAssistants([defaultAssistant]);
       setFreeAssistant(defaultAssistant);
@@ -236,17 +211,13 @@ const PaymentContainer = () => {
         const plan = plans.find((p) => p.id === urlParams.plan_id);
         setSelectedPlan(plan);
       }
-    } else {
-      // Para compra solo de asistentes, limpiar selección
+    } else if (type === "assistants") {
       setSelectedAssistants([]);
       setFreeAssistant(null);
       setSelectedPlan(null);
     }
+    // Para type === "subscription" no hacemos nada, se maneja en CanceledSubscriptionView
   };
-
-  useEffect(() => {
-    resetFreeAssistant();
-  }, [resetFreeAssistant]);
 
   const handlePlanChange = (plan) => {
     setSelectedPlan(plan);
@@ -254,18 +225,15 @@ const PaymentContainer = () => {
     handleRecurringChange(false);
   };
 
-  // Handler para cambio de periodo
   const handlePeriodChange = (period) => {
     setPaymentPeriod(period);
     setShowWompiWidget(false);
 
-    // Si se cambia a anual, resetear pago recurrente ya que no son compatibles
     if (period === PAYMENT_PERIODS.ANNUAL && enableRecurring) {
       handleRecurringChange(false);
     }
   };
 
-  // Handlers para Wompi tradicional
   const handleWompiPaymentClick = () => {
     setShowWompiWidget(true);
   };
@@ -282,7 +250,6 @@ const PaymentContainer = () => {
     }
   };
 
-  // Handler para Wompi Recurring
   const handleWompiRecurringClick = async () => {
     try {
       const assistantsForCreditCard = await formatAssistantsForCreditCard(
@@ -292,7 +259,6 @@ const PaymentContainer = () => {
         selectedComplements
       );
 
-      // Navegar a la nueva página con datos completos usando IDs numéricos
       navigate("/recurring-payment", {
         state: {
           paymentCalculations,
@@ -308,13 +274,21 @@ const PaymentContainer = () => {
     }
   };
 
-  // Handlers para Wallet
   const handleWalletPaymentClick = () => {
     setShowWalletModal(true);
   };
 
   const handleWalletModalClose = () => {
     setShowWalletModal(false);
+  };
+
+  const handleReactivateSubscription = async () => {
+    await Swal.fire({
+      icon: "info",
+      title: "Funcionalidad Próximamente",
+      text: "La reactivación de suscripciones estará disponible muy pronto.",
+      confirmButtonColor: "#009ee3",
+    });
   };
 
   // Utility functions
@@ -325,7 +299,7 @@ const PaymentContainer = () => {
   };
 
   const shouldShowPayButton = () => {
-    if (!purchaseType) return false;
+    if (!purchaseType || purchaseType === "subscription") return false;
 
     if (purchaseType === "plan") {
       return selectedPlan !== null;
@@ -338,12 +312,10 @@ const PaymentContainer = () => {
     return false;
   };
 
-  // Verificar si el pago recurrente es compatible con plan anual
   const isRecurringCompatibleWithPeriod = () => {
     return paymentPeriod === PAYMENT_PERIODS.MONTHLY;
   };
 
-  // Determinar si es pago recurrente con Wompi
   const isWompiRecurringPayment = () => {
     return (
       selectedGateway === "wompi" &&
@@ -353,7 +325,6 @@ const PaymentContainer = () => {
     );
   };
 
-  // Determinar si es pago recurrente con PaymentsWay
   const isPaymentsWayRecurringPayment = () => {
     return (
       selectedGateway === "paymentsway" &&
@@ -367,7 +338,6 @@ const PaymentContainer = () => {
     resetRecurringIfNeeded();
   }, [resetRecurringIfNeeded]);
 
-  // Efecto para resetear pago recurrente si se selecciona plan anual
   useEffect(() => {
     if (paymentPeriod === PAYMENT_PERIODS.ANNUAL && enableRecurring) {
       handleRecurringChange(false);
@@ -375,28 +345,8 @@ const PaymentContainer = () => {
   }, [paymentPeriod, enableRecurring, handleRecurringChange]);
 
   useEffect(() => {
-    // Manejar mensaje de éxito si viene del estado de navegación
-    if (location.state?.successMessage && location.state?.subscriptionCreated) {
-      Swal.fire({
-        icon: "success",
-        title: "¡Suscripción Activa!",
-        html: `
-        <div style="text-align: center;">
-          <p style="margin-bottom: 1rem;">${location.state.successMessage}</p>
-          <div style="background: #e8f5e9; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-            <strong style="color: #2e7d32;">🎉 ¡Bienvenido a Chatea Pro!</strong>
-            <p style="margin: 0.5rem 0 0 0; color: #2e7d32;">Tu suscripción mensual está activa y lista para usar.</p>
-          </div>
-        </div>
-      `,
-        confirmButtonText: "Entendido",
-        confirmButtonColor: "#009ee3",
-        allowOutsideClick: false,
-      });
-
-      navigate("/", { replace: true });
-    }
-  }, [location.state, navigate]);
+    resetFreeAssistant();
+  }, [resetFreeAssistant]);
 
   if (loading) {
     return (
@@ -429,8 +379,8 @@ const PaymentContainer = () => {
                 Verificando tu suscripción...
               </p>
             </div>
-          ) : hasActiveSubscription ? (
-            // Mostrar panel de gestión de suscripción
+          ) : subscription?.status === "ACTIVE" ? (
+            // Mostrar panel de gestión de suscripción activa
             <>
               <figure className="mb-4 text-center">
                 <img
@@ -443,11 +393,13 @@ const PaymentContainer = () => {
 
               <SubscriptionManager
                 workspaceId={formData.workspace_id}
-                onSubscriptionCanceled={handleSubscriptionCanceled}
+                onSubscriptionCanceled={() =>
+                  setSubscription({ ...subscription, status: "INACTIVE" })
+                }
               />
             </>
           ) : (
-            // Mostrar flujo normal de compra
+            // Mostrar flujo normal de compra (incluye INACTIVE y null)
             <div>
               <figure className="mb-4 text-center">
                 <img
@@ -457,9 +409,21 @@ const PaymentContainer = () => {
                   style={{ maxWidth: "220px" }}
                 />
               </figure>
-              <PurchaseTypeSelector onSelect={handlePurchaseTypeChange} />
 
-              {purchaseType && (
+              <PurchaseTypeSelector
+                onSelect={handlePurchaseTypeChange}
+                inactiveSubscription={
+                  subscription?.status === "INACTIVE" ? subscription : null
+                }
+              />
+
+              {purchaseType === "subscription" && subscription ? (
+                // Vista de suscripción cancelada
+                <CanceledSubscriptionView
+                  subscription={subscription}
+                  onReactivate={handleReactivateSubscription}
+                />
+              ) : purchaseType && purchaseType !== "subscription" ? (
                 <div className="main-container" key="main-content">
                   <div className="plan-section">
                     {purchaseType === "plan" && (
@@ -532,20 +496,17 @@ const PaymentContainer = () => {
 
                         {/* Lógica de botones de pago */}
                         {isWompiRecurringPayment() ? (
-                          // Botón de Wompi Recurring
                           <WompiRecurringButton
                             onPaymentClick={handleWompiRecurringClick}
                             disabled={!shouldShowPayButton()}
                           />
                         ) : isPaymentsWayRecurringPayment() ? (
-                          // Botón de PaymentsWay Recurring
                           <RecurringPaymentButton
                             planId={selectedPlan.id}
                             enableRecurring={enableRecurring}
                             selectedAssistants={selectedAssistants}
                           />
                         ) : selectedGateway === "wompi" ? (
-                          // Wompi normal (widget)
                           <>
                             {!showWompiWidget && (
                               <WompiPaymentButton
@@ -566,13 +527,11 @@ const PaymentContainer = () => {
                             />
                           </>
                         ) : selectedGateway === "wallet" ? (
-                          // Wallet
                           <WalletPaymentButton
                             onPaymentClick={handleWalletPaymentClick}
                             disabled={!shouldShowPayButton()}
                           />
                         ) : (
-                          // PaymentsWay normal
                           <PaymentsWayForm
                             amount={paymentCalculations.priceInCOP}
                             orderDescription={
@@ -590,7 +549,7 @@ const PaymentContainer = () => {
                     )}
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>

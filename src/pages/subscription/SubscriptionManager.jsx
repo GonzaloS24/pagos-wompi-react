@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useState, useCallback } from "react";
+import { cancelSubscriptionData } from "../../services/subscriptionService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import SubscriptionHeader from "./components/SubscriptionHeader";
 import CurrentPlanSection from "./components/CurrentPlanSection";
@@ -10,6 +11,7 @@ import ChangesSummary from "./components/ChangesSummary";
 import PaymentView from "./components/PaymentView";
 import { useSubscription } from "./hooks/useSubscription";
 import "./styles/SubscriptionManager.css";
+import Swal from "sweetalert2";
 
 const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -29,7 +31,6 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     setSelectedPlan,
     setSelectedComplements,
     handleSaveChanges,
-    handleCancelSubscription,
   } = useSubscription(workspaceId, onSubscriptionCanceled);
 
   const handleAssistantChange = useCallback(
@@ -45,10 +46,8 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     [setSelectedAssistants]
   );
 
-  // Manejar cambios en complementos
   const handleComplementsChange = useCallback(
     (newComplements) => {
-      console.log("Cambio en complementos:", newComplements);
       setSelectedComplements(newComplements || []);
     },
     [setSelectedComplements]
@@ -75,6 +74,76 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
   const handleBackFromPayment = useCallback(() => {
     setShowPaymentForm(false);
   }, []);
+
+  // Cancelación real de suscripción
+  const handleCancelSubscription = useCallback(async () => {
+    if (!subscription) return;
+
+    const result = await Swal.fire({
+      icon: "warning",
+      title: "Cancelar Suscripción",
+      html: `
+        <div style="text-align: center;">
+          <p>¿Estás seguro de que quieres cancelar tu suscripción?</p>
+          <br>
+          <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <h6 style="color: #856404;">Los servicios estarán activos hasta:</h6>
+            <p style="color: #856404;"><strong>${subscription.nextPaymentDate}</strong></p>
+          </div>
+          <br>
+          <p><small>Esta acción no se puede deshacer.</small></p>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Sí, cancelar suscripción",
+      cancelButtonText: "No, mantener activa",
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#009ee3",
+      width: "500px",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // Llamada real al endpoint de cancelación
+        await cancelSubscriptionData(workspaceId);
+
+        // Mostrar alerta de confirmación
+        await Swal.fire({
+          icon: "success",
+          title: "Suscripción Cancelada",
+          html: `
+            <div style="text-align: center;">
+              <p><strong>Tu suscripción ha sido cancelada exitosamente.</strong></p>
+              <br>
+              <div style="background: #e8f5e9; padding: 15px; border-radius: 8px;">
+                <p style="color: #2e7d32; margin: 0;">
+                  <strong>📅 Servicios activos hasta: ${subscription.nextPaymentDate}</strong>
+                </p>
+                <p style="color: #2e7d32; margin: 10px 0 0 0;">
+                  Después de esta fecha, tu plan y asistentes se desactivarán automáticamente.
+                </p>
+              </div>
+            </div>
+          `,
+          confirmButtonText: "Entendido",
+          confirmButtonColor: "#009ee3",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+        });
+
+        // Notificar al componente padre
+        onSubscriptionCanceled?.();
+      } catch (error) {
+        console.error("Error canceling subscription:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo cancelar la suscripción. Por favor, intenta nuevamente o contacta soporte.",
+          confirmButtonColor: "#009ee3",
+        });
+      }
+    }
+  }, [workspaceId, subscription, onSubscriptionCanceled]);
 
   if (loading) {
     return <LoadingSpinner message="Cargando tu suscripción..." />;
@@ -114,7 +183,6 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
       <SubscriptionHeader />
 
       <div className="subscription-content">
-        {/* Columna Izquierda - Configuración Actual y Modificaciones */}
         <div className="subscription-left">
           <PlanSelector
             plans={plans}
@@ -136,7 +204,6 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
           />
         </div>
 
-        {/* Columna Derecha - Resumen de Cambios */}
         <div className="subscription-right">
           <CurrentPlanSection
             subscription={subscription}
