@@ -20,7 +20,8 @@ export const getSubscription = async (workspaceId) => {
 
     if (response && response.status === "ACTIVE") {
       // Obtener datos adicionales para mapear IDs a nombres
-      const [plans, complements] = await Promise.all([
+      // eslint-disable-next-line no-unused-vars
+      const [plans, assistants, complements] = await Promise.all([
         fetchPlans(),
         fetchAssistants(),
         fetchComplements(),
@@ -48,7 +49,8 @@ export const getSubscription = async (workspaceId) => {
       const mappedComplements = response.addons
         ? response.addons.map((addon) => {
             const complementRef = getComplementReference(addon.id);
-            const complement = complements.find((c) => c.id === complementRef);
+            // Buscar por apiId (ID numérico) en lugar de por id (referencia)
+            const complement = complements.find((c) => c.apiId === addon.id);
 
             return {
               id: complementRef,

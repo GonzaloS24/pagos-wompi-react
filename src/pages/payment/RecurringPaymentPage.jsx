@@ -3,7 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Container, Row, Col } from "react-bootstrap";
 import chateaLogo from "../../assets/chatea.png";
 import CreditCardForm from "../../components/payments/wompi/CreditCardForm";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { fetchAssistants, fetchComplements } from "../../services/dataService";
+import { createSubscription } from "../../services/newApi/subscriptions";
 import Swal from "sweetalert2";
 import "../../styles/components/RecurringPaymentPage.css";
 
@@ -21,6 +23,7 @@ const RecurringPaymentPage = () => {
     selectedPlan,
     selectedAssistants, // IDs numéricos
     selectedComplements, // IDs numéricos con estructura de API
+    purchaseType,
   } = location.state || {};
 
   useEffect(() => {
@@ -77,20 +80,29 @@ const RecurringPaymentPage = () => {
           ? selectedAssistants
           : [];
 
+      // Procesar complementos para que todos tengan botFlowNs
+      const processedComplements =
+        selectedComplements?.map((complement) => ({
+          id: complement.id,
+          quantity: complement.quantity || 1,
+          botFlowNs:
+            complement.bot_flow_ns || complement.selectedBot?.flow_ns || "", // Siempre string
+        })) || [];
+
       // Crear el JSON con la estructura requerida usando IDs numéricos
-      const paymentData = {
+      const subscriptionData = {
         workspace_id: parseInt(formData.workspace_id) || 0,
-        phone: formData.phone_number || "",
-        plan_id: selectedPlan?.id || null,
         workspace_name: formData.workspace_name || "",
         owner_email: formData.owner_email || "",
+        phone: formData.phone_number || "",
+        assistants_only: isAssistantsOnly,
+        plan_id: selectedPlan?.id || null,
         free_assistant_id: freeAssistantId,
         paid_assistant_ids: paidAssistantIds,
-        assistants_only: !selectedPlan,
-        addons: selectedComplements || [],
+        addons: processedComplements,
         card_details: {
           exp_date: {
-            year: parseInt(cardData.exp_year),
+            year: parseInt(cardData.exp_year.toString().slice(-2)),
             month: parseInt(cardData.exp_month),
           },
           card_holder: cardData.card_holder,
@@ -99,32 +111,112 @@ const RecurringPaymentPage = () => {
         },
       };
 
-      // Mostrar el JSON estructurado
+      console.log("Enviando datos al backend:", subscriptionData);
+
+      // Llamada real a la API
+      const response = await createSubscription(subscriptionData);
+
+      console.log("Respuesta del backend:", response);
+
+      // Mostrar mensaje de éxito con la respuesta del backend
       await Swal.fire({
-        icon: "info",
-        title: "Datos del Pago Recurrente",
-        html: `
-          <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 12px; text-align: left;">
-${JSON.stringify(paymentData, null, 2)}
-            </pre>
-          </div>
-        `,
-        confirmButtonText: "Aceptar",
+        icon: "success",
+        title: "¡Suscripción Creada Exitosamente!",
+        text: response || "Tu suscripción ha sido procesada correctamente.",
+        confirmButtonText: "Continuar",
         confirmButtonColor: "#009ee3",
-        width: "600px",
-        customClass: {
-          htmlContainer: "text-left",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+
+      // Redirigir al usuario a la página principal con un mensaje de éxito
+      navigate("/", {
+        replace: true,
+        state: {
+          successMessage:
+            "Tu suscripción ha sido creada exitosamente. Recibirás un email de confirmación en breve.",
+          subscriptionCreated: true,
         },
       });
     } catch (error) {
-      console.error("Error processing payment:", error);
+      console.error("Error creating subscription:", error);
+
+      // Función para procesar errores de validación
+      const getErrorMessage = (error) => {
+        // Si hay errores de validación específicos
+        if (error.response?.data && Array.isArray(error.response.data)) {
+          const validationErrors = error.response.data;
+
+          // Mapear errores comunes a mensajes amigables
+          const errorMessages = validationErrors.map((err) => {
+            const fieldPath = err.path?.join(".");
+
+            switch (fieldPath) {
+              case "cardDetails.expDate.year":
+              case "card_details.exp_date.year":
+                return "El año de vencimiento de la tarjeta no es válido";
+              case "cardDetails.expDate.month":
+              case "card_details.exp_date.month":
+                return "El mes de vencimiento de la tarjeta no es válido";
+              case "cardDetails.cardNumber":
+              case "card_details.card_number":
+                return "El número de tarjeta no es válido";
+              case "cardDetails.cvv":
+              case "card_details.cvv":
+                return "El código CVV no es válido";
+              case "cardDetails.cardHolder":
+              case "card_details.card_holder":
+                return "El nombre del titular no es válido";
+              case "workspace_id":
+                return "El ID del workspace no es válido";
+              case "onwer_email":
+                return "El email del propietario no es válido";
+              default:
+                // Manejar errores de addons/complementos
+                if (
+                  fieldPath?.includes("addons") &&
+                  fieldPath?.includes("botFlowNs")
+                ) {
+                  return "Hay un problema con la configuración de los complementos";
+                }
+                if (fieldPath?.includes("addons")) {
+                  return "Los datos de complementos no son válidos";
+                }
+                return err.message || "Error en los datos enviados";
+            }
+          });
+
+          return errorMessages.join("\n");
+        }
+
+        // Otros tipos de errores
+        if (error.response?.data?.message) {
+          return error.response.data.message;
+        }
+
+        if (error.message) {
+          return error.message;
+        }
+
+        return "Hubo un problema al crear tu suscripción. Por favor intenta nuevamente.";
+      };
+
+      const errorMessage = getErrorMessage(error);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Error al Crear Suscripción",
+        text: errorMessage,
+        confirmButtonText: "Reintentar",
+        confirmButtonColor: "#009ee3",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
+    if (loading) return; // Prevenir cancelación durante procesamiento
     navigate(-1);
   };
 
@@ -144,8 +236,15 @@ ${JSON.stringify(paymentData, null, 2)}
                   <div className="order-summary">
                     <div className="order-details">
                       <div className="detail-section">
-                        <img className="mb-3" src={chateaLogo} width={150} />
-                        <h5 className="detail-title">Detalles de la compra</h5>
+                        <img
+                          className="mb-3"
+                          src={chateaLogo}
+                          width={150}
+                          alt="Chatea Logo"
+                        />
+                        <h5 className="detail-title">
+                          Detalles de la suscripción
+                        </h5>
 
                         {selectedPlan && (
                           <div className="detail-item">
@@ -155,6 +254,21 @@ ${JSON.stringify(paymentData, null, 2)}
                             </span>
                           </div>
                         )}
+
+                        <div className="detail-item">
+                          <span className="detail-label">Workspace:</span>
+                          <span className="detail-value">
+                            {formData.workspace_name} (ID:{" "}
+                            {formData.workspace_id})
+                          </span>
+                        </div>
+
+                        <div className="detail-item">
+                          <span className="detail-label">Propietario:</span>
+                          <span className="detail-value">
+                            {formData.owner_name}
+                          </span>
+                        </div>
 
                         {selectedAssistants &&
                           selectedAssistants.length > 0 && (
@@ -171,6 +285,12 @@ ${JSON.stringify(paymentData, null, 2)}
                                 >
                                   <span className="detail-value">
                                     {getAssistantNameById(assistantId)}
+                                    {index === 0 &&
+                                      !purchaseType === "assistants" && (
+                                        <span className="badge bg-success ms-2">
+                                          Gratis
+                                        </span>
+                                      )}
                                   </span>
                                 </div>
                               ))}
@@ -263,7 +383,21 @@ ${JSON.stringify(paymentData, null, 2)}
                       </div>
                     </div>
 
-                    <div className="payment-form">
+                    {loading && (
+                      <div className="processing-overlay">
+                        <LoadingSpinner
+                          loading={true}
+                          message="Procesando tu suscripción..."
+                          size={50}
+                        />
+                      </div>
+                    )}
+
+                    <div
+                      className={`payment-form ${
+                        loading ? "form-disabled" : ""
+                      }`}
+                    >
                       <CreditCardForm
                         onSubmit={handleCardSubmit}
                         loading={loading}
@@ -276,6 +410,7 @@ ${JSON.stringify(paymentData, null, 2)}
                         <i className="bx bx-info-circle"></i>
                         <span>
                           Puedes cancelar tu suscripción en cualquier momento
+                          desde tu panel de control
                         </span>
                       </div>
                     </div>

@@ -39,6 +39,7 @@ import { canApplyAnnualDiscount } from "../../utils/discounts";
 // Styles
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/components/WompiPayment.css";
+import Swal from "sweetalert2";
 
 const PaymentContainer = () => {
   const navigate = useNavigate();
@@ -372,6 +373,30 @@ const PaymentContainer = () => {
       handleRecurringChange(false);
     }
   }, [paymentPeriod, enableRecurring, handleRecurringChange]);
+
+  useEffect(() => {
+    // Manejar mensaje de éxito si viene del estado de navegación
+    if (location.state?.successMessage && location.state?.subscriptionCreated) {
+      Swal.fire({
+        icon: "success",
+        title: "¡Suscripción Activa!",
+        html: `
+        <div style="text-align: center;">
+          <p style="margin-bottom: 1rem;">${location.state.successMessage}</p>
+          <div style="background: #e8f5e9; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+            <strong style="color: #2e7d32;">🎉 ¡Bienvenido a Chatea Pro!</strong>
+            <p style="margin: 0.5rem 0 0 0; color: #2e7d32;">Tu suscripción mensual está activa y lista para usar.</p>
+          </div>
+        </div>
+      `,
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#009ee3",
+        allowOutsideClick: false,
+      });
+
+      navigate("/", { replace: true });
+    }
+  }, [location.state, navigate]);
 
   if (loading) {
     return (
