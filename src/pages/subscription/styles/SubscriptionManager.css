@@ -33,7 +33,7 @@
 .current-plan-section {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid rgba(0, 159, 227, 0.253);
 }
 
 .current-plan-info {
@@ -82,8 +82,8 @@
 /* Selector de Plan */
 .plan-selector-section {
   margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 159, 227, 0.52);
 }
 
 .plan-selector-section h6 {

@@ -1,8 +1,8 @@
+/* eslint-disable no-constant-binary-expression */
 import { useState, useEffect, useCallback } from "react";
+import { fetchUSDtoCOPRate } from "../../../services/api/exchangeRateApi";
 import {
   getSubscription,
-  updateSubscriptionData,
-  cancelSubscriptionData,
   getPlans,
 } from "../../../services/subscriptionService";
 import { calculateChanges } from "../utils/subscriptionHelpers";
@@ -22,13 +22,15 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
   const [selectedComplements, setSelectedComplements] = useState([]);
   const [changesSummary, setChangesSummary] = useState(null);
   const [calculatingChanges, setCalculatingChanges] = useState(false);
+  const [usdToCopRate, setUsdToCopRate] = useState(4200);
 
   const fetchSubscriptionData = useCallback(async () => {
     setLoading(true);
     try {
-      const [subscriptionData, plansData] = await Promise.all([
+      const [subscriptionData, plansData, exchangeRate] = await Promise.all([
         getSubscription(workspaceId),
         getPlans(),
+        fetchUSDtoCOPRate(),
       ]);
 
       console.log("Subscription data received:", subscriptionData);
@@ -36,26 +38,24 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
 
       setSubscription(subscriptionData);
       setPlans(plansData);
+      setUsdToCopRate(exchangeRate || 4200);
 
       if (subscriptionData) {
-        // ESTABLECER DATOS PREDETERMINADOS DESDE LA API
         console.log("Setting default data from API:");
         console.log("- Assistants:", subscriptionData.assistants);
         console.log("- Plan ID:", subscriptionData.planId);
         console.log("- Complements:", subscriptionData.complements);
 
-        // Establecer asistentes predeterminados (exactamente los que vienen de la API)
-        setSelectedAssistants(subscriptionData.assistants || []);
+        // Establecer datos predeterminados desde la API
+        setSelectedAssistants([...subscriptionData.assistants] || []);
 
-        // Establecer plan predeterminado (el que viene de la API)
         const currentPlan = plansData.find(
           (p) => p.id === subscriptionData.planId
         );
         setSelectedPlan(currentPlan || null);
         console.log("Selected plan set to:", currentPlan);
 
-        // Establecer complementos predeterminados (exactamente los que vienen de la API)
-        setSelectedComplements(subscriptionData.complements || []);
+        setSelectedComplements([...subscriptionData.complements] || []);
       }
     } catch (error) {
       console.error("Error fetching subscription:", error);
@@ -208,9 +208,17 @@ ${JSON.stringify(originalSubscriptionData, null, 2)}
               <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; text-align: left; border-left: 4px solid #28a745;">
 ${JSON.stringify(updatedSubscriptionData, null, 2)}
               </pre>
+
+              ${changesSummary?.totalAmount > 0 ? `
+                <h6 style="color: #009ee3; margin-bottom: 10px;">💰 Resumen de Costos:</h6>
+                <div style="background: #edf4ff; padding: 10px; border-radius: 5px; border-left: 4px solid #009ee3;">
+                  <p><strong>Total a pagar:</strong> $${changesSummary.totalAmount.toFixed(2)} USD</p>
+                  <p><strong>En pesos colombianos:</strong> $${Math.round(changesSummary.totalAmount * usdToCopRate).toLocaleString()} COP</p>
+                </div>
+              ` : ''}
             </div>
           `,
-          confirmButtonText: "Aceptar",
+          confirmButtonText: "Continuar",
           confirmButtonColor: "#009ee3",
           width: "700px",
           customClass: {
@@ -218,16 +226,25 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
           },
         });
 
-        // Llamada a la API
-        await updateSubscriptionData(workspaceId, {
-          original: originalSubscriptionData,
-          updated: updatedSubscriptionData,
-        });
+        // COMENTAR ESTA LÍNEA PARA NO HACER LLAMADAS REALES A LA API
+        // await updateSubscriptionData(workspaceId, {
+        //   original: originalSubscriptionData,
+        //   updated: updatedSubscriptionData,
+        // });
+
+        console.log("=== DATOS QUE SE ENVIARÍAN AL BACKEND ===");
+        console.log("Original:", originalSubscriptionData);
+        console.log("Updated:", updatedSubscriptionData);
+        console.log("Payment Data:", paymentData);
+        console.log("Changes Summary:", changesSummary);
+        console.log("============================================");
 
         Swal.fire({
           icon: "success",
-          title: "¡Suscripción Actualizada!",
-          text: "Los cambios han sido aplicados exitosamente",
+          title: "¡Cambios Aplicados!",
+          text: paymentData 
+            ? `Pago de $${changesSummary.totalAmount.toFixed(2)} USD procesado correctamente`
+            : "Los cambios han sido aplicados exitosamente",
           confirmButtonColor: "#009ee3",
         });
 
@@ -253,6 +270,8 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
       selectedComplements,
       selectedPlan,
       fetchSubscriptionData,
+      changesSummary,
+      usdToCopRate,
     ]
   );
 
@@ -274,7 +293,12 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
     if (result.isConfirmed) {
       setModifying(true);
       try {
-        await cancelSubscriptionData(workspaceId);
+        // COMENTAR ESTA LÍNEA PARA NO HACER LLAMADAS REALES A LA API
+        // await cancelSubscriptionData(workspaceId);
+
+        console.log("=== CANCELACIÓN DE SUSCRIPCIÓN ===");
+        console.log("Workspace ID:", workspaceId);
+        console.log("===================================");
 
         Swal.fire({
           icon: "info",
@@ -308,6 +332,7 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
     selectedComplements,
     changesSummary,
     calculatingChanges,
+    usdToCopRate,
     setSelectedAssistants,
     setSelectedPlan,
     setSelectedComplements,

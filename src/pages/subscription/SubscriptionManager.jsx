@@ -24,6 +24,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     selectedComplements,
     changesSummary,
     calculatingChanges,
+    usdToCopRate,
     setSelectedAssistants,
     setSelectedPlan,
     setSelectedComplements,
@@ -47,6 +48,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
   // Manejar cambios en complementos
   const handleComplementsChange = useCallback(
     (newComplements) => {
+      console.log("Cambio en complementos:", newComplements);
       setSelectedComplements(newComplements || []);
     },
     [setSelectedComplements]
@@ -102,6 +104,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
         onBack={handleBackFromPayment}
         onSubmit={handleCardSubmit}
         modifying={modifying}
+        usdToCopRate={usdToCopRate}
       />
     );
   }
@@ -125,8 +128,6 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             onAssistantChange={handleAssistantChange}
           />
 
-          <br />
-
           <ComplementsSection
             subscription={subscription}
             selectedComplements={selectedComplements}
@@ -142,6 +143,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             onCancelSubscription={handleCancelSubscription}
             modifying={modifying}
           />
+
           <ChangesSummary
             subscription={subscription}
             selectedAssistants={selectedAssistants}
@@ -151,6 +153,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
             calculatingChanges={calculatingChanges}
             onProceedToPayment={handleProceedToPayment}
             modifying={modifying}
+            usdToCopRate={usdToCopRate}
           />
         </div>
       </div>

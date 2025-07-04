@@ -1,7 +1,12 @@
 /* eslint-disable react/prop-types */
 import CreditCardForm from "../../../components/payments/wompi/CreditCardForm";
 
-const PaymentView = ({ changesSummary, onBack, onSubmit, modifying }) => {
+const PaymentView = ({ changesSummary, onBack, onSubmit, modifying, usdToCopRate = 4200 }) => {
+  // Calcular total en COP
+  const totalCOP = changesSummary?.totalAmount 
+    ? Math.round(changesSummary.totalAmount * usdToCopRate)
+    : 0;
+
   return (
     <div className="subscription-payment">
       <div className="payment-header">
@@ -21,13 +26,29 @@ const PaymentView = ({ changesSummary, onBack, onSubmit, modifying }) => {
                 <span>${item.amount.toFixed(2)} USD</span>
               </div>
             ))}
+            
             <div className="summary-total">
               <span>
-                <strong>Total a pagar:</strong>
+                <strong>Total en dólares:</strong>
               </span>
               <span>
                 <strong>${changesSummary?.totalAmount?.toFixed(2)} USD</strong>
               </span>
+            </div>
+
+            <div className="summary-total">
+              <span>
+                <strong>Total en pesos colombianos:</strong>
+              </span>
+              <span>
+                <strong>${totalCOP.toLocaleString("es-CO")} COP</strong>
+              </span>
+            </div>
+
+            <div className="summary-info">
+              <small className="text-muted">
+                * Este pago será procesado una sola vez
+              </small>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import {
   fetchAssistants,
   fetchComplements,
 } from "../../../services/dataService";
+import { PRICING } from "../../../utils/constants";
 
 export const simulateCalculateChanges = async ({
   assistantsToAdd,
@@ -11,98 +12,94 @@ export const simulateCalculateChanges = async ({
   complementsToRemove,
   complementsToModify,
   planChange,
-  currentPlan,
 }) => {
   const items = [];
   let totalAmount = 0;
 
   // Obtener datos dinámicos de la API
-  const [plans, assistants] = await Promise.all([
+  // eslint-disable-next-line no-unused-vars
+  const [plans, assistants, complements] = await Promise.all([
     fetchPlans(),
     fetchAssistants(),
     fetchComplements(),
   ]);
 
-  // Cambio de plan
+  // Cambio de plan - SIEMPRE COBRAMOS EL PRECIO COMPLETO DEL NUEVO PLAN
   if (planChange) {
-    const currentPlanData = plans.find((p) => p.id === currentPlan);
     const newPlanData = plans.find((p) => p.id === planChange.id);
 
-    if (currentPlanData && newPlanData) {
-      const priceDiff = newPlanData.priceUSD - currentPlanData.priceUSD;
-
-      if (priceDiff > 0) {
-        // Upgrade
-        items.push({
-          type: "upgrade",
-          description: `Upgrade a ${newPlanData.name}`,
-          amount: priceDiff,
-        });
-        totalAmount += priceDiff;
-      } else if (priceDiff < 0) {
-        // Downgrade
-        items.push({
-          type: "downgrade",
-          description: `Downgrade a ${newPlanData.name}`,
-          amount: 0,
-        });
-      }
+    if (newPlanData) {
+      // Siempre cobramos el precio completo del nuevo plan
+      items.push({
+        type: "upgrade",
+        description: `Upgrade a ${newPlanData.name}`,
+        amount: newPlanData.priceUSD,
+      });
+      totalAmount += newPlanData.priceUSD;
     }
   }
 
-  // Asistentes a agregar
+  // Asistentes a agregar - $20 cada uno
   for (const assistantId of assistantsToAdd) {
+    // eslint-disable-next-line no-unused-vars
     const assistant = assistants.find((a) => a.id === assistantId);
-    const assistantPrice = assistant?.cost || 20; // Usar precio de la API o fallback
+    const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
 
     items.push({
       type: "add",
-      description: `Agregar ${assistant?.label || assistantId}`,
+      description: `Agregar asistente: ${assistantId}`,
       amount: assistantPrice,
     });
     totalAmount += assistantPrice;
   }
 
-  // Asistentes a remover
+  // Asistentes a remover - Sin costo
   for (const assistantId of assistantsToRemove) {
+    // eslint-disable-next-line no-unused-vars
     const assistant = assistants.find((a) => a.id === assistantId);
 
     items.push({
       type: "remove",
-      description: `Remover ${assistant?.label || assistantId}`,
+      description: `Remover asistente: ${assistantId}`,
       amount: 0,
     });
   }
 
   // Complementos a agregar (completamente nuevos)
   complementsToAdd.forEach((complement) => {
-    const complementPrice = complement.totalPrice || complement.priceUSD || 0;
-    let description = `Agregar ${complement.name}`;
+    // Determinar precio según tipo de complemento
+    let complementPrice = 10; // Precio por defecto para bot y member
+    if (complement.id === "webhooks") {
+      complementPrice = 20; // Webhooks cuestan $20
+    }
+
+    const totalPrice = complementPrice * (complement.quantity || 1);
+    let description = `Agregar ${complement.id}`;
 
     if (complement.selectedBot) {
-      description += ` para ${complement.selectedBot.name}`;
+      description += ` (bot: ${complement.selectedBot.flow_ns})`;
     }
     if (complement.quantity > 1) {
-      description += ` (${complement.quantity} unidades)`;
+      description += ` x${complement.quantity}`;
     }
 
     items.push({
       type: "add",
       description,
-      amount: complementPrice,
+      amount: totalPrice,
     });
-    totalAmount += complementPrice;
+    totalAmount += totalPrice;
   });
 
-  // Complementos a remover (completamente eliminados)
+  // Complementos a remover (completamente eliminados) - Sin costo
   complementsToRemove.forEach((complement) => {
-    let description = `Remover ${complement.name}`;
+    let description = `Remover ${complement.id}`;
 
     if (complement.selectedBot) {
-      description += ` de ${complement.selectedBot.name}`;
+      description += ` (bot: ${complement.selectedBot.flow_ns})`;
     }
     if (complement.quantity > 1) {
-      description += ` (${complement.quantity} unidades)`;
+      description += ` x${complement.quantity}`;
     }
 
     items.push({
@@ -118,16 +115,19 @@ export const simulateCalculateChanges = async ({
     const quantityDiff = newQuantity - originalQuantity;
 
     if (quantityDiff > 0) {
-      // Aumento de cantidad
-      const additionalPrice = (complement.priceUSD || 0) * quantityDiff;
-      let description = `Aumentar ${complement.name}`;
+      // Aumento de cantidad - cobrar solo las unidades adicionales
+      let complementPrice = 10;
+      if (complement.id === "webhooks") {
+        complementPrice = 20;
+      }
+
+      const additionalPrice = complementPrice * quantityDiff;
+      let description = `Aumentar ${complement.id}`;
 
       if (complement.selectedBot) {
-        description += ` para ${complement.selectedBot.name}`;
+        description += ` (bot: ${complement.selectedBot.flow_ns})`;
       }
-      description += ` (${quantityDiff} unidad${
-        quantityDiff > 1 ? "es" : ""
-      } adicional${quantityDiff > 1 ? "es" : ""})`;
+      description += ` +${quantityDiff}`;
 
       items.push({
         type: "add",
@@ -136,16 +136,14 @@ export const simulateCalculateChanges = async ({
       });
       totalAmount += additionalPrice;
     } else if (quantityDiff < 0) {
-      // Disminución de cantidad
+      // Disminución de cantidad - sin costo
       const removedQuantity = Math.abs(quantityDiff);
-      let description = `Disminuir ${complement.name}`;
+      let description = `Disminuir ${complement.id}`;
 
       if (complement.selectedBot) {
-        description += ` de ${complement.selectedBot.name}`;
+        description += ` (bot: ${complement.selectedBot.flow_ns})`;
       }
-      description += ` (${removedQuantity} unidad${
-        removedQuantity > 1 ? "es" : ""
-      } menos)`;
+      description += ` -${removedQuantity}`;
 
       items.push({
         type: "remove",

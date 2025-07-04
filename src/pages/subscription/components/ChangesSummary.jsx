@@ -11,6 +11,7 @@ const ChangesSummary = ({
   changesSummary,
   onProceedToPayment,
   modifying,
+  usdToCopRate = 4200, // Rate de fallback
 }) => {
   const hasAnyChanges = hasChanges(
     selectedAssistants,
@@ -18,6 +19,11 @@ const ChangesSummary = ({
     selectedComplements,
     subscription
   );
+
+  // Calcular total en COP
+  const totalCOP = changesSummary?.totalAmount
+    ? Math.round(changesSummary.totalAmount * usdToCopRate)
+    : 0;
 
   return (
     <div className="changes-summary">
@@ -43,16 +49,35 @@ const ChangesSummary = ({
                 </span>
                 <span>{item.description}</span>
               </div>
-              <div className="change-amount">
-                {item.amount > 0 ? `$0.00` : "$0.00"}
-              </div>
+              <div className="change-amount">${item.amount.toFixed(2)} USD</div>
             </div>
           ))}
 
+          <hr
+            style={{
+              margin: "0.75rem 0",
+              borderColor: "rgba(0, 158, 227)",
+            }}
+          />
+
           {changesSummary?.totalAmount > 0 && (
-            <div className="total-amount">
-              <p>Total a pagar: $0.00 USD</p>
-            </div>
+            <>
+              <div className="total-amount">
+                <div className="d-flex justify-content-between align-items-center mb-0">
+                  <p>Total en dólares:</p>
+                  <span className="fw-bold" style={{ color: "#009ee3" }}>
+                    ${changesSummary.totalAmount.toFixed(2)} USD
+                  </span>
+                </div>
+                <div className="d-flex justify-content-between align-items-center">
+                  <p>Total en pesos colombianos:</p>
+
+                  <span className="fw-bold" style={{ color: "#009ee3" }}>
+                    ${totalCOP.toLocaleString("es-CO")} COP
+                  </span>
+                </div>
+              </div>
+            </>
           )}
 
           <button
@@ -64,6 +89,15 @@ const ChangesSummary = ({
               ? "Proceder al Pago"
               : "Aplicar Cambios"}
           </button>
+
+          {changesSummary?.totalAmount > 0 && (
+            <div className="changes-notice">
+              <span>
+                Se procesará el pago adicional de $
+                {changesSummary.totalAmount.toFixed(2)} USD
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

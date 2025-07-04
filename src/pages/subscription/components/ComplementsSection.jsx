@@ -14,17 +14,31 @@ const ComplementsSection = memo(
     const [loadingBots, setLoadingBots] = useState(false);
     const [complements, setComplements] = useState([]);
     const [loadingComplements, setLoadingComplements] = useState(true);
+    const [isInitialized, setIsInitialized] = useState(false);
 
-    // Inicializar los complementos seleccionados con los de la suscripción actual
+    // Reset de inicialización cuando cambia la suscripción
     useEffect(() => {
-      if (
-        subscription &&
-        subscription.complements &&
-        selectedComplements.length === 0
-      ) {
-        onComplementsChange(subscription.complements);
+      if (subscription) {
+        setIsInitialized(false);
       }
-    }, [subscription, selectedComplements.length, onComplementsChange]);
+    }, [subscription?.id]);
+
+    // Inicializar los complementos seleccionados con los de la suscripción actual SOLO UNA VEZ
+    useEffect(() => {
+      if (subscription && subscription.complements && !isInitialized) {
+        console.log(
+          "Inicializando complementos desde suscripción:",
+          subscription.complements
+        );
+        onComplementsChange([...subscription.complements]); // Copia profunda
+        setIsInitialized(true);
+      } else if (subscription && !subscription.complements && !isInitialized) {
+        // Si no hay complementos en la suscripción, inicializar como array vacío
+        console.log("Inicializando complementos como array vacío");
+        onComplementsChange([]);
+        setIsInitialized(true);
+      }
+    }, [subscription, onComplementsChange, isInitialized]);
 
     // Cargar complementos disponibles desde la API
     useEffect(() => {
@@ -265,8 +279,158 @@ const ComplementsSection = memo(
 
     return (
       <div className="complements-section p-2 bg-white rounded mb-4">
+        {/* Lista de complementos seleccionados */}
+        {Object.keys(groupedComplements).length > 0 && (
+          <div className="selected-complements mt-4">
+            <h5 style={{color: "#009ee3"}} className="mb-4">Complementos Actuales</h5>
+            {Object.entries(groupedComplements).map(
+              ([complementId, complements]) => (
+                <div key={complementId} className="complement-group mb-3">
+                  {complements.map((complement, index) => {
+                    // Determinar el estado del complemento
+                    const originalComplement = subscription.complements?.find(
+                      (currentComp) =>
+                        currentComp.id === complement.id &&
+                        (complement.selectedBot
+                          ? currentComp.selectedBot?.flow_ns ===
+                            complement.selectedBot?.flow_ns
+                          : !currentComp.selectedBot)
+                    );
+
+                    const isFromCurrentSubscription =
+                      Boolean(originalComplement);
+                    const originalQuantity = originalComplement?.quantity || 0;
+                    const currentQuantity = complement.quantity;
+
+                    // Determinar el tipo de cambio
+                    let changeType = "nuevo";
+                    let changeDescription = "";
+
+                    if (isFromCurrentSubscription) {
+                      if (currentQuantity > originalQuantity) {
+                        changeType = "aumento";
+                        changeDescription = `+${
+                          currentQuantity - originalQuantity
+                        }`;
+                      } else if (currentQuantity < originalQuantity) {
+                        changeType = "disminucion";
+                        changeDescription = `-${
+                          originalQuantity - currentQuantity
+                        }`;
+                      } else {
+                        changeType = "sin-cambios";
+                        changeDescription = "Sin cambios";
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={`${complement.id}-${
+                          complement.selectedBot?.flow_ns || "default"
+                        }-${index}`}
+                        className="selected-complement-item mb-2 p-3"
+                        style={{
+                          background: isFromCurrentSubscription
+                            ? "#edf4ff"
+                            : "#d4edda",
+                          border: `1px solid ${
+                            isFromCurrentSubscription
+                              ? "rgba(0, 158, 227, 0.2)"
+                              : "rgba(40, 167, 69, 0.2)"
+                          }`,
+                          borderRadius: "8px",
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <span className="fw-medium">{complement.name}</span>
+                            {complement.selectedBot && (
+                              <small className="d-block text-muted">
+                                {complement.selectedBot.name}
+                              </small>
+                            )}
+                            <small className="d-block text-muted">
+                              ${complement.priceUSD} USD
+                            </small>
+                            {isFromCurrentSubscription && (
+                              <small className="d-block text-muted">
+                                Original: {originalQuantity} → Actual:{" "}
+                                {currentQuantity}{" "}
+                                {changeDescription && `(${changeDescription})`}
+                              </small>
+                            )}
+                            <span
+                              className="badge mt-1"
+                              style={{
+                                backgroundColor:
+                                  changeType === "nuevo"
+                                    ? "#28a745"
+                                    : changeType === "aumento"
+                                    ? "#ffc107"
+                                    : changeType === "disminucion"
+                                    ? "#dc3545"
+                                    : "#6c757d",
+                                color:
+                                  changeType === "aumento" ? "white" : "white",
+                              }}
+                            >
+                              {changeType === "nuevo"
+                                ? "Nuevo"
+                                : changeType === "aumento"
+                                ? `+${currentQuantity - originalQuantity}`
+                                : changeType === "disminucion"
+                                ? `-${originalQuantity - currentQuantity}`
+                                : "Sin cambios"}
+                            </span>
+                          </div>
+
+                          <div className="d-flex align-items-center gap-2">
+                            <div className="quantity-controls d-flex align-items-center justify-content-center gap-3">
+                              <button
+                                className="quantity-btn"
+                                onClick={() =>
+                                  updateComplementQuantity(
+                                    complement.id,
+                                    -1,
+                                    complement.selectedBot?.flow_ns
+                                  )
+                                }
+                                aria-label="Disminuir cantidad"
+                              >
+                                -
+                              </button>
+                              <span className="quantity-input--static">
+                                {complement.quantity}
+                              </span>
+                              <button
+                                className="quantity-btn"
+                                onClick={() =>
+                                  updateComplementQuantity(
+                                    complement.id,
+                                    1,
+                                    complement.selectedBot?.flow_ns
+                                  )
+                                }
+                                aria-label="Aumentar cantidad"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            )}
+          </div>
+        )}
+
+        <br />
+
         <h5 style={{ color: "#009ee3" }} className="mb-3">
-          Gestionar Complementos
+          Agregar Complementos
         </h5>
 
         {/* Agregar nuevo complemento */}
@@ -402,177 +566,18 @@ const ComplementsSection = memo(
           )}
         </div>
 
-        {/* Lista de complementos seleccionados */}
-        {Object.keys(groupedComplements).length > 0 && (
-          <div className="selected-complements mt-4">
-            <h6 className="text-muted mb-3">Complementos Configurados</h6>
-            {Object.entries(groupedComplements).map(
-              ([complementId, complements]) => (
-                <div key={complementId} className="complement-group mb-3">
-                  <div className="complement-header">
-                    <h6 style={{ color: "#009ee3" }}>
-                      {complements[0]?.name || complementId}
-                    </h6>
-                  </div>
-
-                  {complements.map((complement, index) => {
-                    // Determinar el estado del complemento
-                    const originalComplement = subscription.complements?.find(
-                      (currentComp) =>
-                        currentComp.id === complement.id &&
-                        (complement.selectedBot
-                          ? currentComp.selectedBot?.flow_ns ===
-                            complement.selectedBot?.flow_ns
-                          : !currentComp.selectedBot)
-                    );
-
-                    const isFromCurrentSubscription =
-                      Boolean(originalComplement);
-                    const originalQuantity = originalComplement?.quantity || 0;
-                    const currentQuantity = complement.quantity;
-
-                    // Determinar el tipo de cambio
-                    let changeType = "nuevo";
-                    let changeDescription = "";
-
-                    if (isFromCurrentSubscription) {
-                      if (currentQuantity > originalQuantity) {
-                        changeType = "aumento";
-                        changeDescription = `+${
-                          currentQuantity - originalQuantity
-                        }`;
-                      } else if (currentQuantity < originalQuantity) {
-                        changeType = "disminucion";
-                        changeDescription = `-${
-                          originalQuantity - currentQuantity
-                        }`;
-                      } else {
-                        changeType = "sin-cambios";
-                        changeDescription = "Sin cambios";
-                      }
-                    }
-
-                    return (
-                      <div
-                        key={`${complement.id}-${
-                          complement.selectedBot?.flow_ns || "default"
-                        }-${index}`}
-                        className="selected-complement-item mb-2 p-3"
-                        style={{
-                          background: isFromCurrentSubscription
-                            ? "#edf4ff"
-                            : "#d4edda",
-                          border: `1px solid ${
-                            isFromCurrentSubscription
-                              ? "rgba(0, 158, 227, 0.2)"
-                              : "rgba(40, 167, 69, 0.2)"
-                          }`,
-                          borderRadius: "8px",
-                        }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <span className="fw-medium">{complement.name}</span>
-                            {complement.selectedBot && (
-                              <small className="d-block text-muted">
-                                Bot: {complement.selectedBot.name}
-                              </small>
-                            )}
-                            <small className="d-block text-muted">
-                              ${complement.priceUSD} USD c/u
-                            </small>
-                            {isFromCurrentSubscription && (
-                              <small className="d-block text-muted">
-                                Original: {originalQuantity} → Actual:{" "}
-                                {currentQuantity}{" "}
-                                {changeDescription && `(${changeDescription})`}
-                              </small>
-                            )}
-                            <span
-                              className="badge mt-1"
-                              style={{
-                                backgroundColor:
-                                  changeType === "nuevo"
-                                    ? "#28a745"
-                                    : changeType === "aumento"
-                                    ? "#ffc107"
-                                    : changeType === "disminucion"
-                                    ? "#dc3545"
-                                    : "#6c757d",
-                                color:
-                                  changeType === "aumento" ? "#000" : "white",
-                              }}
-                            >
-                              {changeType === "nuevo"
-                                ? "Nuevo"
-                                : changeType === "aumento"
-                                ? `+${currentQuantity - originalQuantity}`
-                                : changeType === "disminucion"
-                                ? `-${originalQuantity - currentQuantity}`
-                                : "Sin cambios"}
-                            </span>
-                          </div>
-
-                          <div className="d-flex align-items-center gap-2">
-                            <div className="quantity-controls d-flex align-items-center justify-content-center gap-3">
-                              <button
-                                className="quantity-btn"
-                                onClick={() =>
-                                  updateComplementQuantity(
-                                    complement.id,
-                                    -1,
-                                    complement.selectedBot?.flow_ns
-                                  )
-                                }
-                                aria-label="Disminuir cantidad"
-                              >
-                                -
-                              </button>
-                              <span className="quantity-input--static">
-                                {complement.quantity}
-                              </span>
-                              <button
-                                className="quantity-btn"
-                                onClick={() =>
-                                  updateComplementQuantity(
-                                    complement.id,
-                                    1,
-                                    complement.selectedBot?.flow_ns
-                                  )
-                                }
-                                aria-label="Aumentar cantidad"
-                              >
-                                +
-                              </button>
-                            </div>
-
-                            <div className="ms-2 text-end">
-                              <div className="fw-medium">
-                                $
-                                {complement.totalPrice ||
-                                  complement.priceUSD *
-                                    complement.quantity}{" "}
-                                USD
-                              </div>
-                              <small className="text-muted">Total</small>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )
-            )}
-          </div>
-        )}
-
         {selectedComplements.length === 0 && (
-          <div className="text-center text-muted py-4">
-            <p>No hay complementos configurados</p>
-            <p>
-              <small>Usa el selector de arriba para agregar complementos</small>
-            </p>
+          <div
+            style={{
+              background: "#edf4ff",
+              border: "1px solid rgba(0, 158, 227, 0.2)",
+              maxWidth: "100%",
+            }}
+            className="text-center text-muted"
+          >
+            <p style={{color: "#009ee3", fontWeight: "bold"}}>No hay complementos configurados</p>
+
+            <small>Usa el selector de arriba para agregar complementos</small>
           </div>
         )}
       </div>
