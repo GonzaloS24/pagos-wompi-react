@@ -11,7 +11,7 @@ const ChangesSummary = ({
   changesSummary,
   onProceedToPayment,
   modifying,
-  usdToCopRate = 4200, // Rate de fallback
+  usdToCopRate = 4200,
 }) => {
   const hasAnyChanges = hasChanges(
     selectedAssistants,
@@ -24,6 +24,8 @@ const ChangesSummary = ({
   const totalCOP = changesSummary?.totalAmount
     ? Math.round(changesSummary.totalAmount * usdToCopRate)
     : 0;
+
+  const hasPayment = changesSummary?.totalAmount > 0;
 
   return (
     <div className="changes-summary">
@@ -60,18 +62,17 @@ const ChangesSummary = ({
             }}
           />
 
-          {changesSummary?.totalAmount > 0 && (
+          {hasPayment && (
             <>
               <div className="total-amount">
                 <div className="d-flex justify-content-between align-items-center mb-0">
-                  <p>Total en dólares:</p>
+                  <p>Total a pagar:</p>
                   <span className="fw-bold" style={{ color: "#009ee3" }}>
                     ${changesSummary.totalAmount.toFixed(2)} USD
                   </span>
                 </div>
                 <div className="d-flex justify-content-between align-items-center">
-                  <p>Total en pesos colombianos:</p>
-
+                  <p>En pesos colombianos:</p>
                   <span className="fw-bold" style={{ color: "#009ee3" }}>
                     ${totalCOP.toLocaleString("es-CO")} COP
                   </span>
@@ -85,17 +86,36 @@ const ChangesSummary = ({
             onClick={onProceedToPayment}
             disabled={modifying}
           >
-            {changesSummary?.totalAmount > 0
-              ? "Proceder al Pago"
-              : "Aplicar Cambios"}
+            {modifying ? "Procesando..." : "Aplicar Cambios"}
           </button>
 
-          {changesSummary?.totalAmount > 0 && (
+          {hasPayment && (
             <div className="changes-notice">
+              <i
+                className="bx bx-credit-card"
+                style={{ marginRight: "8px", color: "#009ee3" }}
+              ></i>
               <span>
-                Se procesará el pago adicional de $
-                {changesSummary.totalAmount.toFixed(2)} USD
+                Se cobrará ${changesSummary.totalAmount.toFixed(2)} USD a tu
+                tarjeta registrada
               </span>
+            </div>
+          )}
+
+          {!hasPayment && hasAnyChanges && (
+            <div
+              className="changes-notice"
+              style={{
+                backgroundColor: "#e8f5e9",
+                borderColor: "#28a745",
+                color: "#155724",
+              }}
+            >
+              <i
+                className="bx bx-check-circle"
+                style={{ marginRight: "8px", color: "#28a745" }}
+              ></i>
+              <span>Sin costo adicional</span>
             </div>
           )}
         </div>
