@@ -327,15 +327,19 @@ export const formatComplementsForCreditCard = async (selectedComplements) => {
   return selectedComplements
     .map((complement) => {
       const comp = complements.find((c) => c.id === complement.id);
-      return {
+      
+      const baseComplement = {
         id: comp?.apiId || complement.id,
         quantity: complement.quantity || 1,
-        ...(complement.id === "webhooks" && complement.selectedBot
-          ? {
-              bot_flow_ns: complement.selectedBot.flow_ns,
-            }
-          : {}),
+        botFlowNs: "",
       };
+
+      // Solo para webhooks, usar el valor real del bot
+      if (complement.id === "webhooks" && complement.selectedBot?.flow_ns) {
+        baseComplement.botFlowNs = complement.selectedBot.flow_ns;
+      }
+
+      return baseComplement;
     })
     .filter((comp) => comp.id !== undefined);
 };
