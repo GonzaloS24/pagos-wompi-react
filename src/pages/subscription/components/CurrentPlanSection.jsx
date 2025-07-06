@@ -2,6 +2,7 @@
 const CurrentPlanSection = ({
   subscription,
   onCancelSubscription,
+  onUpdatePayment,
   modifying,
 }) => {
   return (
@@ -10,7 +11,14 @@ const CurrentPlanSection = ({
       <div className="current-plan-info">
         <div className="plan-details">
           <span className="plan-name">{subscription.planName}</span>
-          <span className="plan-status">
+          <span className="plan-next-payment">Correo: {subscription.owner_email}</span>
+          <span className="plan-next-payment">Workspace ID: {subscription.workspaceId}</span>
+
+          <span className="plan-next-payment">
+            Próximo pago: {subscription.nextPaymentDate}
+          </span>
+
+                    <span className="plan-status">
             Estado:{" "}
             <span className={`status ${subscription.status.toLowerCase()}`}>
               {subscription.status === "ACTIVE"
@@ -18,17 +26,26 @@ const CurrentPlanSection = ({
                 : subscription.status}
             </span>
           </span>
-          <span className="plan-next-payment">
-            Próximo pago: {subscription.nextPaymentDate}
-          </span>
-          <div className="cancel-section">
+          
+          
+          <div className="plan-actions">
             <button
-              className="btn-cancel-subscription"
-              onClick={onCancelSubscription}
+              className="btn-update-payment"
+              onClick={onUpdatePayment}
               disabled={modifying}
             >
-              Cancelar Suscripción
+              Actualizar Metodo de Pago
             </button>
+            
+            <div className="cancel-section">
+              <button
+                className="btn-cancel-subscription"
+                onClick={onCancelSubscription}
+                disabled={modifying}
+              >
+                Cancelar Suscripción
+              </button>
+            </div>
           </div>
         </div>
       </div>

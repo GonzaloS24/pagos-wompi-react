@@ -227,19 +227,6 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
           },
         });
 
-        // COMENTAR ESTA LÍNEA PARA NO HACER LLAMADAS REALES A LA API
-        // await updateSubscriptionData(workspaceId, {
-        //   original: originalSubscriptionData,
-        //   updated: updatedSubscriptionData,
-        // });
-
-        console.log("=== DATOS QUE SE ENVIARÍAN AL BACKEND ===");
-        console.log("Original:", originalSubscriptionData);
-        console.log("Updated:", updatedSubscriptionData);
-        console.log("Payment Data:", paymentData);
-        console.log("Changes Summary:", changesSummary);
-        console.log("============================================");
-
         Swal.fire({
           icon: "success",
           title: "¡Cambios Aplicados!",

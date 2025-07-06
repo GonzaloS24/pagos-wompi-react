@@ -1,7 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useState, useCallback } from "react";
-import { cancelSubscriptionData } from "../../services/subscriptionService";
+import {
+  cancelSubscriptionData,
+  updateSubscriptionData,
+} from "../../services/subscriptionService";
+import { subscriptionPaymentService } from "../../services/subscriptionPaymentService";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import CreditCardForm from "../../components/payments/wompi/CreditCardForm";
 import SubscriptionHeader from "./components/SubscriptionHeader";
 import CurrentPlanSection from "./components/CurrentPlanSection";
 import PlanSelector from "./components/PlanSelector";
@@ -14,6 +19,7 @@ import Swal from "sweetalert2";
 
 const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
   const [modifying, setModifying] = useState(false);
+  const [showPaymentUpdate, setShowPaymentUpdate] = useState(false);
 
   const {
     subscription,
@@ -50,7 +56,61 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     [setSelectedComplements]
   );
 
-  // Función para estructurar el JSON con old/new
+  // Función para manejar actualización de método de pago
+  const handleUpdatePaymentMethod = useCallback(
+    async (cardData) => {
+      if (!subscription?.owner_email) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo obtener el email del propietario de la suscripción",
+          confirmButtonColor: "#009ee3",
+        });
+        return;
+      }
+
+      setModifying(true);
+
+      try {
+        const result = await subscriptionPaymentService.updatePaymentMethod(
+          workspaceId,
+          cardData,
+          subscription.owner_email
+        );
+
+        if (result.success) {
+          await Swal.fire({
+            icon: "success",
+            title: "¡Método de Pago Actualizado!",
+            text: "Tu tarjeta ha sido actualizada exitosamente.",
+            confirmButtonColor: "#009ee3",
+          });
+
+          window.location.reload();
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error al Actualizar",
+            text: result.error || "No se pudo actualizar el método de pago",
+            confirmButtonColor: "#009ee3",
+          });
+        }
+      } catch (error) {
+        console.error("Error updating payment method:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error inesperado. Por favor intenta nuevamente.",
+          confirmButtonColor: "#009ee3",
+        });
+      } finally {
+        setModifying(false);
+      }
+    },
+    [workspaceId, subscription]
+  );
+
+  // Función modificada para estructurar el JSON con old/new
   const prepareUpdateData = async () => {
     try {
       // Importar funciones de formateo
@@ -79,7 +139,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
         free_assistant_id:
           originalAssistantsForAPI.length > 0
             ? originalAssistantsForAPI[0]
-            : null,
+            : undefined,
         paid_assistants_ids:
           originalAssistantsForAPI.length > 1
             ? originalAssistantsForAPI.slice(1)
@@ -93,7 +153,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
         free_assistant_id:
           selectedAssistantsForAPI.length > 0
             ? selectedAssistantsForAPI[0]
-            : null,
+            : undefined,
         paid_assistants_ids:
           selectedAssistantsForAPI.length > 1
             ? selectedAssistantsForAPI.slice(1)
@@ -168,26 +228,30 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
         setModifying(true);
 
         try {
-          // Importar función de actualización
-          const { updateSubscriptionData } = await import(
-            "../../services/subscriptionService"
-          );
-
           // Llamada real al backend
           await updateSubscriptionData(workspaceId, updateData);
 
-          Swal.fire({
-            icon: "success",
-            title: "¡Cambios Aplicados Exitosamente!",
-            text: hasPayment
-              ? `Se ha procesado el pago de ${changesSummary.totalAmount.toFixed(
-                  2
-                )} USD`
-              : "Los cambios han sido aplicados a tu suscripción",
+          // Mostrar alerta de proceso en curso
+          await Swal.fire({
+            icon: "info",
+            title: "Procesando Cambios",
+            html: `
+              <div style="text-align: center;">
+                <p><strong>Tus cambios están siendo procesados.</strong></p>
+                <br>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                  <p style="color: #856404; margin: 0;">⏳ <strong>Tiempo estimado:</strong> 2-5 minutos</p>
+                  <p style="color: #856404; margin: 10px 0 0 0;">📧 Recibirás un email confirmando si el proceso fue exitoso o rechazado.</p>
+                </div>
+                <br>
+              </div>
+            `,
+            confirmButtonText: "Continuar",
             confirmButtonColor: "#009ee3",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
           });
 
-          // Recargar la página o actualizar datos
           window.location.reload();
         } catch (error) {
           console.error("Error updating subscription:", error);
@@ -307,6 +371,20 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
     );
   }
 
+  if (showPaymentUpdate) {
+    return (
+      <div className="subscription-manager">
+        <div className="payment-update-section">
+          <CreditCardForm
+            onSubmit={handleUpdatePaymentMethod}
+            loading={modifying}
+            onCancel={() => setShowPaymentUpdate(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="subscription-manager">
       <SubscriptionHeader />
@@ -337,6 +415,7 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
           <CurrentPlanSection
             subscription={subscription}
             onCancelSubscription={handleCancelSubscription}
+            onUpdatePayment={() => setShowPaymentUpdate(true)}
             modifying={modifying}
           />
 

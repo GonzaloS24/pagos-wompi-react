@@ -1,5 +1,3 @@
-// src/services/subscriptionService.js - Actualizaciones
-
 import {
   getSubscriptionByWorkspace,
   updateSubscription,
@@ -121,7 +119,6 @@ export const cancelSubscriptionData = async (workspaceId) => {
   }
 };
 
-// ... resto de funciones sin cambios
 export const updateSubscriptionData = async (workspaceId, updateData) => {
   try {
     const response = await updateSubscription(workspaceId, updateData);

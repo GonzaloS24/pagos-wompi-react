@@ -84,6 +84,26 @@ export const updateSubscription = async (workspaceId, updateData) => {
 };
 
 /**
+ * Actualiza los datos de la tarjeta de una suscripción
+ * @param {number} workspaceId - ID del workspace
+ * @param {Object} paymentData - Datos de la tarjeta
+ * @param {string} paymentData.owner_email - Email del propietario
+ * @param {Object} paymentData.card_details - Datos de la tarjeta
+ * @returns {Promise<Object>} Respuesta de actualización
+ */
+export const updateSubscriptionPayment = async (workspaceId, paymentData) => {
+  try {
+    const response = await axiosInstance.patch(
+      `/subscriptions/${workspaceId}/payment`,
+      paymentData
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
+/**
  * Cancela una suscripción
  * @param {number} workspaceId - ID del workspace
  * @returns {Promise<void>} Respuesta vacía (status 204)
