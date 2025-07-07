@@ -360,12 +360,6 @@ const RecurringPaymentPage = () => {
                               COP
                             </span>
                           </div>
-                          <div className="recurring-text">
-                            Próximo cobro:{" "}
-                            {new Date(
-                              Date.now() + 30 * 24 * 60 * 60 * 1000
-                            ).toLocaleDateString("es-CO")}
-                          </div>
                         </div>
                       </div>
                     </div>
