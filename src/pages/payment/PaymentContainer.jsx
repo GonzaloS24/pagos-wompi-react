@@ -394,12 +394,12 @@ const PaymentContainer = () => {
               <SubscriptionManager
                 workspaceId={formData.workspace_id}
                 onSubscriptionCanceled={() =>
-                  setSubscription({ ...subscription, status: "INACTIVE" })
+                  setSubscription({ ...subscription, status: "CANCELED" })
                 }
               />
             </>
           ) : (
-            // Mostrar flujo normal de compra (incluye INACTIVE y null)
+            // Mostrar flujo normal de compra (incluye CANCELED y null)
             <div>
               <figure className="mb-4 text-center">
                 <img
@@ -413,7 +413,7 @@ const PaymentContainer = () => {
               <PurchaseTypeSelector
                 onSelect={handlePurchaseTypeChange}
                 inactiveSubscription={
-                  subscription?.status === "INACTIVE" ? subscription : null
+                  subscription?.status === "CANCELED" ? subscription : null
                 }
               />
 

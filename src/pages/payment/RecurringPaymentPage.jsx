@@ -6,6 +6,7 @@ import CreditCardForm from "../../components/payments/wompi/CreditCardForm";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { fetchAssistants, fetchComplements } from "../../services/dataService";
 import { createSubscription } from "../../services/newApi/subscriptions";
+import { useSubscriptionPolling } from "../../hooks/useSubscriptionPolling";
 import Swal from "sweetalert2";
 import "../../styles/components/RecurringPaymentPage.css";
 
@@ -15,6 +16,7 @@ const RecurringPaymentPage = () => {
   const [loading, setLoading] = useState(false);
   const [assistantsData, setAssistantsData] = useState([]);
   const [complementsData, setComplementsData] = useState([]);
+  const [createdWorkspaceId, setCreatedWorkspaceId] = useState(null);
 
   // Datos pasados desde la página anterior (ya en IDs numéricos)
   const {
@@ -25,6 +27,13 @@ const RecurringPaymentPage = () => {
     selectedComplements, // IDs numéricos con estructura de API
     purchaseType,
   } = location.state || {};
+
+  // Hook de polling - se activa cuando createdWorkspaceId existe
+  // eslint-disable-next-line no-unused-vars
+  const { isPolling, pollingCount } = useSubscriptionPolling(
+    createdWorkspaceId,
+    !!createdWorkspaceId
+  );
 
   useEffect(() => {
     // Si no hay datos, redirigir al inicio
@@ -111,33 +120,34 @@ const RecurringPaymentPage = () => {
         },
       };
 
-      console.log("Enviando datos al backend:", subscriptionData);
+      console.log("Enviando datos al backend:", );
 
       // Llamada real a la API
       const response = await createSubscription(subscriptionData);
-
       console.log("Respuesta del backend:", response);
 
-      // Mostrar mensaje de éxito con la respuesta del backend
+      // Mostrar mensaje de procesamiento
       await Swal.fire({
-        icon: "success",
-        title: "¡Suscripción Creada Exitosamente!",
-        text: response || "Tu suscripción ha sido procesada correctamente.",
+        icon: "info",
+        title: "Procesando Suscripción",
+        html: `
+          <div style="text-align: center;">
+            <p><strong>Tu suscripción está siendo procesada.</strong></p>
+            <br>
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+              <p style="color: #856404; margin: 0;">⏳ <strong>Tiempo estimado:</strong> 1-2 minutos</p>
+              <p style="color: #856404; margin: 10px 0 0 0;">🔄 Verificaremos automáticamente el estado.</p>
+            </div>
+          </div>
+        `,
         confirmButtonText: "Continuar",
         confirmButtonColor: "#009ee3",
         allowOutsideClick: false,
         allowEscapeKey: false,
       });
 
-      // Redirigir al usuario a la página principal con un mensaje de éxito
-      navigate("/", {
-        replace: true,
-        state: {
-          successMessage:
-            "Tu suscripción ha sido creada exitosamente. Recibirás un email de confirmación en breve.",
-          subscriptionCreated: true,
-        },
-      });
+      // Establecer el workspace ID para activar el polling
+      setCreatedWorkspaceId(formData.workspace_id);
     } catch (error) {
       console.error("Error creating subscription:", error);
 
@@ -216,12 +226,33 @@ const RecurringPaymentPage = () => {
   };
 
   const handleCancel = () => {
-    if (loading) return; // Prevenir cancelación durante procesamiento
+    if (loading || isPolling) return; // Prevenir cancelación durante procesamiento o polling
     navigate(-1);
   };
 
   if (!paymentCalculations || !formData) {
     return null;
+  }
+
+  // Mostrar overlay de polling cuando está verificando
+  if (isPolling) {
+    return (
+      <div className="stripe-checkout-page">
+        <Container>
+          <Row className="justify-content-center">
+            <Col xl={6} lg={8}>
+              <div className="processing-overlay">
+                <LoadingSpinner
+                  loading={true}
+                  message={`Verificando tu suscripción...`}
+                  size={60}
+                />
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      </div>
+    );
   }
 
   return (

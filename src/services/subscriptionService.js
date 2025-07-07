@@ -19,7 +19,7 @@ export const getSubscription = async (workspaceId) => {
 
     if (
       response &&
-      (response.status === "ACTIVE" || response.status === "INACTIVE")
+      (response.status === "ACTIVE" || response.status === "CANCELED")
     ) {
       // eslint-disable-next-line no-unused-vars
       const [plans, assistants, complements] = await Promise.all([
