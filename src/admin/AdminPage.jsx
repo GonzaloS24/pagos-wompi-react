@@ -1,4 +1,4 @@
-import user from "../../assets/user.png";
+import user from "../assets/user.png";
 import { Container, Modal, Button } from "react-bootstrap";
 import {
   BsFillEyeFill,
@@ -7,12 +7,14 @@ import {
   BsChevronRight,
 } from "react-icons/bs";
 import { MdFreeCancellation } from "react-icons/md";
-import { useState } from "react";
-import Navbar from "../../components/navbar/Navbar";
+import { useEffect, useState } from "react";
+import Navbar from "./components/Navbar";
+import { getSubscriptions } from "../services/newApi/subscriptions";
 
 const AdminPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [data, setData] = useState([]);
 
   const handleViewDetails = (user) => {
     setSelectedUser(user);
@@ -24,69 +26,22 @@ const AdminPage = () => {
     setSelectedUser(null);
   };
 
-  // Datos de ejemplo
-  const users = [
-    {
-      id: 1,
-      nombre: "Gonzalo Salazar",
-      correo: "gonzalo.salazar@gmail.com",
-      idSuscripcion: "65189248-148616336",
-      estado: "Activo",
-      vencimiento: "15/07/2025",
-      cobroMensual: "202.000 COP",
-      tipoPlan: "Chatea Pro Advanced",
-      metodoPago: "Tarjeta de Crédito ****1234",
-      fechaInicio: "15/06/2025",
-    },
-    {
-      id: 2,
-      nombre: "Gonzalo Salazar",
-      correo: "gonzalo.salazar@gmail.com",
-      idSuscripcion: "65189248-148616336",
-      estado: "Activo",
-      vencimiento: "15/07/2025",
-      cobroMensual: "202.000 COP",
-      tipoPlan: "Chatea Pro Advanced",
-      metodoPago: "Tarjeta de Crédito ****1234",
-      fechaInicio: "15/06/2025",
-    },
-    {
-      id: 3,
-      nombre: "Gonzalo Salazar",
-      correo: "gonzalo.salazar@gmail.com",
-      idSuscripcion: "65189248-148616336",
-      estado: "Cancelado",
-      vencimiento: "15/07/2025",
-      cobroMensual: "202.000 COP",
-      tipoPlan: "Chatea Pro Advanced",
-      metodoPago: "Tarjeta de Crédito ****1234",
-      fechaInicio: "15/06/2025",
-    },
-    {
-      id: 4,
-      nombre: "Gonzalo Salazar",
-      correo: "gonzalo.salazar@gmail.com",
-      idSuscripcion: "65189248-148616336",
-      estado: "Activo",
-      vencimiento: "15/07/2025",
-      cobroMensual: "202.000 COP",
-      tipoPlan: "Chatea Pro Advanced",
-      metodoPago: "Tarjeta de Crédito ****1234",
-      fechaInicio: "15/06/2025",
-    },
-    {
-      id: 5,
-      nombre: "Gonzalo Salazar",
-      correo: "gonzalo.salazar@gmail.com",
-      idSuscripcion: "65189248-148616336",
-      estado: "Cancelado",
-      vencimiento: "15/07/2025",
-      cobroMensual: "202.000 COP",
-      tipoPlan: "Chatea Pro Advanced",
-      metodoPago: "Tarjeta de Crédito ****1234",
-      fechaInicio: "15/06/2025",
-    },
-  ];
+  useEffect(() => {
+    const getAllSubscriptions = async () => {
+      try {
+        const response = await getSubscriptions();
+        if (response) {
+          setData(response.data);
+          console.log("Suscripciones obtenidas:", response);
+        } else {
+          console.error("Error al obtener las suscripciones");
+        }
+      } catch (error) {
+        console.log("38  >>>>>>>>> ", error);
+      }
+    };
+    getAllSubscriptions();
+  }, []);
 
   return (
     <>
@@ -130,7 +85,7 @@ const AdminPage = () => {
           <thead className="bg-light">
             <tr>
               <th>Nombre</th>
-              <th>ID Suscripción</th>
+              <th>WorkspaceID</th>
               <th>Estado</th>
               <th>Vencimiento</th>
               <th>Cobro mensual</th>
@@ -138,7 +93,7 @@ const AdminPage = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((userData) => (
+            {data.map((userData) => (
               <tr key={userData.id}>
                 <td>
                   <div className="d-flex align-items-center">
@@ -149,24 +104,33 @@ const AdminPage = () => {
                       className="rounded-circle"
                     />
                     <div className="ms-3">
-                      <p className="mb-0">{userData.nombre}</p>
-                      <p className="text-muted mb-0">{userData.correo}</p>
+                      {/* <p className="mb-0">{userData.nombre}</p> */}
+                      <p className="text-muted mb-0">{userData.email}</p>
                     </div>
                   </div>
                 </td>
-                <td>{userData.idSuscripcion}</td>
+                <td>{userData.workspace_id}</td>
                 <td>
                   <span
                     className={`status-badge ${
-                      userData.estado.toLowerCase() === "cancelado"
+                      userData.status.toLowerCase() === "cancelado"
                         ? "error"
                         : "success"
                     }`}
                   >
-                    {userData.estado}
+                    {userData.status}
                   </span>
                 </td>
-                <td>{userData.vencimiento}</td>
+                <td>
+                  {new Date(userData.next_billing_at).toLocaleDateString(
+                    "es-CO",
+                    {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    }
+                  )}
+                </td>
                 <td>{userData.cobroMensual}</td>
                 <td>
                   <button

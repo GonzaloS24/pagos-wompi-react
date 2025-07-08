@@ -106,7 +106,7 @@ export const getSubscription = async (workspaceId) => {
 };
 
 /**
- * Cancela una suscripción usando el endpoint real
+ * Cancela una suscripción
  */
 export const cancelSubscriptionData = async (workspaceId) => {
   try {

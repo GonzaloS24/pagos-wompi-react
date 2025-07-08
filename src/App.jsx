@@ -2,9 +2,9 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import PaymentContainer from "./pages/payment/PaymentContainer";
 import TransactionConfirmation from "./pages/confirmation/TransactionConfirmation";
 import RecurringPaymentPage from "./pages/payment/RecurringPaymentPage";
-import AdminPage from "./pages/admin/AdminPage";
+import AdminPage from "./admin/AdminPage";
 import PrivateRoute from "./privateRoutes/PrivateRoute";
-import Login from "./pages/auth/login/Login";
+import Login from "./admin/auth/login/Login";
 import { AuthProvider } from "./context/auth/AuthProvider";
 
 const App = () => {
