@@ -1,9 +1,5 @@
-.status-badge.active {
-  background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
-}
-
-.status-badge.failed {
-  background-color: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+.bg-cards {
+  background: #edf4ff;
+  border: 1px solid rgba(0, 158, 227, 0.2) !important;
+  border-radius: 10px;
 }

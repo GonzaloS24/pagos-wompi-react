@@ -3,7 +3,7 @@ import axios from "axios";
 const API_URL = "https://subscriptions-service-26551171030.us-east1.run.app/api";
 
 // ===== TOKEN CENTRALIZADO =====
-const JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30"; // 👈 AQUÍ PONES TU TOKEN UNA SOLA VEZ
+const JWT_TOKEN = "eyJuYW1lIjoiQ2hhdGVhUHJvIiwidXNlIjoic3Vic2N0aXB0aW9ucyIsInNjb3BlIjpbImNyZWF0ZSBzdWJzY3JpcHRpb25zIiwicmVhZCBzdWJzY3JpcHRpb24gZGF0YSIsInVwZGF0ZSBzdWJzY3JpcHRpb24gZGF0YSIsImRlbGV0ZSBzdWJzY3JpcHRpb24gZGF0YSJdLCJpYXQiOjE3NTA5NDU5ODIsImV4cCI6MzMyODgyNTk4Mn0"; // 👈 AQUÍ PONES TU TOKEN UNA SOLA VEZ
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
