@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-// src/hooks/useSubscriptionPolling.js
 import { useState, useEffect, useRef } from "react";
 import { getSubscriptionByWorkspace } from "../services/newApi/subscriptions";
 import Swal from "sweetalert2";

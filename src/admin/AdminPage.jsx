@@ -1,7 +1,6 @@
 import "./styles/adminPage.css";
 import { Container } from "react-bootstrap";
 import { useState } from "react";
-import Navbar from "./components/Navbar";
 import SubscriptionTable from "./components/SubscriptionTable";
 import FiltersSection from "./components/FiltersSection";
 import Pagination from "./components/Pagination";
@@ -42,26 +41,23 @@ const AdminPage = () => {
   };
 
   return (
-    <>
-      <Navbar />
-      <Container className="mt-5">
-        <h3 className="mb-4 text-muted">Gestión de suscripciones</h3>
+    <Container className="mt-5">
+      <h3 className="mb-4 text-muted">Gestión de suscripciones</h3>
 
-        <FiltersSection />
+      <FiltersSection />
 
-        <SubscriptionTable data={data} onViewDetails={handleViewDetails} />
+      <SubscriptionTable data={data} onViewDetails={handleViewDetails} />
 
-        <Pagination totalItems={data.length} />
+      <Pagination totalItems={data.length} />
 
-        <SubscriptionModal
-          show={showModal}
-          onHide={handleCloseModal}
-          selectedUser={selectedUser}
-          onCancelSubscription={handleCancelSubscription}
-          onReactivateSubscription={handleReactivateSubscription}
-        />
-      </Container>
-    </>
+      <SubscriptionModal
+        show={showModal}
+        onHide={handleCloseModal}
+        selectedUser={selectedUser}
+        onCancelSubscription={handleCancelSubscription}
+        onReactivateSubscription={handleReactivateSubscription}
+      />
+    </Container>
   );
 };
 

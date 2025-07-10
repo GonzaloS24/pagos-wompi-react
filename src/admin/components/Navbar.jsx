@@ -1,11 +1,10 @@
+/* eslint-disable react/prop-types */
 import chatea from "../../assets/chatea.png";
 import { BiLogOut } from "react-icons/bi";
 import useAuth from "../../context/auth/UseAuth";
-import { useState } from "react";
 import "../../styles/components/Navbar.css";
 
-const Navbar = () => {
-  const [activeTab, setActiveTab] = useState("suscripciones");
+const Navbar = ({ activeTab, setActiveTab }) => {
   const { logout } = useAuth();
 
   const handleLogout = () => {
@@ -17,7 +16,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-custom">
+    <nav className="navbar navbar-expand-xl navbar-custom">
       <div className="container-fluid">
         <a className="navbar-brand" href="#">
           <img src={chatea} alt="ChateaPro" width="150" />

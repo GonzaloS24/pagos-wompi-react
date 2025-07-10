@@ -281,7 +281,6 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
     if (result.isConfirmed) {
       setModifying(true);
       try {
-        // COMENTAR ESTA LÍNEA PARA NO HACER LLAMADAS REALES A LA API
         await cancelSubscriptionData(workspaceId);
 
         console.log("=== CANCELACIÓN DE SUSCRIPCIÓN ===");
