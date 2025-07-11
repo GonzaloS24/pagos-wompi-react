@@ -140,7 +140,7 @@ export const fetchAssistants = async () => {
         product: {
           id: 1,
           name: "ventas",
-          cost: 20,
+          cost: 0,
         },
         discounts: [],
       },
@@ -148,7 +148,7 @@ export const fetchAssistants = async () => {
         product: {
           id: 2,
           name: "carritos",
-          cost: 20,
+          cost: 0,
         },
         discounts: [],
       },
@@ -156,7 +156,7 @@ export const fetchAssistants = async () => {
         product: {
           id: 3,
           name: "comentarios",
-          cost: 20,
+          cost: 0,
         },
         discounts: [],
       },

@@ -76,7 +76,7 @@ const AIAssistants = ({
               <br />
               <small className="text-muted">
                 Asistentes adicionales cuestan $
-                {PRICING.ASSISTANT_PRICE_USD || 20} USD cada uno.
+                {PRICING.ASSISTANT_PRICE_USD} USD cada uno.
               </small>
             </div>
           </div>

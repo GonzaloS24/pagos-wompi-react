@@ -20,7 +20,7 @@ export const usePaymentCalculations = ({
   freeAssistant,
 }) => {
   const calculations = useMemo(() => {
-    const assistantPrice = 20; // Precio desde API
+    const assistantPrice = PRICING.ASSISTANT_PRICE_USD;
     let totalAssistantsPrice;
     let paidAssistants = [];
 
