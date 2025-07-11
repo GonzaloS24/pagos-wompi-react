@@ -41,23 +41,25 @@ const AdminPage = () => {
   };
 
   return (
-    <Container className="mt-5">
-      <h3 className="mb-4 text-muted">Gestión de suscripciones</h3>
+    <div className="admin-page-container">
+      <Container className="mt-5 admin-page-content">
+        <h3 className="mb-4 text-muted">Gestión de suscripciones</h3>
 
-      <FiltersSection />
+        <FiltersSection />
 
-      <SubscriptionTable data={data} onViewDetails={handleViewDetails} />
+        <SubscriptionTable data={data} onViewDetails={handleViewDetails} />
 
-      <Pagination totalItems={data.length} />
+        <Pagination totalItems={data.length} />
 
-      <SubscriptionModal
-        show={showModal}
-        onHide={handleCloseModal}
-        selectedUser={selectedUser}
-        onCancelSubscription={handleCancelSubscription}
-        onReactivateSubscription={handleReactivateSubscription}
-      />
-    </Container>
+        <SubscriptionModal
+          show={showModal}
+          onHide={handleCloseModal}
+          selectedUser={selectedUser}
+          onCancelSubscription={handleCancelSubscription}
+          onReactivateSubscription={handleReactivateSubscription}
+        />
+      </Container>
+    </div>
   );
 };
 

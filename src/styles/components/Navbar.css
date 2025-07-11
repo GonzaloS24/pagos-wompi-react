@@ -4,6 +4,12 @@
   padding: 0.75rem 0;
 }
 
+.navbar-custom .container-fluid {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
 .nav-link-custom {
   color: #666666 !important;
   font-weight: 500;
@@ -60,4 +66,11 @@
   background-color: rgba(0, 158, 227, 0.1);
   border-color: #009ee3;
   color: #009ee3;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .navbar-custom .container-fluid {
+    max-width: 100%;
+  }
 }

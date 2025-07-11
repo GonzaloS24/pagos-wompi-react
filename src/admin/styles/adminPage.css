@@ -1,5 +1,65 @@
+/* Contenedor principal para alineación */
+.admin-page-container {
+  width: 100%;
+}
+
+.admin-page-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
 .bg-cards {
   background: #edf4ff;
   border: 1px solid rgba(0, 158, 227, 0.2) !important;
   border-radius: 10px;
+}
+
+/* Estilos para tabla sin datos */
+.subscription-table-container {
+  width: 100%;
+}
+
+.no-data-message {
+  padding: 6rem 5rem;
+  text-align: center;
+}
+
+.table-info-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 1rem;
+}
+
+.table-summary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .admin-page-content {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-page-content {
+    padding: 0 10px;
+  }
+
+  .no-data-message {
+    padding: 2rem 1rem;
+  }
+
+  .no-data-message i {
+    font-size: 2rem !important;
+  }
+
+  .no-data-message h5 {
+    font-size: 1.1rem;
+  }
 }
