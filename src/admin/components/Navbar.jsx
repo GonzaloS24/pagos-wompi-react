@@ -1,11 +1,13 @@
 /* eslint-disable react/prop-types */
+import { useState } from "react";
 import chatea from "../../assets/chatea.png";
-import { BiLogOut } from "react-icons/bi";
+import { BiLogOut, BiMenu, BiX } from "react-icons/bi";
 import useAuth from "../../context/auth/UseAuth";
-import "../../styles/components/Navbar.css";
+import "../styles/Navbar.css";
 
 const Navbar = ({ activeTab, setActiveTab }) => {
   const { logout } = useAuth();
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -13,32 +15,106 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
   const handleTabClick = (tabName) => {
     setActiveTab(tabName);
+    setShowSidebar(false);
+  };
+
+  const toggleSidebar = () => {
+    setShowSidebar(!showSidebar);
   };
 
   return (
-    <nav className="navbar navbar-expand-xl navbar-custom">
-      <div className="container-fluid">
-        <a className="navbar-brand" href="#">
-          <img src={chatea} alt="ChateaPro" width="150" />
-        </a>
+    <>
+      <nav className="navbar navbar-expand-xl navbar-custom">
+        <div className="container-fluid">
+          <a className="navbar-brand" href="#">
+            <img src={chatea} alt="ChateaPro" width="150" />
+          </a>
 
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
+          {/* Botón hamburguesa */}
+          <button
+            className="navbar-mobile-toggle"
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Toggle navigation"
+          >
+            <BiMenu size={24} />
+          </button>
 
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav navbar-nav-right">
-            <li className="nav-item">
+          {/* Navegación desktop */}
+          <div className="navbar-desktop">
+            <ul className="navbar-nav navbar-nav-right">
+              <li className="nav-item">
+                <a
+                  className={`nav-link nav-link-custom ${
+                    activeTab === "suscripciones" ? "active" : ""
+                  }`}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleTabClick("suscripciones");
+                  }}
+                >
+                  Resumen de Suscripciones
+                </a>
+              </li>
+              <li className="nav-item">
+                <a
+                  className={`nav-link nav-link-custom ${
+                    activeTab === "metricas" ? "active" : ""
+                  }`}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleTabClick("metricas");
+                  }}
+                >
+                  Métricas Generales
+                </a>
+              </li>
+              <li className="nav-item">
+                <a
+                  className="nav-link logout-btn"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLogout();
+                  }}
+                >
+                  <BiLogOut />
+                  Cerrar Sesión
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      {/* Overlay */}
+      {showSidebar && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setShowSidebar(false)}
+        />
+      )}
+
+      {/* Sidebar móvil */}
+      <div className={`mobile-sidebar ${showSidebar ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <img src={chatea} alt="ChateaPro" width="120" />
+          <button
+            className="sidebar-close"
+            onClick={() => setShowSidebar(false)}
+            aria-label="Cerrar menú"
+          >
+            <BiX size={24} />
+          </button>
+        </div>
+
+        <nav className="sidebar-nav">
+          <ul>
+            <li>
               <a
-                className={`nav-link nav-link-custom ${
+                className={`sidebar-link ${
                   activeTab === "suscripciones" ? "active" : ""
                 }`}
                 href="#"
@@ -50,9 +126,9 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                 Resumen de Suscripciones
               </a>
             </li>
-            <li className="nav-item">
+            <li>
               <a
-                className={`nav-link nav-link-custom ${
+                className={`sidebar-link ${
                   activeTab === "metricas" ? "active" : ""
                 }`}
                 href="#"
@@ -64,9 +140,9 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                 Métricas Generales
               </a>
             </li>
-            <li className="nav-item">
+            <li>
               <a
-                className="nav-link logout-btn"
+                className="sidebar-link logout"
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
@@ -78,9 +154,9 @@ const Navbar = ({ activeTab, setActiveTab }) => {
               </a>
             </li>
           </ul>
-        </div>
+        </nav>
       </div>
-    </nav>
+    </>
   );
 };
 
