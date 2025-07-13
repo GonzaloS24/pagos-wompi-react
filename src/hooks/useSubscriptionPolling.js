@@ -3,10 +3,56 @@ import { useState, useEffect, useRef } from "react";
 import { getSubscriptionByWorkspace } from "../services/newApi/subscriptions";
 import Swal from "sweetalert2";
 
-export const useSubscriptionPolling = (workspaceId, isEnabled = false) => {
+export const useSubscriptionPolling = (
+  workspaceId,
+  isEnabled = false,
+  originalUrlParams = null
+) => {
   const [isPolling, setIsPolling] = useState(false);
   const [pollingCount, setPollingCount] = useState(0);
   const intervalRef = useRef(null);
+
+  const buildRedirectUrl = () => {
+    let params = new URLSearchParams();
+
+    if (originalUrlParams) {
+      // Usar parámetros pasados desde RecurringPaymentPage
+      [
+        "workspace_id",
+        "workspace_name",
+        "owner_name",
+        "owner_email",
+        "phone_number",
+        "plan_id",
+        "period",
+      ].forEach((key) => {
+        if (originalUrlParams[key]) {
+          params.set(key, originalUrlParams[key]);
+        }
+      });
+    } else {
+      // Fallback: extraer de URL actual
+      const currentUrl = new URL(window.location.href);
+      const currentParams = new URLSearchParams(currentUrl.search);
+
+      [
+        "workspace_id",
+        "workspace_name",
+        "owner_name",
+        "owner_email",
+        "phone_number",
+        "plan_id",
+        "period",
+      ].forEach((key) => {
+        if (currentParams.has(key)) {
+          params.set(key, currentParams.get(key));
+        }
+      });
+    }
+
+    const paramString = params.toString();
+    return paramString ? `/?${paramString}` : "/";
+  };
 
   const startPolling = () => {
     if (!workspaceId || isPolling) return;
@@ -40,8 +86,7 @@ export const useSubscriptionPolling = (workspaceId, isEnabled = false) => {
             allowEscapeKey: false,
           });
 
-          // Redirigir al inicio
-          window.location.href = "/";
+          window.location.href = buildRedirectUrl();
           return;
         }
 
@@ -57,8 +102,7 @@ export const useSubscriptionPolling = (workspaceId, isEnabled = false) => {
             confirmButtonColor: "#009ee3",
           });
 
-          // Redirigir al inicio para reintentar
-          window.location.href = "/";
+          window.location.href = buildRedirectUrl();
           return;
         }
 
@@ -84,7 +128,7 @@ export const useSubscriptionPolling = (workspaceId, isEnabled = false) => {
             confirmButtonColor: "#009ee3",
           });
 
-          window.location.href = "/";
+          window.location.href = buildRedirectUrl();
         }
       } catch (error) {
         console.error("Error en polling:", error);
@@ -100,7 +144,7 @@ export const useSubscriptionPolling = (workspaceId, isEnabled = false) => {
             confirmButtonColor: "#009ee3",
           });
 
-          window.location.href = "/";
+          window.location.href = buildRedirectUrl();
         }
       }
     };

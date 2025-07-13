@@ -26,13 +26,39 @@ const RecurringPaymentPage = () => {
     selectedAssistants, // IDs numéricos
     selectedComplements, // IDs numéricos con estructura de API
     purchaseType,
+    originalUrlParams,
   } = location.state || {};
+
+  const buildUrlWithOriginalParams = () => {
+    if (!originalUrlParams) return "/";
+
+    const params = new URLSearchParams();
+
+    // Agregar parámetros relevantes que existen
+    [
+      "workspace_id",
+      "workspace_name",
+      "owner_name",
+      "owner_email",
+      "phone_number",
+      "plan_id",
+      "period",
+    ].forEach((key) => {
+      if (originalUrlParams[key]) {
+        params.set(key, originalUrlParams[key]);
+      }
+    });
+
+    const paramString = params.toString();
+    return paramString ? `/?${paramString}` : "/";
+  };
 
   // Hook de polling - se activa cuando createdWorkspaceId existe
   // eslint-disable-next-line no-unused-vars
   const { isPolling, pollingCount } = useSubscriptionPolling(
     createdWorkspaceId,
-    !!createdWorkspaceId
+    !!createdWorkspaceId,
+    originalUrlParams
   );
 
   useEffect(() => {
@@ -120,7 +146,7 @@ const RecurringPaymentPage = () => {
         },
       };
 
-      console.log("Enviando datos al backend:", );
+      console.log("Enviando datos al backend:");
 
       // Llamada real a la API
       const response = await createSubscription(subscriptionData);
@@ -227,7 +253,9 @@ const RecurringPaymentPage = () => {
 
   const handleCancel = () => {
     if (loading || isPolling) return; // Prevenir cancelación durante procesamiento o polling
-    navigate(-1);
+    // Redirigir con parámetros originales
+    const urlWithParams = buildUrlWithOriginalParams();
+    navigate(urlWithParams);
   };
 
   if (!paymentCalculations || !formData) {
