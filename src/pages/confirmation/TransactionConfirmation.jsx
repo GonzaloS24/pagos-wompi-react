@@ -4,7 +4,7 @@ import chatea from "../../assets/chatea.png";
 import "./styles/Confirmation.css";
 import { useTransactionData } from "./hooks/useTransactionData";
 import { TransactionDetails } from "./components/TransactionDetails";
-import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
+import WalletPaymentModal from "../wallet/WalletPaymentModal";
 import {
   LoadingState,
   ErrorState,

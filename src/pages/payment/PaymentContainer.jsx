@@ -22,8 +22,8 @@ import WompiWidget from "../../components/payments/wompi/WompiWidget";
 import WompiRecurringButton from "../../components/payments/wompi/WompiRecurringButton";
 import PaymentsWayForm from "../../components/payments/paymentsWay/PaymentsWayForm";
 import RecurringPaymentButton from "../../components/payments/paymentsWay/RecurringPaymentButton";
-import WalletPaymentButton from "../../components/payments/wallet/WalletPaymentButton";
-import WalletPaymentModal from "../../components/payments/wallet/WalletPaymentModal";
+import WalletPaymentButton from "../wallet/WalletPaymentButton";
+import WalletPaymentModal from "../wallet/WalletPaymentModal";
 import SubscriptionManager from "../subscription/SubscriptionManager";
 import CanceledSubscriptionView from "./CanceledSubscriptionView";
 
