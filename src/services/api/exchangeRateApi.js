@@ -1,6 +1,6 @@
 import { fetchWithRetry } from "./index";
 
-const EXCHANGE_RATE_API = "https://api.exchangerate-api.com/v4/latest/USD";
+const EXCHANGE_RATE_API = "https://open.er-api.com/v6/latest/USD";
 
 export const fetchExchangeRate = async (targetCurrency = "COP") => {
   try {

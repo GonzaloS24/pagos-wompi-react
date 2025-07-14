@@ -1,9 +1,10 @@
 import axios from "axios";
 
-const API_URL = "https://subscriptions-service-26551171030.us-east1.run.app/api";
+const API_URL =
+  "https://subscriptions-service-26551171030.us-east1.run.app/api";
 
-// ===== TOKEN CENTRALIZADO =====
-const JWT_TOKEN = "eyJuYW1lIjoiQ2hhdGVhUHJvIiwidXNlIjoic3Vic2N0aXB0aW9ucyIsInNjb3BlIjpbImNyZWF0ZSBzdWJzY3JpcHRpb25zIiwicmVhZCBzdWJzY3JpcHRpb24gZGF0YSIsInVwZGF0ZSBzdWJzY3JpcHRpb24gZGF0YSIsImRlbGV0ZSBzdWJzY3JpcHRpb24gZGF0YSJdLCJpYXQiOjE3NTA5NDU5ODIsImV4cCI6MzMyODgyNTk4Mn0"; // 👈 AQUÍ PONES TU TOKEN UNA SOLA VEZ
+const JWT_TOKEN =
+  "eyJuYW1lIjoiQ2hhdGVhUHJvIiwidXNlIjoic3Vic2N0aXB0aW9ucyIsInNjb3BlIjpbImNyZWF0ZSBzdWJzY3JpcHRpb25zIiwicmVhZCBzdWJzY3JpcHRpb24gZGF0YSIsInVwZGF0ZSBzdWJzY3JpcHRpb24gZGF0YSIsImRlbGV0ZSBzdWJzY3JpcHRpb24gZGF0YSJdLCJpYXQiOjE3NTA5NDU5ODIsImV4cCI6MzMyODgyNTk4Mn0"; // 👈 AQUÍ PONES TU TOKEN UNA SOLA VEZ
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
@@ -16,15 +17,12 @@ const axiosInstance = axios.create({
 // Interceptor para agregar el token a las peticiones
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Siempre agregar el token hardcodeado por ahora
-    config.headers.Authorization = `Bearer ${JWT_TOKEN}`; // 👈 TOKEN CENTRALIZADO
-    
-    // Comentado: lógica anterior de localStorage
+    config.headers.Authorization = `Bearer ${JWT_TOKEN}`;
     // const token = localStorage.getItem("token");
     // if (token) {
     //   config.headers.Authorization = `Bearer ${token}`;
     // }
-    
+
     return config;
   },
   (error) => {
@@ -39,7 +37,6 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expirado o inválido
       console.error("Token expirado o inválido");
-      // Comentado: redirección automática
       // localStorage.removeItem("token");
       // window.location.href = "/login";
     }

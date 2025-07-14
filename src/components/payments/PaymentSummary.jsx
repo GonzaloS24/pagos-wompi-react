@@ -196,6 +196,14 @@ const PaymentSummary = ({
             COP ${totalCOP.toLocaleString("es-CO")}
           </span>
         </div>
+        <br />
+        <div className="d-flex justify-content-between align-items-center">
+          <span className="text-muted">
+            <a className="rate-api" target="blank" href="https://www.exchangerate-api.com">
+              TRM por Exchange Rate API
+            </a>
+          </span>
+        </div>
       </div>
     </div>
   );
