@@ -1,14 +1,14 @@
 import PropTypes from "prop-types";
-// import PlanPeriodToggle from "../common/PlanPeriodToggle";
+import PlanPeriodToggle from "../common/PlanPeriodToggle";
 
 const PlanSelector = ({
   plans,
   selectedPlan,
   onPlanChange,
   planSelectorDisabled = false,
-  // paymentPeriod,
-  // onPeriodChange,
-  // periodToggleDisabled = false,
+  paymentPeriod,
+  onPeriodChange,
+  periodToggleDisabled = false,
   className = "",
 }) => {
   const handlePlanChange = (e) => {
@@ -37,7 +37,7 @@ const PlanSelector = ({
         ))}
       </select>
 
-      {/* {selectedPlan && (
+      {selectedPlan && (
         <PlanPeriodToggle
           period={paymentPeriod}
           onPeriodChange={onPeriodChange}
@@ -45,7 +45,7 @@ const PlanSelector = ({
           disabled={periodToggleDisabled}
           className="mb-3"
         />
-      )} */}
+      )}
     </div>
   );
 };

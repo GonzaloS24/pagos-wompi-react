@@ -600,15 +600,6 @@ input[type="checkbox"]:checked {
   margin: 1rem 0;
 }
 
-.toggle-options {
-  display: flex;
-  background-color: #f8f9fa;
-  border-radius: 25px;
-  padding: 4px;
-  position: relative;
-  gap: 4px;
-}
-
 .toggle-option {
   flex: 1;
   position: relative;
@@ -840,9 +831,9 @@ input[type="checkbox"]:checked {
 
 .toggle-options {
   display: flex;
-  background-color: #f8f9fa;
+  background-color: #edf4ff;
   border-radius: 25px;
-  padding: 4px;
+  padding: 20px;
   position: relative;
   gap: 4px;
 }
@@ -881,7 +872,7 @@ input[type="checkbox"]:checked {
   font-weight: 500;
   font-size: 0.9rem;
   color: #6c757d;
-  background-color: transparent;
+  background-color: #fff;
   border-radius: 20px;
   transition: all 0.3s ease;
   position: relative;
