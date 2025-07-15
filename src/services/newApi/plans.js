@@ -19,7 +19,6 @@ import axiosInstance from "./index";
 export const getAllPlans = async () => {
   try {
     const response = await axiosInstance.get("/plans");
-    console.log('22  >>>>>>>>> ', response.data);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

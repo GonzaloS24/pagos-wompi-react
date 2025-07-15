@@ -48,24 +48,18 @@ const Login = () => {
   };
 
   const handleSubmit = () => {
-    console.log("handleSubmit ejecutándose...");
-
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
-      console.log("Errores de validación:", formErrors);
       return;
     }
 
     setIsSubmitting(true);
-    console.log("Iniciando login...");
 
     // Simular llamada a la API
     setTimeout(() => {
-      console.log("Ejecutando login...");
       login();
       setIsSubmitting(false);
-      console.log("Navegando a /admin-dashboard...");
       navigate("/admin-dashboard");
     }, 1500);
   };

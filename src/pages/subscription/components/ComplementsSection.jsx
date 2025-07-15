@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/prop-types */
 import { useState, useEffect, memo } from "react";
 import { fetchWorkspaceBots } from "../../../services/api/assistantsApi";
@@ -26,15 +27,10 @@ const ComplementsSection = memo(
     // Inicializar los complementos seleccionados con los de la suscripción actual SOLO UNA VEZ
     useEffect(() => {
       if (subscription && subscription.complements && !isInitialized) {
-        console.log(
-          "Inicializando complementos desde suscripción:",
-          subscription.complements
-        );
-        onComplementsChange([...subscription.complements]); // Copia profunda
+        onComplementsChange([...subscription.complements]);
         setIsInitialized(true);
       } else if (subscription && !subscription.complements && !isInitialized) {
         // Si no hay complementos en la suscripción, inicializar como array vacío
-        console.log("Inicializando complementos como array vacío");
         onComplementsChange([]);
         setIsInitialized(true);
       }
@@ -282,7 +278,9 @@ const ComplementsSection = memo(
         {/* Lista de complementos seleccionados */}
         {Object.keys(groupedComplements).length > 0 && (
           <div className="selected-complements mt-4">
-            <h5 style={{color: "#009ee3"}} className="mb-4">Complementos Actuales</h5>
+            <h5 style={{ color: "#009ee3" }} className="mb-4">
+              Complementos Actuales
+            </h5>
             {Object.entries(groupedComplements).map(
               ([complementId, complements]) => (
                 <div key={complementId} className="complement-group mb-3">
@@ -575,7 +573,9 @@ const ComplementsSection = memo(
             }}
             className="text-center text-muted"
           >
-            <p style={{color: "#009ee3", fontWeight: "bold"}}>No hay complementos configurados</p>
+            <p style={{ color: "#009ee3", fontWeight: "bold" }}>
+              No hay complementos configurados
+            </p>
 
             <small>Usa el selector de arriba para agregar complementos</small>
           </div>

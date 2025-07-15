@@ -117,7 +117,6 @@ const PaymentContainer = () => {
     setCheckingSubscription(true);
     try {
       const subscriptionData = await getSubscription(workspaceId);
-      console.log("120  >>>>>>>>> ", subscriptionData);
       setSubscription(subscriptionData);
     } catch (error) {
       console.error("Error checking subscription:", error);

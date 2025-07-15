@@ -102,7 +102,6 @@ export const useWalletPayment = (paymentData, onHide) => {
         }
       }
 
-      console.log("Advancing from step:", prev, "to step:", prev + 1);
       return prev < totalSteps ? prev + 1 : prev;
     });
   }, [totalSteps, cedula, telefono]);

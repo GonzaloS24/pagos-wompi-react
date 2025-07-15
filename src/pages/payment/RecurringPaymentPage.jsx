@@ -121,7 +121,7 @@ const RecurringPaymentPage = () => {
           id: complement.id,
           quantity: complement.quantity || 1,
           botFlowNs:
-            complement.bot_flow_ns || complement.selectedBot?.flow_ns || "", // Siempre string
+            complement.bot_flow_ns || complement.selectedBot?.flow_ns || "",
         })) || [];
 
       // Crear el JSON con la estructura requerida usando IDs numéricos
@@ -146,11 +146,8 @@ const RecurringPaymentPage = () => {
         },
       };
 
-      console.log("Enviando datos al backend:");
-
-      // Llamada real a la API
       const response = await createSubscription(subscriptionData);
-      console.log("Respuesta del backend:", response);
+      console.log(response);
 
       // Mostrar mensaje de procesamiento
       await Swal.fire({

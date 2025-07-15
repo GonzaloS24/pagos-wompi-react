@@ -140,7 +140,7 @@ export const fetchAssistants = async () => {
         product: {
           id: 1,
           name: "ventas",
-          cost: 0,
+          cost: 20,
         },
         discounts: [],
       },
@@ -148,7 +148,7 @@ export const fetchAssistants = async () => {
         product: {
           id: 2,
           name: "carritos",
-          cost: 0,
+          cost: 20,
         },
         discounts: [],
       },
@@ -156,7 +156,7 @@ export const fetchAssistants = async () => {
         product: {
           id: 3,
           name: "comentarios",
-          cost: 0,
+          cost: 20,
         },
         discounts: [],
       },
@@ -194,8 +194,8 @@ export const fetchComplements = async () => {
       const reference = getComplementReference(complement.product.id);
 
       return {
-        id: reference, // Usamos el nombre de referencia como ID
-        apiId: complement.product.id, // Guardamos el ID numérico para credit card
+        id: reference,
+        apiId: complement.product.id,
         name: complement.product.name,
         priceUSD: complement.product.cost,
         description: complement.product.name.includes("Bot")
@@ -276,7 +276,7 @@ export const getComplementById = async (id) => {
 export const formatAssistantsForReference = (selectedAssistants) => {
   return selectedAssistants.map((assistant) => {
     if (typeof assistant === "string") {
-      return assistant; // Ya es nombre de referencia
+      return assistant;
     }
     return assistant.id || assistant.name;
   });
@@ -302,7 +302,7 @@ export const formatAssistantsForCreditCard = async (selectedAssistants) => {
 export const formatComplementsForReference = (selectedComplements) => {
   return selectedComplements.map((complement) => {
     if (typeof complement === "string") {
-      return complement; // Ya es nombre de referencia
+      return complement;
     }
 
     const reference = complement.id || complement.name;

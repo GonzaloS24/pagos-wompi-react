@@ -15,7 +15,6 @@ import axiosInstance from "./index";
 export const getAllAddons = async () => {
   try {
     const response = await axiosInstance.get("/addons");
-    console.log('18  >>>>>>>>> ', response.data);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

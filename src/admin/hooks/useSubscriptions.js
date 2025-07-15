@@ -14,7 +14,7 @@ export const useSubscriptions = () => {
         setData(response.data);
       }
     } catch (error) {
-      console.log("Error al obtener suscripciones:", error);
+      console.error("Error al obtener suscripciones:", error);
       setError(error);
     } finally {
       setLoading(false);

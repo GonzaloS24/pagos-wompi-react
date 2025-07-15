@@ -26,8 +26,6 @@ export const subscriptionPaymentService = {
         },
       };
 
-      console.log(JSON.stringify(paymentData, null, 2));
-
       const result = await updateSubscriptionPayment(workspaceId, paymentData);
 
       return {

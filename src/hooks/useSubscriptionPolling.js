@@ -57,21 +57,16 @@ export const useSubscriptionPolling = (
   const startPolling = () => {
     if (!workspaceId || isPolling) return;
 
-    console.log("🔄 Iniciando polling para suscripción:", workspaceId);
     setIsPolling(true);
     setPollingCount(0);
 
     const checkSubscription = async () => {
       try {
         setPollingCount((prev) => prev + 1);
-        console.log(
-          `🔍 Consultando suscripción... intento ${pollingCount + 1}`
-        );
 
         const subscription = await getSubscriptionByWorkspace(workspaceId);
 
         if (subscription && subscription.status === "ACTIVE") {
-          console.log("✅ Suscripción activa encontrada");
           stopPolling();
 
           await Swal.fire({
@@ -91,7 +86,6 @@ export const useSubscriptionPolling = (
         }
 
         if (subscription && subscription.status !== "PENDING") {
-          console.log("❌ Suscripción falló:", subscription.status);
           stopPolling();
 
           await Swal.fire({
@@ -108,7 +102,6 @@ export const useSubscriptionPolling = (
 
         // Si lleva más de 2 minutos (24 intentos), detener polling
         if (pollingCount >= 24) {
-          console.log("⏱️ Timeout del polling");
           stopPolling();
 
           await Swal.fire({
@@ -155,7 +148,6 @@ export const useSubscriptionPolling = (
   };
 
   const stopPolling = () => {
-    console.log("⏹️ Deteniendo polling");
     setIsPolling(false);
     setPollingCount(0);
     if (intervalRef.current) {

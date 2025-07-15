@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-constant-binary-expression */
 import { useState, useEffect, useCallback } from "react";
 import { fetchUSDtoCOPRate } from "../../../services/api/exchangeRateApi";
@@ -34,19 +35,11 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
         fetchUSDtoCOPRate(),
       ]);
 
-      console.log("Subscription data received:", subscriptionData);
-      console.log("Plans data received:", plansData);
-
       setSubscription(subscriptionData);
       setPlans(plansData);
       setUsdToCopRate(exchangeRate || 4200);
 
       if (subscriptionData) {
-        console.log("Setting default data from API:");
-        console.log("- Assistants:", subscriptionData.assistants);
-        console.log("- Plan ID:", subscriptionData.planId);
-        console.log("- Complements:", subscriptionData.complements);
-
         // Establecer datos predeterminados desde la API
         setSelectedAssistants([...subscriptionData.assistants] || []);
 
@@ -54,7 +47,6 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
           (p) => p.id === subscriptionData.planId
         );
         setSelectedPlan(currentPlan || null);
-        console.log("Selected plan set to:", currentPlan);
 
         setSelectedComplements([...subscriptionData.complements] || []);
       }
@@ -89,14 +81,6 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
 
       setCalculatingChanges(true);
       try {
-        console.log("Calculating changes with:");
-        console.log("- Selected assistants:", selectedAssistants);
-        console.log("- Original assistants:", subscription.assistants);
-        console.log("- Selected plan:", selectedPlan?.id);
-        console.log("- Original plan:", subscription.planId);
-        console.log("- Selected complements:", selectedComplements);
-        console.log("- Original complements:", subscription.complements);
-
         const summary = await calculateChanges(
           selectedAssistants,
           selectedPlan,
@@ -104,7 +88,6 @@ export const useSubscription = (workspaceId, onSubscriptionCanceled) => {
           subscription
         );
 
-        console.log("Changes summary calculated:", summary);
         setChangesSummary(summary);
       } catch (error) {
         console.error("Error calculating changes:", error);
@@ -210,13 +193,21 @@ ${JSON.stringify(originalSubscriptionData, null, 2)}
 ${JSON.stringify(updatedSubscriptionData, null, 2)}
               </pre>
 
-              ${changesSummary?.totalAmount > 0 ? `
+              ${
+                changesSummary?.totalAmount > 0
+                  ? `
                 <h6 style="color: #009ee3; margin-bottom: 10px;">💰 Resumen de Costos:</h6>
                 <div style="background: #edf4ff; padding: 10px; border-radius: 5px; border-left: 4px solid #009ee3;">
-                  <p><strong>Total a pagar:</strong> $${changesSummary.totalAmount.toFixed(2)} USD</p>
-                  <p><strong>En pesos colombianos:</strong> $${Math.round(changesSummary.totalAmount * usdToCopRate).toLocaleString()} COP</p>
+                  <p><strong>Total a pagar:</strong> $${changesSummary.totalAmount.toFixed(
+                    2
+                  )} USD</p>
+                  <p><strong>En pesos colombianos:</strong> $${Math.round(
+                    changesSummary.totalAmount * usdToCopRate
+                  ).toLocaleString()} COP</p>
                 </div>
-              ` : ''}
+              `
+                  : ""
+              }
             </div>
           `,
           confirmButtonText: "Continuar",
@@ -230,8 +221,10 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
         Swal.fire({
           icon: "success",
           title: "¡Cambios Aplicados!",
-          text: paymentData 
-            ? `Pago de $${changesSummary.totalAmount.toFixed(2)} USD procesado correctamente`
+          text: paymentData
+            ? `Pago de $${changesSummary.totalAmount.toFixed(
+                2
+              )} USD procesado correctamente`
             : "Los cambios han sido aplicados exitosamente",
           confirmButtonColor: "#009ee3",
         });
@@ -282,10 +275,6 @@ ${JSON.stringify(updatedSubscriptionData, null, 2)}
       setModifying(true);
       try {
         await cancelSubscriptionData(workspaceId);
-
-        console.log("=== CANCELACIÓN DE SUSCRIPCIÓN ===");
-        console.log("Workspace ID:", workspaceId);
-        console.log("===================================");
 
         Swal.fire({
           icon: "info",

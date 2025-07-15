@@ -111,7 +111,6 @@ export const getSubscription = async (workspaceId) => {
 export const cancelSubscriptionData = async (workspaceId) => {
   try {
     await cancelSubscription(workspaceId);
-    console.log("Subscription canceled:", workspaceId);
     return { success: true };
   } catch (error) {
     console.error("Error canceling subscription:", error);
@@ -122,7 +121,6 @@ export const cancelSubscriptionData = async (workspaceId) => {
 export const updateSubscriptionData = async (workspaceId, updateData) => {
   try {
     const response = await updateSubscription(workspaceId, updateData);
-    console.log("Subscription updated:", { workspaceId, updateData });
     return { success: true, data: response };
   } catch (error) {
     console.error("Error updating subscription:", error);

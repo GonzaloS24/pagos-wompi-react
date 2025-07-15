@@ -184,13 +184,6 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
       // Preparar datos estructurados
       const updateData = await prepareUpdateData();
 
-      // Log para debugging
-      console.log("=== DATOS PARA ENVIAR AL BACKEND ===");
-      console.log("Workspace ID:", workspaceId);
-      console.log("Update Data:", JSON.stringify(updateData, null, 2));
-      console.log("Changes Summary:", changesSummary);
-      console.log("=======================================");
-
       // Mostrar alerta simple según el caso
       const result = await Swal.fire({
         icon: hasPayment ? "warning" : "question",
