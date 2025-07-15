@@ -10,6 +10,8 @@ const WalletStepThree = ({
   selectedComplements,
   isAssistantsOnly,
   paymentCalculations,
+  cedula = "",
+  telefono = "",
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
@@ -22,6 +24,14 @@ const WalletStepThree = ({
       "¡Hola! Te envío el comprobante de pago junto con el resumen de mi compra:\n\n";
 
     summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
+
+    // Agregar datos personales si están disponibles
+    if (cedula) {
+      summary += `Cédula: ${cedula}\n`;
+    }
+    if (telefono) {
+      summary += `Teléfono: ${telefono}\n`;
+    }
 
     if (hasPlan) {
       summary += `Plan: ${selectedPlan.name}\n`;
@@ -67,7 +77,7 @@ const WalletStepThree = ({
   return (
     <div>
       <h5 className="text-center mb-4" style={{ color: "#009ee3" }}>
-        Paso 3: Enviar Comprobante
+        Paso 4: Enviar Comprobante
       </h5>
 
       <div className="text-center mb-3">
@@ -83,7 +93,7 @@ const WalletStepThree = ({
             onClick={openWhatsAppWithSummary}
             size="lg"
             style={{
-              backgroundColor: "#25D366",
+              backgroundColor: "#25d366",
               width: "100%",
               borderColor: "#25D366",
               padding: "0.75rem 2rem",
@@ -126,6 +136,8 @@ WalletStepThree.propTypes = {
   selectedComplements: PropTypes.array.isRequired,
   isAssistantsOnly: PropTypes.bool.isRequired,
   paymentCalculations: PropTypes.object,
+  cedula: PropTypes.string,
+  telefono: PropTypes.string,
 };
 
 export default WalletStepThree;

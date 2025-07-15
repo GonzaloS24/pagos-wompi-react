@@ -1,16 +1,53 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useCallback } from "react";
 import { walletService } from "../../../services/payments/wallet/walletService";
 import Swal from "sweetalert2";
 
 export const useWalletPayment = (paymentData, onHide) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 3;
+  const [cedula, setCedula] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [errors, setErrors] = useState({});
+  const totalSteps = 4;
 
   const walletData = walletService.createWalletPaymentData(paymentData);
 
+  // Función para validar los campos
+  const validatePersonalData = () => {
+    const newErrors = {};
+
+    // Validar cédula
+    if (!cedula.trim()) {
+      newErrors.cedula = "La cédula es obligatoria";
+    } else if (!/^\d{6,10}$/.test(cedula)) {
+      newErrors.cedula = "Debe contener entre 6 y 10 dígitos";
+    }
+
+    // Validar teléfono
+    if (!telefono.trim()) {
+      newErrors.telefono = "El teléfono es obligatorio";
+    } else if (!/^\+?\d{10,15}$/.test(telefono.replace(/\s/g, ""))) {
+      newErrors.telefono = "Formato de teléfono inválido";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleConfirmPayment = async () => {
     try {
-      const result = await walletService.processWalletPayment(walletData);
+      // Agregar los datos personales al walletData
+      const walletDataWithPersonalInfo = {
+        ...walletData,
+        customerPersonalInfo: {
+          cedula,
+          telefono,
+        },
+      };
+
+      const result = await walletService.processWalletPayment(
+        walletDataWithPersonalInfo
+      );
 
       if (result.success) {
         onHide();
@@ -57,24 +94,60 @@ export const useWalletPayment = (paymentData, onHide) => {
   };
 
   const nextStep = useCallback(() => {
-    setCurrentStep(prev => {
-      console.log('Advancing from step:', prev, 'to step:', prev + 1);
+    setCurrentStep((prev) => {
+      // Si estamos en el paso 2 (datos personales), validar antes de continuar
+      if (prev === 2) {
+        if (!validatePersonalData()) {
+          return prev;
+        }
+      }
+
+      console.log("Advancing from step:", prev, "to step:", prev + 1);
       return prev < totalSteps ? prev + 1 : prev;
     });
-  }, [totalSteps]);
+  }, [totalSteps, cedula, telefono]);
 
   const prevStep = useCallback(() => {
-    setCurrentStep(prev => prev > 1 ? prev - 1 : prev);
+    setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
   }, []);
 
   const resetSteps = useCallback(() => {
     setCurrentStep(1);
+    setCedula("");
+    setTelefono("");
+    setErrors({});
   }, []);
+
+  // Funciones para manejar cambios en los inputs
+  const handleCedulaChange = useCallback(
+    (value) => {
+      setCedula(value);
+      if (errors.cedula) {
+        setErrors((prev) => ({ ...prev, cedula: "" }));
+      }
+    },
+    [errors.cedula]
+  );
+
+  const handleTelefonoChange = useCallback(
+    (value) => {
+      setTelefono(value);
+      if (errors.telefono) {
+        setErrors((prev) => ({ ...prev, telefono: "" }));
+      }
+    },
+    [errors.telefono]
+  );
 
   return {
     currentStep,
     totalSteps,
     walletData,
+    cedula,
+    telefono,
+    errors,
+    handleCedulaChange,
+    handleTelefonoChange,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,

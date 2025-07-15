@@ -8,6 +8,8 @@ const WalletPaymentSummary = ({
   isAssistantsOnly,
   paymentCalculations,
   walletData,
+  cedula = "",
+  telefono = "",
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
@@ -26,6 +28,30 @@ const WalletPaymentSummary = ({
       <h6 style={{ color: "#009ee3" }} className="mb-2">
         Resumen del Pago
       </h6>
+
+      {/* Mostrar datos personales si están disponibles */}
+      {(cedula || telefono) && (
+        <>
+          {cedula && (
+            <div className="d-flex justify-content-between mb-1">
+              <span className="text-muted">Cédula:</span>
+              <span>{cedula}</span>
+            </div>
+          )}
+          {telefono && (
+            <div className="d-flex justify-content-between mb-1">
+              <span className="text-muted">Teléfono:</span>
+              <span>{telefono}</span>
+            </div>
+          )}
+          <hr
+            style={{
+              margin: "0.5rem 0",
+              borderColor: "rgba(0, 158, 227, 0.2)",
+            }}
+          />
+        </>
+      )}
 
       {hasPlan && (
         <>
@@ -133,6 +159,8 @@ WalletPaymentSummary.propTypes = {
   isAssistantsOnly: PropTypes.bool.isRequired,
   paymentCalculations: PropTypes.object,
   walletData: PropTypes.object.isRequired,
+  cedula: PropTypes.string,
+  telefono: PropTypes.string,
 };
 
 export { WalletPaymentSummary };

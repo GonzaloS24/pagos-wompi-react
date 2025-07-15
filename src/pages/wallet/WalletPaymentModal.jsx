@@ -11,6 +11,7 @@ import WalletStepIndicator from "./components/WalletStepIndicator";
 import WalletStepOne from "./components/steps/WalletStepOne";
 import WalletStepTwo from "./components/steps/WalletStepTwo";
 import WalletStepThree from "./components/steps/WalletStepThree";
+import WalletStepFour from "./components/steps/WalletStepFour";
 
 const WalletPaymentModal = ({
   show,
@@ -26,6 +27,11 @@ const WalletPaymentModal = ({
     currentStep,
     totalSteps,
     walletData,
+    cedula,
+    telefono,
+    errors,
+    handleCedulaChange,
+    handleTelefonoChange,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,
@@ -49,6 +55,8 @@ const WalletPaymentModal = ({
       isAssistantsOnly,
       paymentCalculations,
       walletData,
+      cedula,
+      telefono,
     };
 
     switch (currentStep) {
@@ -56,13 +64,22 @@ const WalletPaymentModal = ({
         return <WalletStepOne {...commonProps} />;
       case 2:
         return (
+          <WalletStepFour
+            {...commonProps}
+            onCedulaChange={handleCedulaChange}
+            onTelefonoChange={handleTelefonoChange}
+            errors={errors}
+          />
+        );
+      case 3:
+        return (
           <WalletStepTwo
             {...commonProps}
             copyToClipboard={copyToClipboard}
             copyPurchaseSummary={copyPurchaseSummary}
           />
         );
-      case 3:
+      case 4:
         return <WalletStepThree {...commonProps} />;
       default:
         return null;
@@ -91,7 +108,7 @@ const WalletPaymentModal = ({
           onClick={prevStep}
           disabled={currentStep === 1}
         >
-          ← Anterior
+          Anterior
         </Button>
 
         <div>
@@ -105,7 +122,7 @@ const WalletPaymentModal = ({
                 padding: "0.5rem 1.5rem",
               }}
             >
-              Siguiente →
+              Siguiente
             </Button>
           ) : (
             <Button

@@ -100,7 +100,7 @@ const PaymentGatewaySelector = ({
             <img src={walletLogo} alt="" />
           </div>
           <span className="gateway-description">
-            Pago por Wallet <br /> Manual
+            Pago por Dropi <br /> Wallet
           </span>
         </div>
       </div>

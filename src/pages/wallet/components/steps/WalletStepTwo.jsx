@@ -11,6 +11,8 @@ const WalletStepTwo = ({
   paymentCalculations,
   copyToClipboard,
   copyPurchaseSummary,
+  cedula = "",
+  telefono = "",
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
@@ -22,6 +24,14 @@ const WalletStepTwo = ({
     let summary = "RESUMEN DEL PLAN:\n\n";
 
     summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
+
+    // Agregar datos personales si están disponibles
+    if (cedula) {
+      summary += `Cédula: ${cedula}\n`;
+    }
+    if (telefono) {
+      summary += `Teléfono: ${telefono}\n`;
+    }
 
     if (hasPlan) {
       summary += `Plan: ${selectedPlan.name}\n`;
@@ -62,14 +72,91 @@ const WalletStepTwo = ({
   return (
     <div>
       <h5 className="text-center mb-4" style={{ color: "#009ee3" }}>
-        Paso 2: Realizar el Pago
+        Paso 3: Realizar el Pago
       </h5>
 
-      {/* Sección 1: Dirección de Wallet */}
+      {/* SECCIÓN 1: NOTAS DEL PAGO */}
       <div className="mb-4">
         <div className="d-flex align-items-center mb-2">
-          <span className="bold">
-            1. {String.fromCodePoint(0x1f4b3)} Envía el dinero a esta dirección:
+          <span
+            className="bold"
+            style={{ fontSize: "1.1rem", fontWeight: "600" }}
+          >
+            1. {String.fromCodePoint(0x1f4dd)} Incluye estas notas en tu pago:
+          </span>
+        </div>
+
+        {/* Mensaje informativo destacado */}
+        <div
+          style={{
+            background: "#e8f5e9",
+            border: "1px solid #28a745",
+            borderRadius: "8px",
+            padding: "1rem",
+            marginBottom: "1rem",
+          }}
+        >
+          <p
+            style={{
+              color: "#155724",
+              margin: "0",
+              fontSize: "0.9rem",
+              fontWeight: "400",
+            }}
+          >
+            Si envías las notas, tu plan se activará de forma inmediata. De lo
+            contrario, tu solicitud será revisada manualmente, lo que puede
+            demorar el proceso.
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: "#fef9e7",
+            border: "1px solid #ffc107",
+            borderRadius: "8px",
+            padding: "1rem",
+          }}
+        >
+          <div className="d-flex justify-content-between align-items-start">
+            <div className="flex-grow-1 me-3">
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  whiteSpace: "pre-line",
+                  lineHeight: "1.4",
+                  flex: 1,
+                }}
+              >
+                {generatePurchaseSummary()}
+              </div>
+            </div>
+            <Button
+              variant="warning"
+              size="sm"
+              onClick={handleCopyPurchaseSummary}
+              style={{
+                backgroundColor: "#ffc107",
+                borderColor: "#ffc107",
+                color: "#fff",
+                minWidth: "80px",
+                fontWeight: "600",
+              }}
+            >
+              📋 Copiar
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* SECCIÓN 2: DIRECCIÓN DE WALLET */}
+      <div className="mb-4">
+        <div className="d-flex align-items-center mb-2">
+          <span
+            className="bold"
+            style={{ fontSize: "1.1rem", fontWeight: "600" }}
+          >
+            2. Envía el dinero y el resumen del plan a esta dirección:
           </span>
         </div>
         <div
@@ -103,92 +190,17 @@ const WalletStepTwo = ({
               size="sm"
               onClick={() => copyToClipboard(walletData.walletAddress)}
               style={{
+                backgroundColor: "#009ee3",
                 borderColor: "#009ee3",
-                color: "#009ee3",
+                color: "#fff",
                 minWidth: "80px",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = "#009ee3";
-                e.target.style.color = "white";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = "";
-                e.target.style.color = "#009ee3";
+                fontWeight: "600",
               }}
             >
               📋 Copiar
             </Button>
           </div>
         </div>
-      </div>
-
-      {/* Sección 2: Resumen del plan */}
-      <div className="mb-4">
-        <div className="d-flex align-items-center mb-2">
-          <span className="bold">
-            2. {String.fromCodePoint(0x1f4dd)} Incluye este resumen en las notas
-            del pago:
-          </span>
-        </div>
-        <div
-          style={{
-            background: "#fef9e7",
-            border: "1px solid #f0c674",
-            borderRadius: "8px",
-            padding: "1rem",
-          }}
-        >
-          <div className="d-flex justify-content-between align-items-start">
-            <div className="flex-grow-1 me-3">
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  whiteSpace: "pre-line",
-                  lineHeight: "1.4",
-                  flex: 1,
-                }}
-              >
-                {generatePurchaseSummary()}
-              </div>
-            </div>
-            <Button
-              variant="outline-warning"
-              size="sm"
-              onClick={handleCopyPurchaseSummary}
-              style={{
-                borderColor: "#ffc107",
-                color: "#856404",
-                minWidth: "80px",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = "white";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = "";
-                e.target.style.color = "";
-              }}
-            >
-              📋 Copiar
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="alert alert-info py-3 text-center"
-        style={{
-          fontSize: "0.9rem",
-          color: "#0c5460",
-        }}
-      >
-        <div className="mb-2">
-          <strong>{String.fromCodePoint(0x1f4a1)} Importante:</strong>
-        </div>
-        <p className="mb-0">
-          Asegúrate de incluir el resumen completo en las notas cuando realices
-          el pago por wallet
-          <br />
-        </p>
       </div>
     </div>
   );
@@ -204,6 +216,8 @@ WalletStepTwo.propTypes = {
   paymentCalculations: PropTypes.object,
   copyToClipboard: PropTypes.func.isRequired,
   copyPurchaseSummary: PropTypes.func.isRequired,
+  cedula: PropTypes.string,
+  telefono: PropTypes.string,
 };
 
 export default WalletStepTwo;
