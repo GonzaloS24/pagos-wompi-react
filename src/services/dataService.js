@@ -13,24 +13,23 @@ import {
  */
 export const fetchPlans = async () => {
   try {
-    // Ahora usa la API real a través de Axios
     const response = await getAllPlans();
 
-return response
-  .filter(
-    (plan) => plan.product.status === "active" && plan.product.id !== "free"
-  )
-  .map((plan) => {
-    const priceUSD = parseFloat(plan.product.displayPrice);
-    return {
-      id: plan.product.id,
-      name: plan.product.name,
-      priceUSD: priceUSD,
-      bot_users: plan.product.botUsers,
-      bots: plan.product.bots,
-      members: plan.product.members,
-    };
-  });
+    return response
+      .filter(
+        (plan) => plan.product.status === "active" && plan.product.id !== "free"
+      )
+      .map((plan) => {
+        const priceUSD = parseFloat(plan.product.display_price);
+        return {
+          id: plan.product.id,
+          name: plan.product.name,
+          priceUSD: priceUSD,
+          bot_users: plan.product.bot_users,
+          bots: plan.product.bots,
+          members: plan.product.members,
+        };
+      });
   } catch (error) {
     console.error("Error fetching plans:", error);
 
@@ -327,7 +326,7 @@ export const formatComplementsForCreditCard = async (selectedComplements) => {
   return selectedComplements
     .map((complement) => {
       const comp = complements.find((c) => c.id === complement.id);
-      
+
       const baseComplement = {
         id: comp?.apiId || complement.id,
         quantity: complement.quantity || 1,

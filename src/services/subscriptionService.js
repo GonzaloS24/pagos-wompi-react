@@ -28,18 +28,21 @@ export const getSubscription = async (workspaceId) => {
         fetchComplements(),
       ]);
 
-      const plan = plans.find((p) => p.id === response.planId);
+      const plan = plans.find((p) => p.id === response.plan_id);
 
       // Mapear asistentes: combinar gratuito + pagados
       const allAssistantIds = [];
-      if (response.freeAssistantId) {
+      if (response.free_assistant_id) {
         const freeAssistantRef = getAssistantReference(
-          response.freeAssistantId
+          response.free_assistant_id
         );
         allAssistantIds.push(freeAssistantRef);
       }
-      if (response.paidAssistantIds && response.paidAssistantIds.length > 0) {
-        const paidAssistantRefs = response.paidAssistantIds.map((id) =>
+      if (
+        response.paid_assistant_ids &&
+        response.paid_assistant_ids.length > 0
+      ) {
+        const paidAssistantRefs = response.paid_assistant_ids.map((id) =>
           getAssistantReference(id)
         );
         allAssistantIds.push(...paidAssistantRefs);
@@ -57,10 +60,10 @@ export const getSubscription = async (workspaceId) => {
               quantity: addon.quantity,
               priceUSD: complement?.priceUSD || 0,
               totalPrice: (complement?.priceUSD || 0) * addon.quantity,
-              selectedBot: addon.botFlowNs
+              selectedBot: addon.bot_flow_ns
                 ? {
-                    flow_ns: addon.botFlowNs,
-                    name: `Bot ${addon.botFlowNs}`,
+                    flow_ns: addon.bot_flow_ns,
+                    name: `Bot ${addon.bot_flow_ns}`,
                   }
                 : null,
             };
@@ -68,13 +71,13 @@ export const getSubscription = async (workspaceId) => {
         : [];
 
       // Calcular fecha de expiración
-      const expirationDate = new Date(response.nextBillingAt);
+      const expirationDate = new Date(response.next_billing_at);
       const isExpired = expirationDate < new Date();
 
       return {
-        id: `${response.workspaceId}`,
-        planId: response.planId,
-        planName: plan?.name || response.planId,
+        id: `${response.workspace_id}`,
+        planId: response.plan_id,
+        planName: plan?.name || response.plan_id,
         status: response.status,
         assistants: allAssistantIds,
         complements: mappedComplements,
@@ -87,13 +90,13 @@ export const getSubscription = async (workspaceId) => {
         expirationDate: expirationDate,
         isExpired,
         createdAt: new Date().toISOString().split("T")[0],
-        workspaceId: response.workspaceId.toString(),
-        workspace_name: `Workspace ${response.workspaceId}`,
+        workspaceId: response.workspace_id.toString(),
+        workspace_name: `Workspace ${response.workspace_id}`,
         owner_email: response.email,
         phone: "+57 300 000 0000",
-        flowNs: response.flowNs,
-        freeAssistantId: response.freeAssistantId,
-        paidAssistantIds: response.paidAssistantIds || [],
+        flowNs: response.flow_ns,
+        freeAssistantId: response.free_assistant_id,
+        paidAssistantIds: response.paid_assistant_ids || [],
         addons: response.addons || [],
       };
     }

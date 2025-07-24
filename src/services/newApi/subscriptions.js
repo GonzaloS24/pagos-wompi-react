@@ -110,7 +110,7 @@ export const updateSubscriptionPayment = async (workspaceId, paymentData) => {
  */
 export const cancelSubscription = async (workspaceId) => {
   try {
-    const response = await axiosInstance.patch(
+    const response = await axiosInstance.delete(
       `/subscriptions/${workspaceId}/cancel`
     );
     return response.data;
