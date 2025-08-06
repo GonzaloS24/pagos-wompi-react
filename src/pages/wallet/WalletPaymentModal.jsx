@@ -29,9 +29,11 @@ const WalletPaymentModal = ({
     walletData,
     cedula,
     telefono,
+    tipoDocumento,
     errors,
     handleCedulaChange,
     handleTelefonoChange,
+    handleDocumentChange,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,
@@ -57,6 +59,7 @@ const WalletPaymentModal = ({
       walletData,
       cedula,
       telefono,
+      tipoDocumento,
     };
 
     switch (currentStep) {
@@ -68,6 +71,7 @@ const WalletPaymentModal = ({
             {...commonProps}
             onCedulaChange={handleCedulaChange}
             onTelefonoChange={handleTelefonoChange}
+            onTipoDocumentoChange={handleDocumentChange}
             errors={errors}
           />
         );

@@ -7,6 +7,8 @@ export const useWalletPayment = (paymentData, onHide) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [cedula, setCedula] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [tipoDocumento, setTipoDocumento] = useState("cedula");
+
   const [errors, setErrors] = useState({});
   const totalSteps = 4;
 
@@ -30,6 +32,11 @@ export const useWalletPayment = (paymentData, onHide) => {
       newErrors.telefono = "Formato de teléfono inválido";
     }
 
+    // Validar tipo de documento
+    if (!tipoDocumento.trim()) {
+      newErrors.tipoDocumento = "El tipo de documento es obligatorio";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -42,6 +49,7 @@ export const useWalletPayment = (paymentData, onHide) => {
         customerPersonalInfo: {
           cedula,
           telefono,
+          tipoDocumento,
         },
       };
 
@@ -104,7 +112,7 @@ export const useWalletPayment = (paymentData, onHide) => {
 
       return prev < totalSteps ? prev + 1 : prev;
     });
-  }, [totalSteps, cedula, telefono]);
+  }, [totalSteps, cedula, telefono, tipoDocumento]);
 
   const prevStep = useCallback(() => {
     setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
@@ -114,6 +122,7 @@ export const useWalletPayment = (paymentData, onHide) => {
     setCurrentStep(1);
     setCedula("");
     setTelefono("");
+    setTipoDocumento("cedula");
     setErrors({});
   }, []);
 
@@ -138,15 +147,27 @@ export const useWalletPayment = (paymentData, onHide) => {
     [errors.telefono]
   );
 
+  const handleDocumentChange = useCallback(
+    (value) => {
+      setTipoDocumento(value);
+      if (errors.tipoDocumento) {
+        setErrors((prev) => ({ ...prev, tipoDocumento: "" }));
+      }
+    },
+    [errors.tipoDocumento]
+  );
+
   return {
     currentStep,
     totalSteps,
     walletData,
     cedula,
     telefono,
+    tipoDocumento,
     errors,
     handleCedulaChange,
     handleTelefonoChange,
+    handleDocumentChange,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,

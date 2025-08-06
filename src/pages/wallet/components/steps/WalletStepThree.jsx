@@ -10,6 +10,7 @@ const WalletStepThree = ({
   selectedComplements,
   isAssistantsOnly,
   paymentCalculations,
+  tipoDocumento = "",
   cedula = "",
   telefono = "",
 }) => {
@@ -19,6 +20,20 @@ const WalletStepThree = ({
   const isAnnual = paymentCalculations?.isAnnual || false;
   const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
 
+  // Función para obtener el texto del tipo de documento
+  const getTipoDocumentoText = (tipo) => {
+    switch (tipo) {
+      case "cedula":
+        return "CC";
+      case "nit":
+        return "NIT";
+      case "otro":
+        return "OTRO";
+      default:
+        return tipo.toUpperCase();
+    }
+  };
+
   const generateWhatsAppSummary = () => {
     let summary =
       "¡Hola! Te envío el comprobante de pago junto con el resumen de mi compra:\n\n";
@@ -26,9 +41,12 @@ const WalletStepThree = ({
     summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
 
     // Agregar datos personales si están disponibles
-    if (cedula) {
-      summary += `Cédula: ${cedula}\n`;
+    if (tipoDocumento && cedula) {
+      summary += `Documento: ${getTipoDocumentoText(
+        tipoDocumento
+      )} ${cedula}\n`;
     }
+
     if (telefono) {
       summary += `Teléfono: ${telefono}\n`;
     }
@@ -50,12 +68,12 @@ const WalletStepThree = ({
     summary += `Periodicidad: ${isAnnual ? "Anual" : "Mensual"}\n`;
 
     if (isAnnual && totalAnnualSavings > 0) {
-      summary += `Ahorro anual: -$${totalAnnualSavings.toFixed(2)} USD\n`;
+      summary += `Ahorro anual: -${totalAnnualSavings.toFixed(2)} USD\n`;
     }
 
     summary += `Total en dólares${
       isAnnual ? " (anual)" : ""
-    }: $${walletData.amountUSD.toFixed(2)} USD\n`;
+    }: ${walletData.amountUSD.toFixed(2)} USD\n`;
 
     summary += `Total en pesos colombianos${
       isAnnual ? " (anual)" : ""
@@ -138,6 +156,7 @@ WalletStepThree.propTypes = {
   paymentCalculations: PropTypes.object,
   cedula: PropTypes.string,
   telefono: PropTypes.string,
+  tipoDocumento: PropTypes.string,
 };
 
 export default WalletStepThree;

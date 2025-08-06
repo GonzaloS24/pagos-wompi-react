@@ -10,12 +10,27 @@ const WalletPaymentSummary = ({
   walletData,
   cedula = "",
   telefono = "",
+  tipoDocumento = "",
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
   const hasPlan = !isAssistantsOnly && selectedPlan;
   const isAnnual = paymentCalculations?.isAnnual || false;
   const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
+
+  // Función para obtener el texto del tipo de documento
+  const getTipoDocumentoText = (tipo) => {
+    switch (tipo) {
+      case "cedula":
+        return "CC";
+      case "nit":
+        return "NIT";
+      case "otro":
+        return "OTRO";
+      default:
+        return tipo.toUpperCase();
+    }
+  };
 
   return (
     <div
@@ -30,12 +45,14 @@ const WalletPaymentSummary = ({
       </h6>
 
       {/* Mostrar datos personales si están disponibles */}
-      {(cedula || telefono) && (
+      {(cedula || telefono || tipoDocumento) && (
         <>
-          {cedula && (
+          {tipoDocumento && cedula && (
             <div className="d-flex justify-content-between mb-1">
-              <span className="text-muted">Cédula:</span>
-              <span>{cedula}</span>
+              <span className="text-muted">Documento:</span>
+              <span>
+                {getTipoDocumentoText(tipoDocumento)} {cedula}
+              </span>
             </div>
           )}
           {telefono && (
@@ -161,6 +178,7 @@ WalletPaymentSummary.propTypes = {
   walletData: PropTypes.object.isRequired,
   cedula: PropTypes.string,
   telefono: PropTypes.string,
+  tipoDocumento: PropTypes.string,
 };
 
 export { WalletPaymentSummary };

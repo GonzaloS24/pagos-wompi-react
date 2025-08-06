@@ -12,6 +12,7 @@ const WalletStepTwo = ({
   copyToClipboard,
   copyPurchaseSummary,
   cedula = "",
+  tipoDocumento = "",
   telefono = "",
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
@@ -20,15 +21,39 @@ const WalletStepTwo = ({
   const isAnnual = paymentCalculations?.isAnnual || false;
   const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
 
+  // Función para obtener el texto del tipo de documento
+  const getTipoDocumentoText = (tipo) => {
+    switch (tipo) {
+      case "cedula":
+        return "CC";
+      case "nit":
+        return "NIT";
+      case "otro":
+        return "OTRO";
+      default:
+        return tipo.toUpperCase();
+    }
+  };
+
   const generatePurchaseSummary = () => {
     let summary = "RESUMEN DEL PLAN:\n\n";
 
     summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
 
-    // Agregar datos personales si están disponibles
-    if (cedula) {
-      summary += `Cédula: ${cedula}\n`;
+    if (tipoDocumento && cedula) {
+      summary += `Documento: ${getTipoDocumentoText(
+        tipoDocumento
+      )} ${cedula}\n`;
     }
+
+    // if (tipoDocumento) {
+    //   summary += `Tipo de documento: ${getTipoDocumentoText(tipoDocumento)}\n`;
+    // }
+
+    // if (cedula) {
+    //   summary += `Cédula: ${cedula}\n`;
+    // }
+
     if (telefono) {
       summary += `Teléfono: ${telefono}\n`;
     }
@@ -218,6 +243,7 @@ WalletStepTwo.propTypes = {
   copyPurchaseSummary: PropTypes.func.isRequired,
   cedula: PropTypes.string,
   telefono: PropTypes.string,
+  tipoDocumento: PropTypes.string,
 };
 
 export default WalletStepTwo;

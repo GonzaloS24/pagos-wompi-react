@@ -4,8 +4,10 @@ const WalletStepFour = ({
   // walletData,
   cedula,
   telefono,
+  tipoDocumento,
   onCedulaChange,
   onTelefonoChange,
+  onTipoDocumentoChange,
   errors,
 }) => {
   return (
@@ -32,26 +34,57 @@ const WalletStepFour = ({
             className="form-label"
             style={{ fontWeight: "500", color: "#4a5568" }}
           >
-            Cédula de Ciudadanía *
+            Documento de Identidad *
           </label>
-          <input
-            type="text"
-            className={`form-control ${errors.cedula ? "is-invalid" : ""}`}
-            value={cedula}
-            onChange={(e) => onCedulaChange(e.target.value.replace(/\D/g, ""))}
-            placeholder="Número de cédula"
-            style={{
-              borderRadius: "6px",
-              padding: "0.75rem",
-              fontSize: "1rem",
-              border: "1px solid rgba(0, 158, 227, 0.3)",
-            }}
-          />
-          {errors.cedula && (
-            <div className="invalid-feedback" style={{ display: "block" }}>
-              {errors.cedula}
+          <div className="row g-2">
+            <div className="col-4">
+              <select
+                className={`form-select ${
+                  errors.tipoDocumento ? "is-invalid" : ""
+                }`}
+                value={tipoDocumento}
+                onChange={(e) => onTipoDocumentoChange(e.target.value)}
+                style={{
+                  borderRadius: "6px",
+                  padding: "0.75rem",
+                  fontSize: "1rem",
+                  border: "1px solid rgba(0, 158, 227, 0.3)",
+                  background: "#fff",
+                }}
+              >
+                <option value="cedula">CC</option>
+                <option value="nit">NIT</option>
+                <option value="otro">OTRO</option>
+              </select>
+              {errors.tipoDocumento && (
+                <div className="invalid-feedback" style={{ display: "block" }}>
+                  {errors.tipoDocumento}
+                </div>
+              )}
             </div>
-          )}
+            <div className="col-8">
+              <input
+                type="text"
+                className={`form-control ${errors.cedula ? "is-invalid" : ""}`}
+                value={cedula}
+                onChange={(e) =>
+                  onCedulaChange(e.target.value.replace(/\D/g, ""))
+                }
+                placeholder="Número de documento"
+                style={{
+                  borderRadius: "6px",
+                  padding: "0.75rem",
+                  fontSize: "1rem",
+                  border: "1px solid rgba(0, 158, 227, 0.3)",
+                }}
+              />
+              {errors.cedula && (
+                <div className="invalid-feedback" style={{ display: "block" }}>
+                  {errors.cedula}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mb-3">
@@ -95,8 +128,10 @@ WalletStepFour.propTypes = {
   walletData: PropTypes.object.isRequired,
   cedula: PropTypes.string.isRequired,
   telefono: PropTypes.string.isRequired,
+  tipoDocumento: PropTypes.string.isRequired,
   onCedulaChange: PropTypes.func.isRequired,
   onTelefonoChange: PropTypes.func.isRequired,
+  onTipoDocumentoChange: PropTypes.func.isRequired,
   errors: PropTypes.object.isRequired,
 };
 

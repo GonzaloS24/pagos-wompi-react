@@ -9,6 +9,9 @@ const WalletStepOne = ({
   isAssistantsOnly,
   paymentCalculations,
   walletData,
+  cedula = "",
+  telefono = "",
+  tipoDocumento = "",
 }) => {
   return (
     <div>
@@ -24,6 +27,9 @@ const WalletStepOne = ({
         isAssistantsOnly={isAssistantsOnly}
         paymentCalculations={paymentCalculations}
         walletData={walletData}
+        cedula={cedula}
+        telefono={telefono}
+        tipoDocumento={tipoDocumento}
       />
 
       <p className="text-center text-muted">
@@ -41,6 +47,9 @@ WalletStepOne.propTypes = {
   isAssistantsOnly: PropTypes.bool.isRequired,
   paymentCalculations: PropTypes.object,
   walletData: PropTypes.object.isRequired,
+  cedula: PropTypes.string,
+  telefono: PropTypes.string,
+  tipoDocumento: PropTypes.string,
 };
 
 export default WalletStepOne;
