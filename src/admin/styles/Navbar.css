@@ -1,0 +1,229 @@
+.navbar-custom {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 0;
+  position: relative;
+  z-index: 1000;
+}
+
+/* Contenedor con ancho máximo igual al contenido */
+.navbar-custom .container-fluid {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+/* Botón móvil personalizado */
+.navbar-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #666;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.navbar-mobile-toggle:hover {
+  background-color: rgba(0, 158, 227, 0.1);
+  color: #009ee3;
+}
+
+/* Navegación desktop */
+.navbar-desktop {
+  display: block;
+}
+
+/* Sidebar móvil */
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100vh;
+  background: #ffffff;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: left 0.3s ease;
+  z-index: 1100;
+  overflow-y: auto;
+}
+
+.mobile-sidebar.open {
+  left: 0;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1050;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar-close {
+  background: none;
+  border: none;
+  color: #666;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.sidebar-close:hover {
+  background-color: rgba(0, 158, 227, 0.1);
+  color: #009ee3;
+}
+
+.sidebar-nav {
+  padding: 1rem 0;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-nav li {
+  margin: 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  color: #666666;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(0, 158, 227, 0.1);
+  color: #009ee3;
+  border-left-color: #009ee3;
+}
+
+.sidebar-link.active {
+  background-color: rgba(0, 158, 227, 0.1);
+  color: #009ee3;
+  border-left-color: #009ee3;
+}
+
+.sidebar-link.logout {
+  color: #dc3545;
+  margin-top: 1rem;
+  border-top: 1px solid #e9ecef;
+  padding-top: 1.5rem;
+}
+
+.sidebar-link.logout:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border-left-color: #dc3545;
+}
+
+.nav-link-custom {
+  color: #666666 !important;
+  font-weight: 500;
+  padding: 0.5rem 1rem !important;
+  margin: 0 0.25rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.nav-link-custom:hover {
+  color: #009ee3 !important;
+  background-color: rgba(0, 158, 227, 0.1);
+}
+
+.nav-link-custom.active {
+  color: #009ee3 !important;
+  background-color: rgba(0, 158, 227, 0.1);
+}
+
+.logout-btn {
+  color: #dc3545 !important;
+  font-weight: 500;
+  padding: 0.5rem 1rem !important;
+  margin: 0 0.25rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logout-btn:hover {
+  color: #ffffff !important;
+  background-color: #dc3545;
+}
+
+.navbar-nav-right {
+  margin-left: auto;
+}
+
+.input-group-text {
+  background-color: #edf4ff;
+  border-color: #ced4da;
+  color: #6c757d;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #009ee3;
+  box-shadow: 0 0 0 0.2rem rgba(0, 158, 227, 0.25);
+}
+
+.pagination .page-link:hover {
+  background-color: rgba(0, 158, 227, 0.1);
+  border-color: #009ee3;
+  color: #009ee3;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .navbar-custom .container-fluid {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 1199.98px) {
+  .navbar-mobile-toggle {
+    display: block;
+  }
+  
+  .navbar-desktop {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-sidebar {
+    width: 260px;
+    left: -260px;
+  }
+  
+  .sidebar-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .sidebar-link {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+}

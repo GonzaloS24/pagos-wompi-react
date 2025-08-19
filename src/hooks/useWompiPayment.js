@@ -1,6 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
-import { WOMPI_CONFIG, fetchPlans } from "../api/wompiConfig";
-import { sanitizeString } from "../utils/wompiHelpers";
+import { fetchPlans } from "../services/dataService";
+import { fetchUSDtoCOPRate } from "../services/api/exchangeRateApi";
+import { sanitizeString } from "../services/validation/formValidation";
+import { PAYMENT_PERIODS } from "../utils/constants";
 import Swal from "sweetalert2";
 
 export const useWompiPayment = () => {
@@ -11,6 +14,7 @@ export const useWompiPayment = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(true);
   const [isDataConfirmed, setIsDataConfirmed] = useState(false);
+  const [paymentPeriod, setPaymentPeriod] = useState(PAYMENT_PERIODS.MONTHLY); 
   const [formData, setFormData] = useState({
     workspace_id: "",
     workspace_name: "",
@@ -48,10 +52,18 @@ export const useWompiPayment = () => {
         owner_email: sanitizeString(params.get("owner_email")),
         phone_number: sanitizeString(params.get("phone_number")),
         plan_id: sanitizeString(params.get("plan_id")),
+        period: sanitizeString(params.get("period")),
       };
 
       if (urlData.plan_id && plans.length > 0) {
         selectPlanFromId(urlData.plan_id);
+      }
+
+      if (
+        urlData.period &&
+        Object.values(PAYMENT_PERIODS).includes(urlData.period)
+      ) {
+        setPaymentPeriod(urlData.period);
       }
 
       setFormData({
@@ -72,32 +84,47 @@ export const useWompiPayment = () => {
     const initializeData = async () => {
       setLoading(true);
       try {
-        // Obtener tasa de cambio
-        const response = await fetch(WOMPI_CONFIG.EXCHANGE_RATE_API);
-        if (!response.ok) throw new Error("Error al obtener tasa de cambio");
-        const data = await response.json();
-        setUsdToCopRate(data.rates.COP);
+        const [exchangeRate, fetchedPlans] = await Promise.all([
+          fetchUSDtoCOPRate(),
+          fetchPlans(),
+        ]);
 
-        // Obtener los planes desde fetchPlans
-        const fetchedPlans = await fetchPlans();
+        const validRate =
+          exchangeRate && exchangeRate > 100 ? exchangeRate : 4200;
+
+        setUsdToCopRate(validRate);
         setPlans(fetchedPlans);
 
         // Buscar plan seleccionado desde los parámetros de la URL
         const params = new URLSearchParams(window.location.search);
         const planId = sanitizeString(params.get("plan_id"));
+        const period = sanitizeString(params.get("period"));
+
         if (planId) {
-          const plan = fetchedPlans.find((p) => p.id === planId); // Usamos los planes recién obtenidos
+          const plan = fetchedPlans.find((p) => p.id === planId);
           if (plan) {
             setSelectedPlan(plan);
           }
         }
+
+        if (period && Object.values(PAYMENT_PERIODS).includes(period)) {
+          setPaymentPeriod(period);
+        }
       } catch (error) {
         console.error("Error en la inicialización:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Error al cargar los datos necesarios",
-        });
+        setUsdToCopRate(4200);
+
+        try {
+          const fetchedPlans = await fetchPlans();
+          setPlans(fetchedPlans);
+        } catch (planError) {
+          console.error("Error cargando planes:", planError);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Error al cargar los datos necesarios",
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -128,5 +155,7 @@ export const useWompiPayment = () => {
     setFormErrors,
     isDataConfirmed,
     setIsDataConfirmed,
+    paymentPeriod,
+    setPaymentPeriod,
   };
 };

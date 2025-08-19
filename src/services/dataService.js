@@ -1,0 +1,344 @@
+import { getAllPlans } from "./newApi/plans";
+import { getAllAssistants } from "./newApi/assistants";
+import { getAllAddons } from "./newApi/addons";
+import {
+  ASSISTANT_DISPLAY_INFO,
+  COMING_SOON_ASSISTANTS,
+  getAssistantReference,
+  getComplementReference,
+} from "../utils/constants";
+
+/**
+ * Obtiene todos los planes activos (excluyendo el free)
+ */
+export const fetchPlans = async () => {
+  try {
+    const response = await getAllPlans();
+
+    return response
+      .filter(
+        (plan) => plan.product.status === "active" && plan.product.id !== "free"
+      )
+      .map((plan) => {
+        const priceUSD = parseFloat(plan.product.display_price);
+        return {
+          id: plan.product.id,
+          name: plan.product.name,
+          priceUSD: priceUSD,
+          bot_users: plan.product.bot_users,
+          bots: plan.product.bots,
+          members: plan.product.members,
+        };
+      });
+  } catch (error) {
+    console.error("Error fetching plans:", error);
+
+    // Fallback a datos simulados si la API falla
+    const SIMULATED_PLANS = [
+      {
+        product: {
+          id: "business",
+          displayPrice: "49 USD",
+          name: "Chatea Pro Start",
+          price: 49,
+          bots: 1,
+          botUsers: 1000,
+          members: 5,
+          status: "active",
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: "business_lite",
+          displayPrice: "109 USD",
+          name: "Chatea Pro Advanced",
+          price: 109,
+          bots: 1,
+          botUsers: 10000,
+          members: 5,
+          status: "active",
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: "custom_plan3",
+          displayPrice: "189 USD",
+          name: "Chatea Pro Plus",
+          price: 189,
+          bots: 1,
+          botUsers: 20000,
+          members: 5,
+          status: "active",
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: "business_large",
+          displayPrice: "399 USD",
+          name: "Chatea Pro Master",
+          price: 399,
+          bots: 5,
+          botUsers: 50000,
+          members: 10,
+          status: "active",
+        },
+        discounts: [],
+      },
+    ];
+
+    return SIMULATED_PLANS.filter(
+      (plan) => plan.product.status === "active" && plan.product.id !== "free"
+    ).map((plan) => ({
+      id: plan.product.id,
+      name: plan.product.name,
+      priceUSD: plan.product.price,
+      bot_users: plan.product.botUsers,
+      bots: plan.product.bots,
+      members: plan.product.members,
+      displayPrice: plan.product.displayPrice,
+    }));
+  }
+};
+
+/**
+ * Obtiene todos los asistentes disponibles y los combina con los de "próximamente"
+ */
+export const fetchAssistants = async () => {
+  try {
+    // Ahora usa la API real a través de Axios
+    const response = await getAllAssistants();
+
+    // Convertir asistentes de API
+    const apiAssistants = response.map((assistant) => {
+      const reference = getAssistantReference(assistant.product.id);
+      const displayInfo = ASSISTANT_DISPLAY_INFO[reference];
+
+      return {
+        id: reference, // Usamos el nombre de referencia como ID
+        apiId: assistant.product.id, // Guardamos el ID numérico para credit card
+        name: assistant.product.name,
+        cost: assistant.product.cost,
+        label: displayInfo?.label || assistant.product.name,
+        description: displayInfo?.description || "",
+        icon: displayInfo?.icon || "bx-bot",
+        comingSoon: false,
+      };
+    });
+
+    // Combinar con asistentes de "próximamente"
+    return [...apiAssistants, ...COMING_SOON_ASSISTANTS];
+  } catch (error) {
+    console.error("Error fetching assistants:", error);
+
+    // Fallback a datos simulados si la API falla
+    const SIMULATED_ASSISTANTS = [
+      {
+        product: {
+          id: 1,
+          name: "ventas",
+          cost: 20,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 2,
+          name: "carritos",
+          cost: 20,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 3,
+          name: "comentarios",
+          cost: 20,
+        },
+        discounts: [],
+      },
+    ];
+
+    const apiAssistants = SIMULATED_ASSISTANTS.map((assistant) => {
+      const reference = getAssistantReference(assistant.product.id);
+      const displayInfo = ASSISTANT_DISPLAY_INFO[reference];
+
+      return {
+        id: reference,
+        apiId: assistant.product.id,
+        name: assistant.product.name,
+        cost: assistant.product.cost,
+        label: displayInfo?.label || assistant.product.name,
+        description: displayInfo?.description || "",
+        icon: displayInfo?.icon || "bx-bot",
+        comingSoon: false,
+      };
+    });
+
+    return [...apiAssistants, ...COMING_SOON_ASSISTANTS];
+  }
+};
+
+/**
+ * Obtiene todos los complementos disponibles
+ */
+export const fetchComplements = async () => {
+  try {
+    // Ahora usa la API real a través de Axios
+    const response = await getAllAddons();
+
+    return response.map((complement) => {
+      const reference = getComplementReference(complement.product.id);
+
+      return {
+        id: reference,
+        apiId: complement.product.id,
+        name: complement.product.name,
+        priceUSD: complement.product.cost,
+        description: complement.product.name.includes("Bot")
+          ? "(Permite agregar un nuevo canal como FB, IG o WP)"
+          : complement.product.name.includes("Miembro")
+          ? "(Permite agregar un nuevo asesor)"
+          : "",
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching complements:", error);
+
+    // Fallback a datos simulados si la API falla
+    const SIMULATED_COMPLEMENTS = [
+      {
+        product: {
+          id: 1,
+          name: "🤖 1 Bot Adicional 🤖",
+          cost: 10,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 2,
+          name: "🙋‍♀️1 Miembro Adicional 🙋‍♀️",
+          cost: 10,
+        },
+        discounts: [],
+      },
+      {
+        product: {
+          id: 3,
+          name: "1.000 Webhooks Diarios 🔗",
+          cost: 20,
+        },
+        discounts: [],
+      },
+    ];
+
+    return SIMULATED_COMPLEMENTS.map((complement) => {
+      const reference = getComplementReference(complement.product.id);
+
+      return {
+        id: reference,
+        apiId: complement.product.id,
+        name: complement.product.name,
+        priceUSD: complement.product.cost,
+        description: complement.product.name.includes("Bot")
+          ? "(Permite agregar un nuevo canal como FB, IG o WP)"
+          : complement.product.name.includes("Miembro")
+          ? "(Permite agregar un nuevo asesor)"
+          : "",
+      };
+    });
+  }
+};
+
+/**
+ * Obtiene la información de un asistente por su ID de referencia
+ */
+export const getAssistantById = async (id) => {
+  const assistants = await fetchAssistants();
+  return assistants.find((assistant) => assistant.id === id);
+};
+
+/**
+ * Obtiene la información de un complemento por su ID de referencia
+ */
+export const getComplementById = async (id) => {
+  const complements = await fetchComplements();
+  return complements.find((complement) => complement.id === id);
+};
+
+/**
+ * Convierte asistentes seleccionados a formato para referencia de pago normal
+ */
+export const formatAssistantsForReference = (selectedAssistants) => {
+  return selectedAssistants.map((assistant) => {
+    if (typeof assistant === "string") {
+      return assistant;
+    }
+    return assistant.id || assistant.name;
+  });
+};
+
+/**
+ * Convierte asistentes seleccionados a formato para credit card (IDs numéricos)
+ */
+export const formatAssistantsForCreditCard = async (selectedAssistants) => {
+  const assistants = await fetchAssistants();
+
+  return selectedAssistants
+    .map((assistantId) => {
+      const assistant = assistants.find((a) => a.id === assistantId);
+      return assistant?.apiId || assistantId;
+    })
+    .filter((id) => id !== undefined);
+};
+
+/**
+ * Convierte complementos seleccionados a formato para referencia de pago normal
+ */
+export const formatComplementsForReference = (selectedComplements) => {
+  return selectedComplements.map((complement) => {
+    if (typeof complement === "string") {
+      return complement;
+    }
+
+    const reference = complement.id || complement.name;
+    if (complement.quantity > 1) {
+      return `${reference}_${complement.quantity}`;
+    }
+
+    if (complement.selectedBot) {
+      return `${reference}_${complement.quantity}_${complement.selectedBot.flow_ns}`;
+    }
+
+    return reference;
+  });
+};
+
+/**
+ * Convierte complementos seleccionados a formato para credit card (IDs numéricos)
+ */
+export const formatComplementsForCreditCard = async (selectedComplements) => {
+  const complements = await fetchComplements();
+
+  return selectedComplements
+    .map((complement) => {
+      const comp = complements.find((c) => c.id === complement.id);
+
+      const baseComplement = {
+        id: comp?.apiId || complement.id,
+        quantity: complement.quantity || 1,
+        botFlowNs: "",
+      };
+
+      // Solo para webhooks, usar el valor real del bot
+      if (complement.id === "webhooks" && complement.selectedBot?.flow_ns) {
+        baseComplement.botFlowNs = complement.selectedBot.flow_ns;
+      }
+
+      return baseComplement;
+    })
+    .filter((comp) => comp.id !== undefined);
+};

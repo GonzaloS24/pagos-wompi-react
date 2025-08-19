@@ -1,0 +1,214 @@
+.subscriptions-metrics {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.metrics-cards-row {
+  margin-bottom: 2rem;
+}
+
+/* Metric Cards */
+.metric-card {
+  background: #fff;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 158, 227, 0.3);
+}
+
+.metric-card .card-body {
+  padding: 1.5rem;
+}
+
+.metric-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 158, 227, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.metric-icon i {
+  font-size: 1.8rem;
+  color: #009ee3;
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-title {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  color: #009ee3;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+/* Charts Section */
+.charts-section {
+  margin-top: 2rem;
+}
+
+.charts-section .row {
+  display: flex;
+  align-items: stretch;
+}
+
+.charts-section .col-lg-8,
+.charts-section .col-lg-4 {
+  display: flex;
+  flex-direction: column;
+}
+
+.new-subscriptions-chart,
+.plans-distribution-chart {
+  width: 100%;
+  margin-bottom: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card {
+  background: #fff;
+  border: 1px solid rgba(0, 158, 227, 0.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.chart-header h5 {
+  font-weight: 600;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-container-circular {
+  height: auto;
+  min-height: 350px;
+}
+
+.chart-container .loader-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  box-shadow: none;
+  height: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .subscriptions-metrics {
+    padding: 1rem;
+  }
+
+  .metric-card .card-body {
+    padding: 1rem;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .metric-icon {
+    margin-right: 0;
+    margin-bottom: 1rem;
+    width: 50px;
+    height: 50px;
+  }
+
+  .metric-icon i {
+    font-size: 1.5rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .chart-card {
+    padding: 1rem;
+  }
+
+  .chart-container {
+    height: 300px;
+  }
+
+  .chart-container-circular {
+    height: 280px;
+  }
+
+  .charts-section .row {
+    flex-direction: column;
+  }
+
+  .charts-section .col-lg-8,
+  .charts-section .col-lg-4 {
+    display: block;
+  }
+
+  .new-subscriptions-chart,
+  .plans-distribution-chart {
+    flex: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .metric-value {
+    font-size: 1.3rem;
+  }
+
+  .chart-header h5 {
+    font-size: 1rem;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+
+  .chart-container-circular {
+    height: 220px;
+  }
+}
