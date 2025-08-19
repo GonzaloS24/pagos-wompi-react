@@ -163,6 +163,8 @@ const SubscriptionManager = ({ workspaceId, onSubscriptionCanceled }) => {
 
       return {
         owner_email: subscription.owner_email,
+        document_type: subscription.document_type,
+        document_number: subscription.document_number,
         old: oldData,
         new: newData,
       };

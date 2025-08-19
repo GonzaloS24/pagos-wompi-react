@@ -130,6 +130,8 @@ const RecurringPaymentPage = () => {
         workspace_name: formData.workspace_name || "",
         owner_email: formData.owner_email || "",
         phone: formData.phone_number || "",
+        document_type: formData.document_type || "",
+        document_number: formData.document_number || "",
         assistants_only: isAssistantsOnly,
         plan_id: selectedPlan?.id || null,
         free_assistant_id: freeAssistantId,
@@ -323,6 +325,14 @@ const RecurringPaymentPage = () => {
                           <span className="detail-label">Propietario:</span>
                           <span className="detail-value">
                             {formData.owner_name}
+                          </span>
+                        </div>
+
+                        <div className="detail-item">
+                          <span className="detail-label">Documento:</span>
+                          <span className="detail-value">
+                            {formData.document_type}
+                            {formData.document_number}
                           </span>
                         </div>
 

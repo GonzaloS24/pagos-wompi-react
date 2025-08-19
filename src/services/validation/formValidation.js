@@ -32,6 +32,33 @@ export const validateForm = (formData) => {
     errors.phone_number = "Número de teléfono inválido";
   }
 
+  // Validación del tipo de documento
+  if (!formData.document_type) {
+    errors.document_type = "El tipo de documento es requerido";
+  }
+
+  // Validación del número de documento
+  if (!formData.document_number.trim()) {
+    errors.document_number = "El número de documento es requerido";
+  } else {
+    // Validar según el tipo de documento
+    if (
+      formData.document_type === "cedula" ||
+      formData.document_type === "nit"
+    ) {
+      if (!/^\d{6,15}$/.test(formData.document_number)) {
+        errors.document_number = "Debe contener entre 6 y 15 dígitos";
+      }
+    } else if (formData.document_type === "otro") {
+      if (
+        formData.document_number.length < 3 ||
+        formData.document_number.length > 20
+      ) {
+        errors.document_number = "Debe contener entre 3 y 20 caracteres";
+      }
+    }
+  }
+
   return errors;
 };
 

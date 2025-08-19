@@ -90,6 +90,58 @@ const ConfirmationModal = ({
             </Form.Control.Feedback>
           </Form.Group>
 
+          <Form.Group className="mb-3">
+            <Form.Label>Documento de Identidad *</Form.Label>
+            <div className="row g-2">
+              <div className="col-4">
+                <Form.Select
+                  className="p-2"
+                  value={formData.document_type}
+                  onChange={(e) =>
+                    handleInputChange("document_type", e.target.value)
+                  }
+                  isInvalid={!!formErrors.document_type}
+                >
+                  <option value="cedula">CC</option>
+                  <option value="nit">NIT</option>
+                  <option value="otro">OTRO</option>
+                </Form.Select>
+                {formErrors.document_type && (
+                  <div
+                    className="invalid-feedback"
+                    style={{ display: "block" }}
+                  >
+                    {formErrors.document_type}
+                  </div>
+                )}
+              </div>
+              <div className="col-8">
+                <Form.Control
+                  className="p-2"
+                  type="text"
+                  value={formData.document_number}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Solo permitir números para CC y NIT, todo para OTRO
+                    if (formData.document_type === "otro") {
+                      handleInputChange("document_number", value);
+                    } else {
+                      handleInputChange(
+                        "document_number",
+                        value.replace(/\D/g, "")
+                      );
+                    }
+                  }}
+                  placeholder="Número de documento"
+                  isInvalid={!!formErrors.document_number}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {formErrors.document_number}
+                </Form.Control.Feedback>
+              </div>
+            </div>
+          </Form.Group>
+
           <p className="text-muted small mb-3">* Campos obligatorios</p>
 
           <Button variant="primary" type="submit" className="w-100">

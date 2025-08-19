@@ -153,6 +153,20 @@ export const usePaymentCalculations = ({
     freeAssistant,
   ]);
 
+  // Función helper para obtener tipo de documento abreviado
+  const getDocumentTypeAbbr = (type) => {
+    switch (type) {
+      case "cedula":
+        return "cc";
+      case "nit":
+        return "nit";
+      case "otro":
+        return "otro";
+      default:
+        return type;
+    }
+  };
+
   const generateReference = useMemo(() => {
     const workspaceId =
       urlParams?.workspace_id || WOMPI_CONFIG.DEFAULT_WORKSPACE_ID;
@@ -172,11 +186,17 @@ export const usePaymentCalculations = ({
         : "";
 
     // información del periodo de pago
-    const periodString = calculations.isAnnual
-      ? "-period=annual"
-      : "";
+    const periodString = calculations.isAnnual ? "-period=annual" : "";
 
     const recurringString = enableRecurring ? "-recurring=true" : "";
+
+    // información del documento 
+    const documentString =
+      urlParams?.document_type && urlParams?.document_number
+        ? `-ssn=${getDocumentTypeAbbr(urlParams.document_type)}+${
+            urlParams.document_number
+          }`
+        : "";
 
     if (purchaseType === "plan") {
       return `plan_id=${
@@ -185,13 +205,13 @@ export const usePaymentCalculations = ({
         urlParams?.workspace_name
       }-owner_email=${urlParams?.owner_email}-phone_number=${
         urlParams?.phone_number
-      }${assistantsString}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
+      }${assistantsString}${complementsString}${recurringString}${periodString}${documentString}-reference${Date.now()}`;
     } else {
       return `assistants_only=true-workspace_id=${workspaceId}-workspace_name=${
         urlParams?.workspace_name
       }-owner_email=${urlParams?.owner_email}-phone_number=${
         urlParams?.phone_number
-      }${assistantsString}${complementsString}${recurringString}${periodString}-reference${Date.now()}`;
+      }${assistantsString}${complementsString}${recurringString}${periodString}${documentString}-reference${Date.now()}`;
     }
   }, [
     purchaseType,
