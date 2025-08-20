@@ -1,4 +1,6 @@
 import PropTypes from "prop-types";
+import { useState, useEffect } from "react";
+import { getNationalIdentityNumberTypes } from "../../../../services/referralApi/documentTypes";
 
 const WalletStepFour = ({
   // walletData,
@@ -10,6 +12,32 @@ const WalletStepFour = ({
   onTipoDocumentoChange,
   errors,
 }) => {
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(true);
+
+  // Cargar tipos de documento al montar el componente
+  useEffect(() => {
+    const loadDocumentTypes = async () => {
+      try {
+        const types = await getNationalIdentityNumberTypes();
+        setDocumentTypes(types);
+      } catch (error) {
+        console.error("Error loading document types:", error);
+      } finally {
+        setLoadingDocumentTypes(false);
+      }
+    };
+
+    loadDocumentTypes();
+  }, []);
+
+  // Determinar si se debe validar solo números
+  const shouldValidateNumericOnly = (documentType) => {
+    // Para CC, TI, CE, NIT, RC validar solo números
+    const numericTypes = ["CC", "TI", "CE", "NIT", "RC"];
+    return numericTypes.includes(documentType);
+  };
+
   return (
     <div>
       <h5 className="text-center mb-4" style={{ color: "#009ee3" }}>
@@ -51,10 +79,20 @@ const WalletStepFour = ({
                   border: "1px solid rgba(0, 158, 227, 0.3)",
                   background: "#fff",
                 }}
+                disabled={loadingDocumentTypes}
               >
-                <option value="cedula">CC</option>
-                <option value="nit">NIT</option>
-                <option value="otro">OTRO</option>
+                {loadingDocumentTypes ? (
+                  <option value="">Cargando...</option>
+                ) : (
+                  <>
+                    <option value="">Seleccionar</option>
+                    {documentTypes.map((type) => (
+                      <option key={type.name} value={type.name}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
               {errors.tipoDocumento && (
                 <div className="invalid-feedback" style={{ display: "block" }}>
@@ -67,9 +105,15 @@ const WalletStepFour = ({
                 type="text"
                 className={`form-control ${errors.cedula ? "is-invalid" : ""}`}
                 value={cedula}
-                onChange={(e) =>
-                  onCedulaChange(e.target.value.replace(/\D/g, ""))
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Validar según el tipo de documento
+                  if (shouldValidateNumericOnly(tipoDocumento)) {
+                    onCedulaChange(value.replace(/\D/g, ""));
+                  } else {
+                    onCedulaChange(value);
+                  }
+                }}
                 placeholder="Número de documento"
                 style={{
                   borderRadius: "6px",
@@ -85,6 +129,14 @@ const WalletStepFour = ({
               )}
             </div>
           </div>
+          {tipoDocumento && !loadingDocumentTypes && (
+            <small className="text-muted">
+              {
+                documentTypes.find((type) => type.name === tipoDocumento)
+                  ?.description
+              }
+            </small>
+          )}
         </div>
 
         <div className="mb-3">

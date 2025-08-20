@@ -2,7 +2,7 @@ import {
   getSubscriptionByWorkspace,
   updateSubscription,
   cancelSubscription,
-} from "./newApi/subscriptions";
+} from "./subscriptionsApi/subscriptions";
 import { fetchPlans, fetchAssistants, fetchComplements } from "./dataService";
 import { calculateChanges as calculateChangesHelper } from "../pages/subscription/utils/subscriptionHelpers";
 import {

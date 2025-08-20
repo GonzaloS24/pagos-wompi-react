@@ -155,16 +155,8 @@ export const usePaymentCalculations = ({
 
   // Función helper para obtener tipo de documento abreviado
   const getDocumentTypeAbbr = (type) => {
-    switch (type) {
-      case "cedula":
-        return "cc";
-      case "nit":
-        return "nit";
-      case "otro":
-        return "otro";
-      default:
-        return type;
-    }
+    if (!type || type.trim() === "") return null;
+    return type;
   };
 
   const generateReference = useMemo(() => {
@@ -190,12 +182,11 @@ export const usePaymentCalculations = ({
 
     const recurringString = enableRecurring ? "-recurring=true" : "";
 
-    // información del documento 
+    // Agregar información del documento solo si ambos campos están presentes
+    const documentTypeAbbr = getDocumentTypeAbbr(urlParams?.document_type);
     const documentString =
-      urlParams?.document_type && urlParams?.document_number
-        ? `-ssn=${getDocumentTypeAbbr(urlParams.document_type)}+${
-            urlParams.document_number
-          }`
+      documentTypeAbbr && urlParams?.document_number
+        ? `-ssn=${documentTypeAbbr}+${urlParams.document_number}`
         : "";
 
     if (purchaseType === "plan") {

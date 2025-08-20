@@ -40,19 +40,19 @@ const WalletStepTwo = ({
 
     summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
 
-    if (tipoDocumento && cedula) {
-      summary += `Documento: ${getTipoDocumentoText(
-        tipoDocumento
-      )} ${cedula}\n`;
+    // if (tipoDocumento && cedula) {
+    //   summary += `Documento: ${getTipoDocumentoText(
+    //     tipoDocumento
+    //   )} ${cedula}\n`;
+    // }
+
+    if (tipoDocumento) {
+      summary += `Tipo de documento: ${getTipoDocumentoText(tipoDocumento)}\n`;
     }
 
-    // if (tipoDocumento) {
-    //   summary += `Tipo de documento: ${getTipoDocumentoText(tipoDocumento)}\n`;
-    // }
-
-    // if (cedula) {
-    //   summary += `Cédula: ${cedula}\n`;
-    // }
+    if (cedula) {
+      summary += `Cédula: ${cedula}\n`;
+    }
 
     if (telefono) {
       summary += `Teléfono: ${telefono}\n`;

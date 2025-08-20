@@ -1,4 +1,4 @@
-import { updateSubscriptionPayment } from "./newApi/subscriptions";
+import { updateSubscriptionPayment } from "./subscriptionsApi/subscriptions";
 
 /**
  * Servicio para manejar actualizaciones de tarjetas de suscripciones

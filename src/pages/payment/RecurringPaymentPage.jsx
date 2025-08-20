@@ -5,7 +5,7 @@ import chateaLogo from "../../assets/chatea.png";
 import CreditCardForm from "../../components/payments/wompi/CreditCardForm";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { fetchAssistants, fetchComplements } from "../../services/dataService";
-import { createSubscription } from "../../services/newApi/subscriptions";
+import { createSubscription } from "../../services/subscriptionsApi/subscriptions";
 import { useSubscriptionPolling } from "../../hooks/useSubscriptionPolling";
 import Swal from "sweetalert2";
 import "../../styles/components/RecurringPaymentPage.css";
@@ -23,8 +23,8 @@ const RecurringPaymentPage = () => {
     paymentCalculations,
     formData,
     selectedPlan,
-    selectedAssistants, // IDs numéricos
-    selectedComplements, // IDs numéricos con estructura de API
+    selectedAssistants,
+    selectedComplements,
     purchaseType,
     originalUrlParams,
   } = location.state || {};

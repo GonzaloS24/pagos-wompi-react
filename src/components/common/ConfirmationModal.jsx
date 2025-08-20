@@ -1,5 +1,7 @@
 /* eslint-disable react/prop-types */
 import { Modal, Button, Form } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { getNationalIdentityNumberTypes } from "../../services/referralApi/documentTypes";
 
 const ConfirmationModal = ({
   show,
@@ -8,8 +10,34 @@ const ConfirmationModal = ({
   onSubmit,
   onFormChange,
 }) => {
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(true);
+
+  // Cargar tipos de documento al montar el componente
+  useEffect(() => {
+    const loadDocumentTypes = async () => {
+      try {
+        const types = await getNationalIdentityNumberTypes();
+        setDocumentTypes(types);
+      } catch (error) {
+        console.error("Error loading document types:", error);
+      } finally {
+        setLoadingDocumentTypes(false);
+      }
+    };
+
+    loadDocumentTypes();
+  }, []);
+
   const handleInputChange = (field, value) => {
     onFormChange(field, value);
+  };
+
+  // Determinar si se debe validar solo números
+  const shouldValidateNumericOnly = (documentType) => {
+    // Para CC, TI, CE, NIT, RC validar solo números
+    const numericTypes = ["CC", "TI", "CE", "NIT", "RC"];
+    return numericTypes.includes(documentType);
   };
 
   return (
@@ -101,10 +129,20 @@ const ConfirmationModal = ({
                     handleInputChange("document_type", e.target.value)
                   }
                   isInvalid={!!formErrors.document_type}
+                  disabled={loadingDocumentTypes}
                 >
-                  <option value="cedula">CC</option>
-                  <option value="nit">NIT</option>
-                  <option value="otro">OTRO</option>
+                  {loadingDocumentTypes ? (
+                    <option value="">Cargando...</option>
+                  ) : (
+                    <>
+                      <option value="">Seleccionar</option>
+                      {documentTypes.map((type) => (
+                        <option key={type.name} value={type.name}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </Form.Select>
                 {formErrors.document_type && (
                   <div
@@ -122,14 +160,14 @@ const ConfirmationModal = ({
                   value={formData.document_number}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Solo permitir números para CC y NIT, todo para OTRO
-                    if (formData.document_type === "otro") {
-                      handleInputChange("document_number", value);
-                    } else {
+                    // Validar según el tipo de documento
+                    if (shouldValidateNumericOnly(formData.document_type)) {
                       handleInputChange(
                         "document_number",
                         value.replace(/\D/g, "")
                       );
+                    } else {
+                      handleInputChange("document_number", value);
                     }
                   }}
                   placeholder="Número de documento"
@@ -140,9 +178,16 @@ const ConfirmationModal = ({
                 </Form.Control.Feedback>
               </div>
             </div>
+            {formData.document_type && !loadingDocumentTypes && (
+              <Form.Text className="text-muted">
+                {
+                  documentTypes.find(
+                    (type) => type.name === formData.document_type
+                  )?.description
+                }
+              </Form.Text>
+            )}
           </Form.Group>
-
-          <p className="text-muted small mb-3">* Campos obligatorios</p>
 
           <Button variant="primary" type="submit" className="w-100">
             Confirmar Información

@@ -41,10 +41,18 @@ const WalletStepThree = ({
     summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
 
     // Agregar datos personales si están disponibles
-    if (tipoDocumento && cedula) {
-      summary += `Documento: ${getTipoDocumentoText(
-        tipoDocumento
-      )} ${cedula}\n`;
+    // if (tipoDocumento && cedula) {
+    //   summary += `Documento: ${getTipoDocumentoText(
+    //     tipoDocumento
+    //   )} ${cedula}\n`;
+    // }
+
+    if (tipoDocumento) {
+      summary += `Tipo de documento: ${getTipoDocumentoText(tipoDocumento)}\n`;
+    }
+
+    if (cedula) {
+      summary += `Cédula: ${cedula}\n`;
     }
 
     if (telefono) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getSubscriptions } from "../../services/newApi/subscriptions";
+import { getSubscriptions } from "../../services/subscriptionsApi/subscriptions";
 
 export const useSubscriptions = () => {
   const [data, setData] = useState([]);
