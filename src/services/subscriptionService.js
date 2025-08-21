@@ -2,7 +2,7 @@ import {
   getSubscriptionByWorkspace,
   updateSubscription,
   cancelSubscription,
-} from "./newApi/subscriptions";
+} from "./subscriptionsApi/subscriptions";
 import { fetchPlans, fetchAssistants, fetchComplements } from "./dataService";
 import { calculateChanges as calculateChangesHelper } from "../pages/subscription/utils/subscriptionHelpers";
 import {
@@ -91,9 +91,12 @@ export const getSubscription = async (workspaceId) => {
         isExpired,
         createdAt: new Date().toISOString().split("T")[0],
         workspaceId: response.workspace_id.toString(),
-        workspace_name: `Workspace ${response.workspace_id}`,
-        owner_email: response.email,
-        phone: "+57 300 000 0000",
+        workspace_name:
+          response.workspace_name || `Workspace ${response.workspace_id}`,
+        owner_email: response.email || response.owner_email,
+        phone: response.phone || "+57 300 000 0000",
+        document_type: response.document_type || "",
+        document_number: response.document_number || "",
         flowNs: response.flow_ns,
         freeAssistantId: response.free_assistant_id,
         paidAssistantIds: response.paid_assistant_ids || [],

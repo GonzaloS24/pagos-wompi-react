@@ -14,13 +14,15 @@ export const useWompiPayment = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(true);
   const [isDataConfirmed, setIsDataConfirmed] = useState(false);
-  const [paymentPeriod, setPaymentPeriod] = useState(PAYMENT_PERIODS.MONTHLY); 
+  const [paymentPeriod, setPaymentPeriod] = useState(PAYMENT_PERIODS.MONTHLY);
   const [formData, setFormData] = useState({
     workspace_id: "",
     workspace_name: "",
     owner_name: "",
     owner_email: "",
     phone_number: "",
+    document_type: "",
+    document_number: "",
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -53,6 +55,8 @@ export const useWompiPayment = () => {
         phone_number: sanitizeString(params.get("phone_number")),
         plan_id: sanitizeString(params.get("plan_id")),
         period: sanitizeString(params.get("period")),
+        document_type: sanitizeString(params.get("document_type")) || "",
+        document_number: sanitizeString(params.get("document_number")),
       };
 
       if (urlData.plan_id && plans.length > 0) {
@@ -72,6 +76,8 @@ export const useWompiPayment = () => {
         owner_name: urlData.owner_name || "",
         owner_email: urlData.owner_email || "",
         phone_number: urlData.phone_number || "",
+        document_type: urlData.document_type || "",
+        document_number: urlData.document_number || "",
       });
 
       setUrlParams(urlData);

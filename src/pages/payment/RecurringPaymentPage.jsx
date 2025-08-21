@@ -5,7 +5,7 @@ import chateaLogo from "../../assets/chatea.png";
 import CreditCardForm from "../../components/payments/wompi/CreditCardForm";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { fetchAssistants, fetchComplements } from "../../services/dataService";
-import { createSubscription } from "../../services/newApi/subscriptions";
+import { createSubscription } from "../../services/subscriptionsApi/subscriptions";
 import { useSubscriptionPolling } from "../../hooks/useSubscriptionPolling";
 import Swal from "sweetalert2";
 import "../../styles/components/RecurringPaymentPage.css";
@@ -23,8 +23,8 @@ const RecurringPaymentPage = () => {
     paymentCalculations,
     formData,
     selectedPlan,
-    selectedAssistants, // IDs numéricos
-    selectedComplements, // IDs numéricos con estructura de API
+    selectedAssistants,
+    selectedComplements,
     purchaseType,
     originalUrlParams,
   } = location.state || {};
@@ -130,6 +130,8 @@ const RecurringPaymentPage = () => {
         workspace_name: formData.workspace_name || "",
         owner_email: formData.owner_email || "",
         phone: formData.phone_number || "",
+        document_type: formData.document_type || "",
+        document_number: formData.document_number || "",
         assistants_only: isAssistantsOnly,
         plan_id: selectedPlan?.id || null,
         free_assistant_id: freeAssistantId,
@@ -323,6 +325,14 @@ const RecurringPaymentPage = () => {
                           <span className="detail-label">Propietario:</span>
                           <span className="detail-value">
                             {formData.owner_name}
+                          </span>
+                        </div>
+
+                        <div className="detail-item">
+                          <span className="detail-label">Documento:</span>
+                          <span className="detail-value">
+                            {formData.document_type}
+                            {formData.document_number}
                           </span>
                         </div>
 

@@ -1,6 +1,6 @@
-import { getAllPlans } from "./newApi/plans";
-import { getAllAssistants } from "./newApi/assistants";
-import { getAllAddons } from "./newApi/addons";
+import { getAllPlans } from "./subscriptionsApi/plans";
+import { getAllAssistants } from "./subscriptionsApi/assistants";
+import { getAllAddons } from "./subscriptionsApi/addons";
 import {
   ASSISTANT_DISPLAY_INFO,
   COMING_SOON_ASSISTANTS,

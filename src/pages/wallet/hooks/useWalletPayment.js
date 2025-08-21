@@ -7,7 +7,7 @@ export const useWalletPayment = (paymentData, onHide) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [cedula, setCedula] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [tipoDocumento, setTipoDocumento] = useState("cedula");
+  const [tipoDocumento, setTipoDocumento] = useState("");
 
   const [errors, setErrors] = useState({});
   const totalSteps = 4;
@@ -18,11 +18,28 @@ export const useWalletPayment = (paymentData, onHide) => {
   const validatePersonalData = () => {
     const newErrors = {};
 
+    // Validar tipo de documento
+    if (!tipoDocumento || tipoDocumento.trim() === "") {
+      newErrors.tipoDocumento = "Requerido";
+    }
+
     // Validar cédula
     if (!cedula.trim()) {
-      newErrors.cedula = "La cédula es obligatoria";
-    } else if (!/^\d{6,10}$/.test(cedula)) {
-      newErrors.cedula = "Debe contener entre 6 y 10 dígitos";
+      newErrors.cedula = "El número de documento es requerido";
+    } else if (tipoDocumento) {
+      // Solo validar formato si ya se seleccionó un tipo
+      const numericTypes = ["CC", "TI", "CE", "NIT", "RC"];
+
+      if (numericTypes.includes(tipoDocumento)) {
+        if (!/^\d{6,15}$/.test(cedula)) {
+          newErrors.cedula = "Debe contener entre 6 y 15 dígitos";
+        }
+      } else {
+        // Para PA, DIE, PPT permitir alfanumérico
+        if (cedula.length < 3 || cedula.length > 20) {
+          newErrors.cedula = "Debe contener entre 3 y 20 caracteres";
+        }
+      }
     }
 
     // Validar teléfono
@@ -30,11 +47,6 @@ export const useWalletPayment = (paymentData, onHide) => {
       newErrors.telefono = "El teléfono es obligatorio";
     } else if (!/^\+?\d{10,15}$/.test(telefono.replace(/\s/g, ""))) {
       newErrors.telefono = "Formato de teléfono inválido";
-    }
-
-    // Validar tipo de documento
-    if (!tipoDocumento.trim()) {
-      newErrors.tipoDocumento = "El tipo de documento es obligatorio";
     }
 
     setErrors(newErrors);
@@ -122,7 +134,7 @@ export const useWalletPayment = (paymentData, onHide) => {
     setCurrentStep(1);
     setCedula("");
     setTelefono("");
-    setTipoDocumento("cedula");
+    setTipoDocumento("");
     setErrors({});
   }, []);
 
@@ -150,11 +162,16 @@ export const useWalletPayment = (paymentData, onHide) => {
   const handleDocumentChange = useCallback(
     (value) => {
       setTipoDocumento(value);
+      // Limpiar el número cuando cambie el tipo
+      setCedula("");
       if (errors.tipoDocumento) {
         setErrors((prev) => ({ ...prev, tipoDocumento: "" }));
       }
+      if (errors.cedula) {
+        setErrors((prev) => ({ ...prev, cedula: "" }));
+      }
     },
-    [errors.tipoDocumento]
+    [errors.tipoDocumento, errors.cedula]
   );
 
   return {

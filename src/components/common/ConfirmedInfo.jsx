@@ -1,5 +1,19 @@
 /* eslint-disable react/prop-types */
 const ConfirmedInfo = ({ formData }) => {
+  // Función para obtener el texto del tipo de documento
+  const getDocumentTypeText = (type) => {
+    switch (type) {
+      case "cedula":
+        return "CC";
+      case "nit":
+        return "NIT";
+      case "otro":
+        return "OTRO";
+      default:
+        return type?.toUpperCase() || "";
+    }
+  };
+
   return (
     <div
       style={{
@@ -36,10 +50,19 @@ const ConfirmedInfo = ({ formData }) => {
             <span className="fw-medium">{formData.owner_email}</span>
           </div>
         </div>
-        <div className="col-12">
+        <div className="col-sm-6">
           <div className="text-start">
             <small className="text-muted d-block">WhatsApp Personal</small>
             <span className="fw-medium">{formData.phone_number}</span>
+          </div>
+        </div>
+        <div className="col-sm-6">
+          <div className="text-start">
+            <small className="text-muted d-block">Documento</small>
+            <span className="fw-medium">
+              {getDocumentTypeText(formData.document_type)}{" "}
+              {formData.document_number}
+            </span>
           </div>
         </div>
       </div>

@@ -32,6 +32,33 @@ export const validateForm = (formData) => {
     errors.phone_number = "Número de teléfono inválido";
   }
 
+  // Validación del tipo de documento
+  if (!formData.document_type || formData.document_type.trim() === "") {
+    errors.document_type = "Requerido";
+  }
+
+  // Validación del número de documento
+  if (!formData.document_number || !formData.document_number.trim()) {
+    errors.document_number = "El número de documento es requerido";
+  } else if (formData.document_type) {
+    // Solo validar formato si ya se seleccionó un tipo
+    const numericTypes = ["CC", "TI", "CE", "NIT", "RC"];
+
+    if (numericTypes.includes(formData.document_type)) {
+      if (!/^\d{6,15}$/.test(formData.document_number)) {
+        errors.document_number = "Debe contener entre 6 y 15 dígitos";
+      }
+    } else {
+      // Para PA, DIE, PPT permitir alfanumérico
+      if (
+        formData.document_number.length < 3 ||
+        formData.document_number.length > 20
+      ) {
+        errors.document_number = "Debe contener entre 3 y 20 caracteres";
+      }
+    }
+  }
+
   return errors;
 };
 
