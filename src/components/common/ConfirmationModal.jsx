@@ -9,6 +9,7 @@ const ConfirmationModal = ({
   formErrors,
   onSubmit,
   onFormChange,
+  urlParams,
 }) => {
   const [documentTypes, setDocumentTypes] = useState([]);
   const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(true);
@@ -31,6 +32,13 @@ const ConfirmationModal = ({
 
   const handleInputChange = (field, value) => {
     onFormChange(field, value);
+  };
+
+  // Función helper para verificar si un campo viene de la URL
+  const isFieldFromURL = (fieldName) => {
+    return (
+      urlParams && urlParams[fieldName] && urlParams[fieldName].trim() !== ""
+    );
   };
 
   // Determinar si se debe validar solo números
@@ -56,6 +64,7 @@ const ConfirmationModal = ({
                 handleInputChange("workspace_id", e.target.value)
               }
               isInvalid={!!formErrors.workspace_id}
+              disabled={isFieldFromURL("workspace_id")}
             />
             <Form.Control.Feedback type="invalid">
               {formErrors.workspace_id}
@@ -71,6 +80,7 @@ const ConfirmationModal = ({
                 handleInputChange("workspace_name", e.target.value)
               }
               isInvalid={!!formErrors.workspace_name}
+              disabled={isFieldFromURL("workspace_name")}
             />
             <Form.Control.Feedback type="invalid">
               {formErrors.workspace_name}
@@ -84,6 +94,7 @@ const ConfirmationModal = ({
               value={formData.owner_name}
               onChange={(e) => handleInputChange("owner_name", e.target.value)}
               isInvalid={!!formErrors.owner_name}
+              disabled={isFieldFromURL("owner_name")}
             />
             <Form.Control.Feedback type="invalid">
               {formErrors.owner_name}
@@ -97,6 +108,7 @@ const ConfirmationModal = ({
               value={formData.owner_email}
               onChange={(e) => handleInputChange("owner_email", e.target.value)}
               isInvalid={!!formErrors.owner_email}
+              disabled={isFieldFromURL("owner_email")}
             />
             <Form.Control.Feedback type="invalid">
               {formErrors.owner_email}
@@ -112,13 +124,14 @@ const ConfirmationModal = ({
                 handleInputChange("phone_number", e.target.value)
               }
               isInvalid={!!formErrors.phone_number}
+              disabled={isFieldFromURL("phone_number")}
             />
             <Form.Control.Feedback type="invalid">
               {formErrors.phone_number}
             </Form.Control.Feedback>
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-4">
             <Form.Label>Documento de Identidad *</Form.Label>
             <div className="row g-2">
               <div className="col-4">
@@ -129,7 +142,9 @@ const ConfirmationModal = ({
                     handleInputChange("document_type", e.target.value)
                   }
                   isInvalid={!!formErrors.document_type}
-                  disabled={loadingDocumentTypes}
+                  disabled={
+                    loadingDocumentTypes || isFieldFromURL("document_type")
+                  }
                 >
                   {loadingDocumentTypes ? (
                     <option value="">Cargando...</option>

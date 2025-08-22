@@ -564,6 +564,7 @@ const PaymentContainer = () => {
         formErrors={formErrors}
         onSubmit={handleSubmit}
         onFormChange={handleFormChange}
+        urlParams={urlParams}
       />
 
       {/* Modal de Wallet Payment */}
