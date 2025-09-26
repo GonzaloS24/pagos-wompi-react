@@ -1,249 +1,190 @@
 import PropTypes from "prop-types";
-import { Button } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { getNationalIdentityNumberTypes } from "../../../../services/referralApi/documentTypes";
 
 const WalletStepTwo = ({
-  walletData,
-  paymentData,
-  selectedPlan,
-  selectedAssistants,
-  selectedComplements,
-  isAssistantsOnly,
-  paymentCalculations,
-  copyToClipboard,
-  copyPurchaseSummary,
-  cedula = "",
-  tipoDocumento = "",
-  telefono = "",
+  // walletData,
+  cedula,
+  telefono,
+  tipoDocumento,
+  onCedulaChange,
+  onTelefonoChange,
+  onTipoDocumentoChange,
+  errors,
 }) => {
-  const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
-  const hasComplements = selectedComplements && selectedComplements.length > 0;
-  const hasPlan = !isAssistantsOnly && selectedPlan;
-  const isAnnual = paymentCalculations?.isAnnual || false;
-  const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(true);
 
-  // Función para obtener el texto del tipo de documento
-  const getTipoDocumentoText = (tipo) => {
-    switch (tipo) {
-      case "cedula":
-        return "CC";
-      case "nit":
-        return "NIT";
-      case "otro":
-        return "OTRO";
-      default:
-        return tipo.toUpperCase();
-    }
-  };
+  // Cargar tipos de documento al montar el componente
+  useEffect(() => {
+    const loadDocumentTypes = async () => {
+      try {
+        const types = await getNationalIdentityNumberTypes();
+        setDocumentTypes(types);
+      } catch (error) {
+        console.error("Error loading document types:", error);
+      } finally {
+        setLoadingDocumentTypes(false);
+      }
+    };
 
-  const generatePurchaseSummary = () => {
-    let summary = "RESUMEN DEL PLAN:\n\n";
+    loadDocumentTypes();
+  }, []);
 
-    summary += `Workspace ID: ${paymentData.formData.workspace_id}\n`;
-
-    // if (tipoDocumento && cedula) {
-    //   summary += `Documento: ${getTipoDocumentoText(
-    //     tipoDocumento
-    //   )} ${cedula}\n`;
-    // }
-
-    if (tipoDocumento) {
-      summary += `Tipo de documento: ${getTipoDocumentoText(tipoDocumento)}\n`;
-    }
-
-    if (cedula) {
-      summary += `Cédula: ${cedula}\n`;
-    }
-
-    if (telefono) {
-      summary += `Teléfono: ${telefono}\n`;
-    }
-
-    if (hasPlan) {
-      summary += `Plan: ${selectedPlan.name}\n`;
-    }
-
-    if (hasAssistants) {
-      summary += `Asistentes: ${selectedAssistants.join(", ")}\n`;
-    }
-
-    if (hasComplements) {
-      summary += `Complementos: ${selectedComplements
-        .map((c) => `${c.id} (${c.quantity})`)
-        .join(", ")}\n`;
-    }
-
-    summary += `Periodicidad: ${isAnnual ? "Anual" : "Mensual"}\n`;
-
-    if (isAnnual && totalAnnualSavings > 0) {
-      summary += `Ahorro anual: -$${totalAnnualSavings.toFixed(2)} USD\n`;
-    }
-
-    summary += `Total en dólares${
-      isAnnual ? " (anual)" : ""
-    }: $${walletData.amountUSD.toFixed(2)} USD\n`;
-
-    summary += `Total en pesos colombianos${
-      isAnnual ? " (anual)" : ""
-    }: ${Math.round(walletData.amount)} COP\n`;
-
-    return summary;
-  };
-
-  const handleCopyPurchaseSummary = () => {
-    const summary = generatePurchaseSummary();
-    copyPurchaseSummary(summary);
+  // Determinar si se debe validar solo números
+  const shouldValidateNumericOnly = (documentType) => {
+    // Para CC, TI, CE, NIT, RC validar solo números
+    const numericTypes = ["CC", "TI", "CE", "NIT", "RC"];
+    return numericTypes.includes(documentType);
   };
 
   return (
     <div>
       <h5 className="text-center mb-4" style={{ color: "#009ee3" }}>
-        Paso 3: Realizar el Pago
+        Paso 2: Información Personal
       </h5>
 
-      {/* SECCIÓN 1: NOTAS DEL PAGO */}
-      <div className="mb-4">
-        <div className="d-flex align-items-center mb-2">
-          <span
-            className="bold"
-            style={{ fontSize: "1.1rem", fontWeight: "600" }}
-          >
-            1. {String.fromCodePoint(0x1f4dd)} Incluye estas notas en tu pago:
-          </span>
-        </div>
+      <div
+        style={{
+          background: "#edf4ff",
+          border: "1px solid rgba(0, 158, 227, 0.2)",
+          borderRadius: "8px",
+          padding: "1.5rem",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <h6 style={{ color: "#009ee3", marginBottom: "1rem" }}>
+          Datos para el pago
+        </h6>
 
-        {/* Mensaje informativo destacado */}
-        <div
-          style={{
-            background: "#e8f5e9",
-            border: "1px solid #28a745",
-            borderRadius: "8px",
-            padding: "1rem",
-            marginBottom: "1rem",
-          }}
-        >
-          <p
-            style={{
-              color: "#155724",
-              margin: "0",
-              fontSize: "0.9rem",
-              fontWeight: "400",
-            }}
+        <div className="mb-3">
+          <label
+            className="form-label"
+            style={{ fontWeight: "500", color: "#4a5568" }}
           >
-            Si envías las notas, tu plan se activará de forma inmediata. De lo
-            contrario, tu solicitud será revisada manualmente, lo que puede
-            demorar el proceso.
-          </p>
-        </div>
-
-        <div
-          style={{
-            background: "#fef9e7",
-            border: "1px solid #ffc107",
-            borderRadius: "8px",
-            padding: "1rem",
-          }}
-        >
-          <div className="d-flex justify-content-between align-items-start">
-            <div className="flex-grow-1 me-3">
-              <div
+            Documento de Identidad *
+          </label>
+          <div className="row g-2">
+            <div className="col-4">
+              <select
+                className={`form-select ${
+                  errors.tipoDocumento ? "is-invalid" : ""
+                }`}
+                value={tipoDocumento}
+                onChange={(e) => onTipoDocumentoChange(e.target.value)}
                 style={{
-                  fontSize: "0.85rem",
-                  whiteSpace: "pre-line",
-                  lineHeight: "1.4",
-                  flex: 1,
+                  borderRadius: "6px",
+                  padding: "0.75rem",
+                  fontSize: "1rem",
+                  border: "1px solid rgba(0, 158, 227, 0.3)",
+                  background: "#fff",
                 }}
+                disabled={loadingDocumentTypes}
               >
-                {generatePurchaseSummary()}
-              </div>
+                {loadingDocumentTypes ? (
+                  <option value="">Cargando...</option>
+                ) : (
+                  <>
+                    <option value="">Seleccionar</option>
+                    {documentTypes.map((type) => (
+                      <option key={type.name} value={type.name}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+              {errors.tipoDocumento && (
+                <div className="invalid-feedback" style={{ display: "block" }}>
+                  {errors.tipoDocumento}
+                </div>
+              )}
             </div>
-            <Button
-              variant="warning"
-              size="sm"
-              onClick={handleCopyPurchaseSummary}
-              style={{
-                backgroundColor: "#ffc107",
-                borderColor: "#ffc107",
-                color: "#fff",
-                minWidth: "80px",
-                fontWeight: "600",
-              }}
-            >
-              📋 Copiar
-            </Button>
+            <div className="col-8">
+              <input
+                type="text"
+                className={`form-control ${errors.cedula ? "is-invalid" : ""}`}
+                value={cedula}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Validar según el tipo de documento
+                  if (shouldValidateNumericOnly(tipoDocumento)) {
+                    onCedulaChange(value.replace(/\D/g, ""));
+                  } else {
+                    onCedulaChange(value);
+                  }
+                }}
+                placeholder="Número de documento"
+                style={{
+                  borderRadius: "6px",
+                  padding: "0.75rem",
+                  fontSize: "1rem",
+                  border: "1px solid rgba(0, 158, 227, 0.3)",
+                }}
+              />
+              {errors.cedula && (
+                <div className="invalid-feedback" style={{ display: "block" }}>
+                  {errors.cedula}
+                </div>
+              )}
+            </div>
           </div>
+          {tipoDocumento && !loadingDocumentTypes && (
+            <small className="text-muted">
+              {
+                documentTypes.find((type) => type.name === tipoDocumento)
+                  ?.description
+              }
+            </small>
+          )}
+        </div>
+
+        <div className="mb-3">
+          <label
+            className="form-label"
+            style={{ fontWeight: "500", color: "#4a5568" }}
+          >
+            Número de Teléfono *
+          </label>
+          <input
+            type="tel"
+            className={`form-control ${errors.telefono ? "is-invalid" : ""}`}
+            value={telefono}
+            onChange={(e) => onTelefonoChange(e.target.value)}
+            placeholder="Ej: +57 300 123 4567"
+            style={{
+              borderRadius: "6px",
+              padding: "0.75rem",
+              fontSize: "1rem",
+              border: "1px solid rgba(0, 158, 227, 0.3)",
+            }}
+          />
+          {errors.telefono && (
+            <div className="invalid-feedback" style={{ display: "block" }}>
+              {errors.telefono}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* SECCIÓN 2: DIRECCIÓN DE WALLET */}
-      <div className="mb-4">
-        <div className="d-flex align-items-center mb-2">
-          <span
-            className="bold"
-            style={{ fontSize: "1.1rem", fontWeight: "600" }}
-          >
-            2. Envía el dinero y el resumen del plan a esta dirección:
-          </span>
-        </div>
-        <div
-          style={{
-            background: "#edf4ff",
-            border: "1px solid #009ee3",
-            borderRadius: "8px",
-            padding: "1rem",
-            position: "relative",
-          }}
-        >
-          <div className="d-flex justify-content-between align-items-center">
-            <div className="flex-grow-1 me-3">
-              <small className="text-muted d-block mb-1">
-                Dirección de Wallet:
-              </small>
-              <code
-                style={{
-                  fontSize: "0.9rem",
-                  color: "#495057",
-                  wordBreak: "break-all",
-                  background: "transparent",
-                  padding: 0,
-                }}
-              >
-                {walletData.walletAddress}
-              </code>
-            </div>
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={() => copyToClipboard(walletData.walletAddress)}
-              style={{
-                backgroundColor: "#009ee3",
-                borderColor: "#009ee3",
-                color: "#fff",
-                minWidth: "80px",
-                fontWeight: "600",
-              }}
-            >
-              📋 Copiar
-            </Button>
-          </div>
-        </div>
+      <div className="text-center">
+        <p className="text-muted">
+          Completa estos datos para continuar con tu pago.
+        </p>
       </div>
     </div>
   );
 };
 
 WalletStepTwo.propTypes = {
-  walletData: PropTypes.object.isRequired,
-  paymentData: PropTypes.object.isRequired,
-  selectedPlan: PropTypes.object,
-  selectedAssistants: PropTypes.array.isRequired,
-  selectedComplements: PropTypes.array.isRequired,
-  isAssistantsOnly: PropTypes.bool.isRequired,
-  paymentCalculations: PropTypes.object,
-  copyToClipboard: PropTypes.func.isRequired,
-  copyPurchaseSummary: PropTypes.func.isRequired,
-  cedula: PropTypes.string,
-  telefono: PropTypes.string,
-  tipoDocumento: PropTypes.string,
+  walletData: PropTypes.object,
+  cedula: PropTypes.string.isRequired,
+  telefono: PropTypes.string.isRequired,
+  tipoDocumento: PropTypes.string.isRequired,
+  onCedulaChange: PropTypes.func.isRequired,
+  onTelefonoChange: PropTypes.func.isRequired,
+  onTipoDocumentoChange: PropTypes.func.isRequired,
+  errors: PropTypes.object.isRequired,
 };
 
 export default WalletStepTwo;
