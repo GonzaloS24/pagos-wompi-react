@@ -34,26 +34,47 @@ const WalletStepThree = ({ onVideoCompleted }) => {
 
       <div
         style={{
-          background: "#fff3cd",
-          border: "1px solid #ffc107",
-          borderRadius: "8px",
-          padding: "1.2rem",
+          background: "#ffe6e6",
+          border: "2px solid #ff9999",
+          borderRadius: "10px",
+          padding: "1.3rem",
           marginBottom: "1.5rem",
+          boxShadow: "0 2px 8px rgba(255, 153, 153, 0.2)",
         }}
       >
         <div className="d-flex align-items-center mb-2">
-          <span style={{ fontSize: "1.3rem", marginRight: "0.5rem" }}>⚠️</span>
-          <strong style={{ color: "#856404", fontSize: "1rem" }}>
-            Incluye las notas en tu transferencia
+          <span style={{ fontSize: "1.2rem", marginRight: "0.5rem" }}>🚨</span>
+          <strong style={{ color: "#cc0000", fontSize: "1.1rem" }}>
+            ¡IMPORTANTE! Incluye las notas en tu transferencia
           </strong>
         </div>
-        <p style={{ color: "#856404", margin: "0", fontSize: "0.9rem" }}>
+        <p
+          style={{
+            color: "#990000",
+            margin: "0",
+            fontSize: "0.95rem",
+            lineHeight: "1.4",
+          }}
+        >
           Si incluyes las notas en el campo descripción o concepto de tu
           transferencia, tu plan se activará{" "}
-          <span style={{ color: "#28a745", fontWeight: "600" }}>
+          <span
+            style={{
+              color: "#006600",
+              fontWeight: "600",
+            }}
+          >
             inmediatamente
           </span>
-          . Sin ellas, puede demorar varios días.
+          . Sin ellas, puede demorar{" "}
+          <span
+            style={{
+              color: "#cc0000",
+              fontWeight: "600",
+            }}
+          >
+            varios días <span style={{ fontSize: "1.2rem" }}>🚨</span>
+          </span>
         </p>
       </div>
 
