@@ -140,6 +140,52 @@ const WalletStepFour = ({
         </div>
       </div>
 
+      {/* ADVERTENCIA DE CONVERSIÓN DE MONEDAS */}
+      <div
+        style={{
+          background: "#fff3cd",
+          border: "1px solid #ffc107",
+          borderRadius: "10px",
+          padding: "1.2rem",
+          marginBottom: "1.5rem",
+          boxShadow: "0 2px 8px rgba(255, 193, 7, 0.2)",
+        }}
+      >
+        <div className="d-flex align-items-start mb-2">
+          <span style={{ fontSize: "1.3rem", marginRight: "0.7rem" }}>💱</span>
+          <div>
+            <strong style={{ color: "#856404", fontSize: "1rem" }}>
+              Pagos en otras monedas
+            </strong>
+            <p
+              style={{
+                color: "#856404",
+                margin: "0.5rem 0 0 0",
+                fontSize: "0.9rem",
+                lineHeight: "1.5",
+              }}
+            >
+              Para pagos en una moneda diferente a COP o USD, por favor verifica
+              el valor equivalente en tu moneda local antes de realizar la
+              transferencia. Puedes usar un {" "}
+              <a
+                href="https://www.google.com/search?q=conversor+de+monedas"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "#0066cc",
+                  textDecoration: "underline",
+                  fontWeight: "600",
+                }}
+              >
+                conversor de monedas
+              </a>{" "}
+              para calcularlo.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* SECCIÓN 2: DIRECCIÓN DE WALLET */}
       <div className="mb-4">
         <div className="d-flex align-items-center mb-2">
@@ -196,7 +242,8 @@ const WalletStepFour = ({
       <div className="alert  text-center">
         <i className="bx bx-bulb me-2"></i>
         Incluye el resumen del plan en la descripción o concepto de tu
-        transferencia para una activación inmediata.
+        transferencia para una activación inmediata. Si pagas en otra moneda,
+        asegúrate de enviar el valor correcto.
       </div>
     </div>
   );
