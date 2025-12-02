@@ -12,6 +12,7 @@ import WalletStepOne from "./components/steps/WalletStepOne";
 import WalletStepTwo from "./components/steps/WalletStepTwo";
 import WalletStepThree from "./components/steps/WalletStepThree";
 import WalletStepFour from "./components/steps/WalletStepFour";
+import WalletStepFive from "./components/steps/WalletStepFive";
 
 const WalletPaymentModal = ({
   show,
@@ -30,10 +31,12 @@ const WalletPaymentModal = ({
     cedula,
     telefono,
     tipoDocumento,
+    videoCompleted,
     errors,
     handleCedulaChange,
     handleTelefonoChange,
     handleDocumentChange,
+    handleVideoCompleted,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,
@@ -67,7 +70,7 @@ const WalletPaymentModal = ({
         return <WalletStepOne {...commonProps} />;
       case 2:
         return (
-          <WalletStepFour
+          <WalletStepTwo
             {...commonProps}
             onCedulaChange={handleCedulaChange}
             onTelefonoChange={handleTelefonoChange}
@@ -76,22 +79,39 @@ const WalletPaymentModal = ({
           />
         );
       case 3:
+        return <WalletStepThree onVideoCompleted={handleVideoCompleted} />;
+      case 4:
         return (
-          <WalletStepTwo
+          <WalletStepFour
             {...commonProps}
             copyToClipboard={copyToClipboard}
             copyPurchaseSummary={copyPurchaseSummary}
           />
         );
-      case 4:
-        return <WalletStepThree {...commonProps} />;
+      case 5:
+        return <WalletStepFive {...commonProps} />;
       default:
         return null;
     }
   };
 
+  // Función para determinar si el botón "Siguiente" debe estar deshabilitado
+  const isNextButtonDisabled = () => {
+    if (currentStep === 3 && !videoCompleted) {
+      return true;
+    }
+    return false;
+  };
+
   return (
-    <Modal show={show} onHide={onHide} size="md" centered>
+    <Modal
+      show={show}
+      onHide={onHide}
+      centered
+      style={{
+        "--bs-modal-width": "600px",
+      }}
+    >
       <Modal.Header closeButton>
         <Modal.Title style={{ color: "#009ee3" }}>
           Pago por Wallet - Paso {currentStep} de {totalSteps}
@@ -120,13 +140,21 @@ const WalletPaymentModal = ({
             <Button
               variant="primary"
               onClick={nextStep}
+              disabled={isNextButtonDisabled()}
               style={{
-                backgroundColor: "#009ee3",
-                borderColor: "#009ee3",
+                backgroundColor: isNextButtonDisabled() ? "#6c757d" : "#009ee3",
+                borderColor: isNextButtonDisabled() ? "#6c757d" : "#009ee3",
                 padding: "0.5rem 1.5rem",
               }}
             >
-              Siguiente
+              {currentStep === 3 && !videoCompleted ? (
+                <>
+                  <i className="bx bx-lock me-1"></i>
+                  Ver Tutorial Completo
+                </>
+              ) : (
+                "Siguiente"
+              )}
             </Button>
           ) : (
             <Button

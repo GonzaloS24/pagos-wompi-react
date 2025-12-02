@@ -8,9 +8,10 @@ export const useWalletPayment = (paymentData, onHide) => {
   const [cedula, setCedula] = useState("");
   const [telefono, setTelefono] = useState("");
   const [tipoDocumento, setTipoDocumento] = useState("");
+  const [videoCompleted, setVideoCompleted] = useState(false);
 
   const [errors, setErrors] = useState({});
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const walletData = walletService.createWalletPaymentData(paymentData);
 
@@ -115,16 +116,22 @@ export const useWalletPayment = (paymentData, onHide) => {
 
   const nextStep = useCallback(() => {
     setCurrentStep((prev) => {
-      // Si estamos en el paso 2 (datos personales), validar antes de continuar
+      // Validaciones por paso
       if (prev === 2) {
+        // Paso de datos personales
         if (!validatePersonalData()) {
           return prev;
         }
       }
 
+      if (prev === 3 && !videoCompleted) {
+        // No permitir avanzar si el video no se ha completado
+        return prev;
+      }
+
       return prev < totalSteps ? prev + 1 : prev;
     });
-  }, [totalSteps, cedula, telefono, tipoDocumento]);
+  }, [totalSteps, cedula, telefono, tipoDocumento, videoCompleted]);
 
   const prevStep = useCallback(() => {
     setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
@@ -135,7 +142,13 @@ export const useWalletPayment = (paymentData, onHide) => {
     setCedula("");
     setTelefono("");
     setTipoDocumento("");
+    setVideoCompleted(false);
     setErrors({});
+  }, []);
+
+  // Función para manejar cuando el video se completa
+  const handleVideoCompleted = useCallback((completed) => {
+    setVideoCompleted(completed);
   }, []);
 
   // Funciones para manejar cambios en los inputs
@@ -181,10 +194,12 @@ export const useWalletPayment = (paymentData, onHide) => {
     cedula,
     telefono,
     tipoDocumento,
+    videoCompleted,
     errors,
     handleCedulaChange,
     handleTelefonoChange,
     handleDocumentChange,
+    handleVideoCompleted,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,
