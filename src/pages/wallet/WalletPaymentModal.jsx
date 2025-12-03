@@ -32,11 +32,14 @@ const WalletPaymentModal = ({
     telefono,
     tipoDocumento,
     videoCompleted,
+    selectedCurrency,
+    currencyRates,
     errors,
     handleCedulaChange,
     handleTelefonoChange,
     handleDocumentChange,
     handleVideoCompleted,
+    handleCurrencyChange,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,
@@ -63,11 +66,19 @@ const WalletPaymentModal = ({
       cedula,
       telefono,
       tipoDocumento,
+      selectedCurrency,
+      currencyRates,
     };
 
     switch (currentStep) {
       case 1:
-        return <WalletStepOne {...commonProps} />;
+        return (
+          <WalletStepOne
+            {...commonProps}
+            onCurrencyChange={handleCurrencyChange}
+            errors={errors}
+          />
+        );
       case 2:
         return (
           <WalletStepTwo
