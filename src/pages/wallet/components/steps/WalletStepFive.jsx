@@ -1,6 +1,10 @@
 import PropTypes from "prop-types";
 import { Button } from "react-bootstrap";
 import wapp from "../../../../assets/whatsapp.png";
+import {
+  convertUSDToLocalCurrency,
+  formatCurrencyAmount,
+} from "../../../../services/api/currencyService";
 
 const WalletStepFive = ({
   walletData,
@@ -13,12 +17,34 @@ const WalletStepFive = ({
   tipoDocumento = "",
   cedula = "",
   telefono = "",
+  selectedCurrency = "COP",
+  currencyRates = null,
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
   const hasPlan = !isAssistantsOnly && selectedPlan;
   const isAnnual = paymentCalculations?.isAnnual || false;
   const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
+
+  // Conversión de moneda
+  const convertedAmount = currencyRates
+    ? convertUSDToLocalCurrency(
+        walletData.amountUSD,
+        currencyRates,
+        selectedCurrency
+      )
+    : selectedCurrency === "COP"
+    ? walletData.amount
+    : walletData.amountUSD;
+
+  const convertedSavings =
+    currencyRates && totalAnnualSavings > 0
+      ? convertUSDToLocalCurrency(
+          totalAnnualSavings,
+          currencyRates,
+          selectedCurrency
+        )
+      : totalAnnualSavings;
 
   // Función para obtener el texto del tipo de documento
   const getTipoDocumentoText = (tipo) => {
@@ -69,16 +95,19 @@ const WalletStepFive = ({
     summary += `Periodicidad: ${isAnnual ? "Anual" : "Mensual"}\n`;
 
     if (isAnnual && totalAnnualSavings > 0) {
-      summary += `Ahorro anual: -${totalAnnualSavings.toFixed(2)} USD\n`;
+      summary += `Ahorro anual: -${formatCurrencyAmount(
+        convertedSavings,
+        selectedCurrency
+      )}\n`;
     }
 
     summary += `Total en dólares${
       isAnnual ? " (anual)" : ""
     }: ${walletData.amountUSD.toFixed(2)} USD\n`;
 
-    summary += `Total en pesos colombianos${
+    summary += `Total en ${selectedCurrency}${
       isAnnual ? " (anual)" : ""
-    }: ${Math.round(walletData.amount)} COP\n\n`;
+    }: ${formatCurrencyAmount(convertedAmount, selectedCurrency)}\n\n`;
 
     summary += "¡Gracias!";
 
@@ -158,6 +187,8 @@ WalletStepFive.propTypes = {
   cedula: PropTypes.string,
   telefono: PropTypes.string,
   tipoDocumento: PropTypes.string,
+  selectedCurrency: PropTypes.string,
+  currencyRates: PropTypes.object,
 };
 
 export default WalletStepFive;

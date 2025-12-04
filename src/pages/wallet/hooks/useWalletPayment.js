@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { walletService } from "../../../services/payments/wallet/walletService";
+import { fetchCurrencyRates } from "../../../services/api/currencyService";
 import Swal from "sweetalert2";
 
 export const useWalletPayment = (paymentData, onHide) => {
@@ -9,11 +10,22 @@ export const useWalletPayment = (paymentData, onHide) => {
   const [telefono, setTelefono] = useState("");
   const [tipoDocumento, setTipoDocumento] = useState("");
   const [videoCompleted, setVideoCompleted] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState("");
+  const [currencyRates, setCurrencyRates] = useState(null);
 
   const [errors, setErrors] = useState({});
   const totalSteps = 5;
 
   const walletData = walletService.createWalletPaymentData(paymentData);
+
+  // Cargar tasas de cambio al montar
+  useEffect(() => {
+    const loadRates = async () => {
+      const rates = await fetchCurrencyRates();
+      setCurrencyRates(rates);
+    };
+    loadRates();
+  }, []);
 
   // Función para validar los campos
   const validatePersonalData = () => {
@@ -52,6 +64,15 @@ export const useWalletPayment = (paymentData, onHide) => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Función para validar moneda
+  const validateCurrency = () => {
+    if (!selectedCurrency || selectedCurrency.trim() === "") {
+      setErrors((prev) => ({ ...prev, currency: "Debes seleccionar un país" }));
+      return false;
+    }
+    return true;
   };
 
   const handleConfirmPayment = async () => {
@@ -117,6 +138,13 @@ export const useWalletPayment = (paymentData, onHide) => {
   const nextStep = useCallback(() => {
     setCurrentStep((prev) => {
       // Validaciones por paso
+      if (prev === 1) {
+        // Validar moneda en paso 1
+        if (!validateCurrency()) {
+          return prev;
+        }
+      }
+
       if (prev === 2) {
         // Paso de datos personales
         if (!validatePersonalData()) {
@@ -131,7 +159,14 @@ export const useWalletPayment = (paymentData, onHide) => {
 
       return prev < totalSteps ? prev + 1 : prev;
     });
-  }, [totalSteps, cedula, telefono, tipoDocumento, videoCompleted]);
+  }, [
+    totalSteps,
+    cedula,
+    telefono,
+    tipoDocumento,
+    videoCompleted,
+    selectedCurrency,
+  ]);
 
   const prevStep = useCallback(() => {
     setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
@@ -143,6 +178,7 @@ export const useWalletPayment = (paymentData, onHide) => {
     setTelefono("");
     setTipoDocumento("");
     setVideoCompleted(false);
+    setSelectedCurrency("");
     setErrors({});
   }, []);
 
@@ -187,6 +223,16 @@ export const useWalletPayment = (paymentData, onHide) => {
     [errors.tipoDocumento, errors.cedula]
   );
 
+  const handleCurrencyChange = useCallback(
+    (currency) => {
+      setSelectedCurrency(currency);
+      if (errors.currency) {
+        setErrors((prev) => ({ ...prev, currency: "" }));
+      }
+    },
+    [errors.currency]
+  );
+
   return {
     currentStep,
     totalSteps,
@@ -195,11 +241,14 @@ export const useWalletPayment = (paymentData, onHide) => {
     telefono,
     tipoDocumento,
     videoCompleted,
+    selectedCurrency,
+    currencyRates,
     errors,
     handleCedulaChange,
     handleTelefonoChange,
     handleDocumentChange,
     handleVideoCompleted,
+    handleCurrencyChange,
     handleConfirmPayment,
     copyToClipboard,
     copyPurchaseSummary,

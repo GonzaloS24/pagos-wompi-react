@@ -1,5 +1,10 @@
 import PropTypes from "prop-types";
 import { Button } from "react-bootstrap";
+import {
+  convertUSDToLocalCurrency,
+  formatCurrencyAmount,
+  LATAM_CURRENCIES,
+} from "../../../../services/api/currencyService";
 
 const WalletStepFour = ({
   walletData,
@@ -14,12 +19,38 @@ const WalletStepFour = ({
   cedula = "",
   tipoDocumento = "",
   telefono = "",
+  selectedCurrency = "COP",
+  currencyRates = null,
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
   const hasPlan = !isAssistantsOnly && selectedPlan;
   const isAnnual = paymentCalculations?.isAnnual || false;
   const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
+
+  // Conversión de moneda
+  const convertedAmount = currencyRates
+    ? convertUSDToLocalCurrency(
+        walletData.amountUSD,
+        currencyRates,
+        selectedCurrency
+      )
+    : selectedCurrency === "COP"
+    ? walletData.amount
+    : walletData.amountUSD;
+
+  const convertedSavings =
+    currencyRates && totalAnnualSavings > 0
+      ? convertUSDToLocalCurrency(
+          totalAnnualSavings,
+          currencyRates,
+          selectedCurrency
+        )
+      : totalAnnualSavings;
+
+  const currencyInfo = LATAM_CURRENCIES.find(
+    (c) => c.code === selectedCurrency
+  );
 
   const getTipoDocumentoText = (tipo) => {
     switch (tipo) {
@@ -68,16 +99,19 @@ const WalletStepFour = ({
     summary += `Periodicidad: ${isAnnual ? "Anual" : "Mensual"}\n`;
 
     if (isAnnual && totalAnnualSavings > 0) {
-      summary += `Ahorro anual: -$${totalAnnualSavings.toFixed(2)} USD\n`;
+      summary += `Ahorro anual: -${formatCurrencyAmount(
+        convertedSavings,
+        selectedCurrency
+      )}\n`;
     }
 
     summary += `Total en dólares${
       isAnnual ? " (anual)" : ""
     }: $${walletData.amountUSD.toFixed(2)} USD\n`;
 
-    summary += `Total en pesos colombianos${
+    summary += `Total en ${selectedCurrency}${
       isAnnual ? " (anual)" : ""
-    }: ${Math.round(walletData.amount)} COP\n`;
+    }: ${formatCurrencyAmount(convertedAmount, selectedCurrency)}\n`;
 
     return summary;
   };
@@ -92,6 +126,44 @@ const WalletStepFour = ({
       <h5 className="text-center mb-4" style={{ color: "#009ee3" }}>
         Paso 4: Realizar el Pago
       </h5>
+
+      {/* Información de moneda seleccionada */}
+      {selectedCurrency && currencyInfo && (
+        <div
+          style={{
+            background: "#edf4ff",
+            border: "1px solid rgba(0, 158, 227, 0.2)",
+            borderRadius: "8px",
+            padding: "1rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <div className="d-flex align-items-center">
+            <i
+              className="bx bx-world"
+              style={{
+                fontSize: "1.5rem",
+                color: "#009ee3",
+                marginRight: "0.75rem",
+              }}
+            ></i>
+            <div>
+              <div
+                style={{
+                  fontWeight: "600",
+                  color: "#009ee3",
+                  fontSize: "0.95rem",
+                }}
+              >
+                Moneda seleccionada
+              </div>
+              <div style={{ color: "#4a5568", fontSize: "0.9rem" }}>
+                {currencyInfo.country} - {currencyInfo.name}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SECCIÓN 1: RESUMEN DEL PLAN */}
       <div className="mb-4">
@@ -136,52 +208,6 @@ const WalletStepFour = ({
             >
               📋 Copiar
             </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* ADVERTENCIA DE CONVERSIÓN DE MONEDAS */}
-      <div
-        style={{
-          background: "#fff3cd",
-          border: "1px solid #ffc107",
-          borderRadius: "10px",
-          padding: "1.2rem",
-          marginBottom: "1.5rem",
-          boxShadow: "0 2px 8px rgba(255, 193, 7, 0.2)",
-        }}
-      >
-        <div className="d-flex align-items-start mb-2">
-          <span style={{ fontSize: "1.3rem", marginRight: "0.7rem" }}>💱</span>
-          <div>
-            <strong style={{ color: "#856404", fontSize: "1rem" }}>
-              Pagos en otras monedas
-            </strong>
-            <p
-              style={{
-                color: "#856404",
-                margin: "0.5rem 0 0 0",
-                fontSize: "0.9rem",
-                lineHeight: "1.5",
-              }}
-            >
-              Para pagos en una moneda diferente a COP o USD, por favor verifica
-              el valor equivalente en tu moneda local antes de realizar la
-              transferencia. Puedes usar un {" "}
-              <a
-                href="https://www.google.com/search?q=conversor+de+monedas"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: "#0066cc",
-                  textDecoration: "underline",
-                  fontWeight: "600",
-                }}
-              >
-                conversor de monedas
-              </a>{" "}
-              para calcularlo.
-            </p>
           </div>
         </div>
       </div>
@@ -242,8 +268,7 @@ const WalletStepFour = ({
       <div className="alert  text-center">
         <i className="bx bx-bulb me-2"></i>
         Incluye el resumen del plan en la descripción o concepto de tu
-        transferencia para una activación inmediata. Si pagas en otra moneda,
-        asegúrate de enviar el valor correcto.
+        transferencia para una activación inmediata.
       </div>
     </div>
   );
@@ -262,6 +287,8 @@ WalletStepFour.propTypes = {
   cedula: PropTypes.string,
   telefono: PropTypes.string,
   tipoDocumento: PropTypes.string,
+  selectedCurrency: PropTypes.string,
+  currencyRates: PropTypes.object,
 };
 
 export default WalletStepFour;

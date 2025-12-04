@@ -1,4 +1,8 @@
 import PropTypes from "prop-types";
+import {
+  convertUSDToLocalCurrency,
+  formatCurrencyAmount,
+} from "../../../services/api/currencyService";
 
 const WalletPaymentSummary = ({
   //   paymentData,
@@ -11,12 +15,34 @@ const WalletPaymentSummary = ({
   cedula = "",
   telefono = "",
   tipoDocumento = "",
+  selectedCurrency = "COP",
+  currencyRates = null,
 }) => {
   const hasAssistants = selectedAssistants && selectedAssistants.length > 0;
   const hasComplements = selectedComplements && selectedComplements.length > 0;
   const hasPlan = !isAssistantsOnly && selectedPlan;
   const isAnnual = paymentCalculations?.isAnnual || false;
   const totalAnnualSavings = paymentCalculations?.totalAnnualSavings || 0;
+
+  // Conversión de moneda
+  const convertedAmount = currencyRates
+    ? convertUSDToLocalCurrency(
+        walletData.amountUSD,
+        currencyRates,
+        selectedCurrency
+      )
+    : selectedCurrency === "COP"
+    ? walletData.amount
+    : walletData.amountUSD;
+
+  const convertedSavings =
+    currencyRates && totalAnnualSavings > 0
+      ? convertUSDToLocalCurrency(
+          totalAnnualSavings,
+          currencyRates,
+          selectedCurrency
+        )
+      : totalAnnualSavings;
 
   // Función para obtener el texto del tipo de documento
   const getTipoDocumentoText = (tipo) => {
@@ -142,7 +168,7 @@ const WalletPaymentSummary = ({
             Ahorro anual:
           </span>
           <span className="fw-bold text-success">
-            -${totalAnnualSavings.toFixed(2)} USD
+            -{formatCurrencyAmount(convertedSavings, selectedCurrency)}
           </span>
         </div>
       )}
@@ -158,10 +184,11 @@ const WalletPaymentSummary = ({
 
       <div className="d-flex justify-content-between mb-1">
         <span className="text-muted">
-          Total en pesos colombianos{isAnnual ? " (anual)" : ""}:
+          Total en {selectedCurrency}
+          {isAnnual ? " (anual)" : ""}:
         </span>
         <span className="fw-bold" style={{ color: "#009ee3" }}>
-          ${Math.round(walletData.amount)} COP
+          {formatCurrencyAmount(convertedAmount, selectedCurrency)}
         </span>
       </div>
     </div>
@@ -179,6 +206,8 @@ WalletPaymentSummary.propTypes = {
   cedula: PropTypes.string,
   telefono: PropTypes.string,
   tipoDocumento: PropTypes.string,
+  selectedCurrency: PropTypes.string,
+  currencyRates: PropTypes.object,
 };
 
 export { WalletPaymentSummary };
