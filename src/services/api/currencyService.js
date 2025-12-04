@@ -95,10 +95,8 @@ export const formatCurrencyAmount = (amount, currencyCode) => {
   const currency = LATAM_CURRENCIES.find((c) => c.code === currencyCode);
   const decimals = ["COP", "CLP", "PYG"].includes(currencyCode) ? 0 : 2;
 
-  const formatted = amount.toLocaleString("es-ES", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+  // Formatear sin separadores de miles
+  const formatted = amount.toFixed(decimals).replace(".", ",");
 
   return currency
     ? `${currency.symbol}${formatted}`
